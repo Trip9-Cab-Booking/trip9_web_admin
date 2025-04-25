@@ -382,7 +382,7 @@ const statusHandler = async (id: string, status: string) => {
             open={open}
             onClose={handleClose}
         >
-            <MenuItem onClick={() => {
+            {/* <MenuItem onClick={() => {
                 handleClose();
                 printTable(userData, {
                 title: "Drivers Report",
@@ -390,7 +390,7 @@ const statusHandler = async (id: string, status: string) => {
                 });
                 }} disableRipple>
                 Print
-            </MenuItem>
+            </MenuItem> */}
             <MenuItem onClick={() => {
                 handleClose();
                 exportToExcelUsers(userData.map(user => ({

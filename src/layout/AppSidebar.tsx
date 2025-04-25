@@ -12,8 +12,6 @@ import {
   UserCircleIcon
 } from "../icons/index";
 import SidebarWidget from "./SidebarFooter";
-import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
-import AccountMenu from "@/components/ProfileMenu";
 
 type NavItem = {
   name: string;

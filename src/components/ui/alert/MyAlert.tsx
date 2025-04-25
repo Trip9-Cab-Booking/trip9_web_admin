@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
-import { CloseIcon, CloseLineIcon } from '@/icons';
+import {  CloseLineIcon } from '@/icons';
 // import CloseIcon from '@mui/icons-material/Close';
 
 interface Data {
