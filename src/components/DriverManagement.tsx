@@ -10,7 +10,6 @@ import { alpha, Button, Chip, IconButton, Menu, MenuItem, MenuProps, Stack, styl
 import { CheckCircleIcon, DownloadIcon } from '@/icons';
 import { exportToExcel } from '@/utils/export/drivers/excel';
 import { exportToPDF } from '@/utils/export/drivers/pdf';
-import { printTable } from '@/utils/export/drivers/print';
 import CustomNoRowsOverlay from './CustomNoDataOverlay';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
@@ -82,6 +81,8 @@ const DriverManagement = () => {
 
 
   const [loading, setLoading] = useState(true);
+  console.log(loading);
+
   const router = useRouter();
 
   const [userData, setUserData] = useState<Data[]>([]);
@@ -129,7 +130,7 @@ const DriverManagement = () => {
 
 
         // Transform API data to Data[] structure
-        const formatted: Data[] = data.map((driver: any, index: number) => ({
+        const formatted: Data[] = data.map((driver: { firstName?: string; lastName?: string; gender?: string; address?: string; status?: string; _id: string }, index: number) => ({
           id:index + 1,
           firstName: driver.firstName || '',
           lastName: driver.lastName || '',

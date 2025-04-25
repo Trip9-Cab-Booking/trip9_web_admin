@@ -41,14 +41,14 @@ if (typeof window !== 'undefined') {
   }
 }
 
-const persistState = (state: AuthState) => {
+const persistState = async (state: AuthState) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem(
       '_trip9_auth_state',
-      encryptData({
+      await encryptData(JSON.stringify({
         user: state.user,
         accessToken: state.accessToken,
-      })
+      }))
     );
   }
 };

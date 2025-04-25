@@ -5,7 +5,7 @@ import { selectAccessToken } from '@/store/authSlice';
 import axios from 'axios';
 import React, { use, useEffect, useState } from 'react'
 import { useSelector } from 'react-redux';
-import { UserCircle, Phone, Mail, Calendar, Award, CheckCircle, MapPin, Car, Briefcase, FileText, FileImage, ArrowLeft } from 'lucide-react';
+import { UserCircle, Phone, Mail, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { User } from '@/types/users';
@@ -26,16 +26,16 @@ const UserPage = ({params}: {params: Promise<{userId: string}>}) => {
   };
 
     // Calculate age from DOB
-    const calculateAge = (dob: string) => {
-        const today = new Date();
-        const birthDate = new Date(dob);
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-          age--;
-        }
-        return age;
-      };
+    // const calculateAge = (dob: string) => {
+    //     const today = new Date();
+    //     const birthDate = new Date(dob);
+    //     let age = today.getFullYear() - birthDate.getFullYear();
+    //     const monthDiff = today.getMonth() - birthDate.getMonth();
+    //     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    //       age--;
+    //     }
+    //     return age;
+    //   };
 
 
 

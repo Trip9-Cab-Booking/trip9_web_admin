@@ -107,8 +107,10 @@ const SignInForm = () => {
         showFeedback("Login successful!", "success");
         router.push("/");
       }
-    } catch (error: any) {
-      const msg = error?.response?.data?.message || "Login failed";
+    } catch (error: unknown) {
+      const msg = axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Login failed";
       setFormErrors((prev) => ({ ...prev, email: msg }));
       showFeedback(msg, "error");
     } finally {
@@ -140,9 +142,15 @@ const SignInForm = () => {
             //* Here I need to call send email alert based on resData message
             showFeedback(resData?.message || "Email sent successfully", "success");
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.log(error);
-            const msg = error?.response?.data?.message || "Login failed";
+
+            const msg = axios.isAxiosError(error) && error.response?.data?.message
+                ? (error.message || error.response.data.message)
+                : "Login failed";
+                console.log(msg);
+
+            setFormErrors((prev) => ({ ...prev, email: msg }));
             showFeedback(msg, "error");
             }
     }

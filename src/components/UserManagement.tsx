@@ -8,7 +8,6 @@ import Paper from '@mui/material/Paper';
 import TableSkeleton from './skeleton/Table';
 import { alpha, Button, Chip, IconButton, Menu, MenuItem, MenuProps, Stack, styled } from '@mui/material';
 import { CheckCircleIcon, DownloadIcon } from '@/icons';
-import { printTable } from '@/utils/export/drivers/print';
 import CustomNoRowsOverlay from './CustomNoDataOverlay';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
@@ -85,6 +84,8 @@ const UserManagement = () => {
 
 
   const [loading, setLoading] = useState(true);
+  console.log(loading);
+
   const router = useRouter();
 
   const [userData, setUserData] = useState<UserData[]>([]);
@@ -134,7 +135,7 @@ const UserManagement = () => {
 
 
         // Transform API data to Data[] structure
-        const formatted: UserData[] = data.map((user: any, index: number) => ({
+        const formatted: UserData[] = data.map((user: { firstName?: string; lastName?: string; gender?: string; phone?: string; status?: string; _id: string }, index: number) => ({
           id:index + 1,
           firstName: user.firstName || '',
           lastName: user.lastName || '',
