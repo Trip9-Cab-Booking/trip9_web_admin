@@ -59,7 +59,7 @@ const DriverPage = ({params}: {params: Promise<{driverId: string}>}) => {
             }
         }
         fetchDriverData();
-    }, [])
+    }, [driverId, token]);
 
 
   return (

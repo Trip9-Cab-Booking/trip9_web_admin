@@ -238,9 +238,13 @@ const SignInForm = () => {
               onSubmit: (event: React.FormEvent<HTMLFormElement>) => {
                 event.preventDefault();
                 const formData = new FormData(event.currentTarget);
-                const formJson = Object.fromEntries((formData as any).entries());
+                const formJson = Object.fromEntries(Array.from(formData.entries())) as Record<string, FormDataEntryValue>;
                 const email = formJson.email;
-                handleForgot(email);
+                if (typeof email === "string") {
+                  handleForgot(email);
+                } else {
+                  console.error("Invalid email format");
+                }
                 handleClose();
               },
             },

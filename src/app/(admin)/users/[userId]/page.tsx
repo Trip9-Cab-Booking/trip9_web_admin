@@ -60,7 +60,7 @@ const UserPage = ({params}: {params: Promise<{userId: string}>}) => {
             }
         }
         fetchDriverData();
-    }, [])
+    }, [userId, token])
 
 
   return (

@@ -91,9 +91,11 @@ const ResetPasswordForm = () => {
         dispatch(updateAccessToken(null));
         router.push("/signin");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.log(error);
-        const msg = error?.response?.data?.message || "Login failed";
+        const msg = axios.isAxiosError(error) && error.response?.data?.message
+          ? error.response.data.message
+          : "Login failed";
         showFeedback(msg, "error");
     } finally {
       setLoading(false);
