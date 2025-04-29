@@ -134,6 +134,7 @@ const SignInForm = () => {
         console.log("email to forgot", email);
 
         try {
+            dispatch(setLoading(true));
             const res = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/admin/forgot-password`, {email});
             const resData = res.data;
             console.log(resData);

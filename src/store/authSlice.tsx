@@ -45,7 +45,7 @@ const persistState = async (state: AuthState) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem(
       '_trip9_auth_state',
-      await encryptData(JSON.stringify({
+      encryptData(({
         user: state.user,
         accessToken: state.accessToken,
       }))

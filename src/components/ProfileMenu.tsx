@@ -14,6 +14,7 @@ import { Typography } from '@mui/material';
 
 export default function AccountMenu() {
     const currentUser = useSelector(selectCurrentUser);
+
     const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -40,7 +41,7 @@ export default function AccountMenu() {
             aria-haspopup="true"
             aria-expanded={open ? 'true' : undefined}
           >
-            <Avatar sx={{ width: 32, height: 32 }}>M</Avatar>
+            <Avatar sx={{ width: 32, height: 32 }}>{ currentUser && currentUser?.firstName.charAt(0).toUpperCase()}</Avatar>
           </IconButton>
         </Tooltip>
       </Box>
