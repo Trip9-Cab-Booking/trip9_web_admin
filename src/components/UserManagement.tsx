@@ -29,7 +29,7 @@ export type UserData = {
 };
 
 
-const paginationModel = { page: 0, pageSize: 5 };
+
 
 const StyledMenu = styled((props: MenuProps) => (
     <Menu
@@ -80,19 +80,20 @@ const UserManagement = () => {
 
 //   const user = useSelector(selectCurrentUser);
   const token = useSelector(selectAccessToken);
-  console.log(token);
-
-
   const [loading, setLoading] = useState(true);
-  console.log(loading);
-
   const router = useRouter();
-
   const [userData, setUserData] = useState<UserData[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showSearch, setShowSearch] = useState(false);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+
+//   * Pagination
+const [pageNumber, setPageNumber] = useState<number>(1);
+const [pageSize, setPageSize] = useState<number>(10);
+const [pageTotalSize, setPageTotalSize] = useState<number>(10);
+
+
 
   // New states for alert/snackbar
         const [alertMessage, setAlertMessage] = useState("");
@@ -117,7 +118,7 @@ const UserManagement = () => {
     const fetchDrivers = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${BASE}/api/admin/users`, {
+        const res = await axios.get(`${BASE}/api/admin/users?page=${pageNumber}&limit=${pageSize}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'ngrok-skip-browser-warning': '69420',
@@ -131,12 +132,14 @@ const UserManagement = () => {
         }
 
         const data = res.data.data;
-        console.log("data:", data);
+        setPageNumber(res.data.pageMeta.page);
+        setPageSize(res.data.pageMeta.limit);
+        setPageTotalSize(res.data.pageMeta.total);
 
 
         // Transform API data to Data[] structure
         const formatted: UserData[] = data.map((user: { firstName?: string; lastName?: string; gender?: string; phone?: string; status?: string; _id: string }, index: number) => ({
-          id:index + 1,
+          id:(pageNumber - 1) * pageSize + index + 1,
           firstName: user.firstName || '',
           lastName: user.lastName || '',
           gender: user.gender,
@@ -157,26 +160,11 @@ const UserManagement = () => {
     };
 
     if (token) fetchDrivers();
-  }, [token]);
+  }, [token,pageNumber,pageSize]);
 
-//   useEffect(() => {
-//     let isMounted = true;
-//     if (isMounted && drivers?.length > 0) {
-//       const formatted = drivers.map((driver: any, idx: number) => ({
-//         id: idx+1,
-//         firstName: driver.firstName,
-//         lastName: driver.lastName,
-//         address: driver.address,
-//         status: driver.status
-//       }));
-//       setUserData(formatted);
-//     }else{
-//         setUserData([]);
-//     }
-//     return () => {
-//       isMounted = false;
-//     };
-//   }, [drivers]);
+  const paginationModel = { page: pageNumber-1, pageSize: pageSize };
+  console.log(paginationModel);
+
 
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'SL No'},
@@ -333,7 +321,7 @@ const statusHandler = async (id: string, status: string) => {
   };
 
 
-  if (userData.length === 0) return <TableSkeleton />
+  if (loading) return <TableSkeleton />
 
   return (
     <div>
@@ -422,8 +410,13 @@ const statusHandler = async (id: string, status: string) => {
       rows={filteredData}
       columns={columns}
       initialState={{ pagination: { paginationModel } }}
-      paginationMode='client'
-      pageSizeOptions={[5, 10]}
+      paginationMode="server"
+        paginationModel={{ page: pageNumber - 1, pageSize }}
+        onPaginationModelChange={({ page, pageSize }) => {
+            setPageNumber(page + 1); // Convert zero-based to one-based
+            setPageSize(pageSize);
+        }}
+        rowCount={pageTotalSize} // You should keep total count in state too
       checkboxSelection={false}
       rowSelection={false}
       slots={{ noRowsOverlay: CustomNoRowsOverlay }}
