@@ -1,9 +1,9 @@
 'use client';
 
-import { selectAccessToken } from '@/store/authSlice';
+import { logout, selectAccessToken } from '@/store/authSlice';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { DataGrid, GridColDef, GridSearchIcon } from '@mui/x-data-grid';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import Paper from '@mui/material/Paper';
 import TableSkeleton from './skeleton/Table';
 import { alpha, Button, Chip, IconButton, Menu, MenuItem, MenuProps, Stack, styled } from '@mui/material';
@@ -12,9 +12,11 @@ import CustomNoRowsOverlay from './CustomNoDataOverlay';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { useAuthGuard } from '@/hooks/useAuthGaurd';
-import { exportToPDFUsers } from '@/utils/export/users/pdf';
-import { exportToExcelUsers } from '@/utils/export/users/excel';
 import CustomSnackbar from './CustomSnackbar';
+import Search from './Search';
+import { useAppDispatch } from '@/store/store';
+import { useTableQueryParams } from '@/hooks/useQueryParams';
+import { downloadData } from '@/utils/downloadData';
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -78,20 +80,27 @@ const UserManagement = () => {
 
     useAuthGuard();
 
+    const dispatch = useAppDispatch();
+
+    const {
+        page,
+        pageSize,
+        setPage,
+      } = useTableQueryParams();
+
 //   const user = useSelector(selectCurrentUser);
   const token = useSelector(selectAccessToken);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const [userData, setUserData] = useState<UserData[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [showSearch, setShowSearch] = useState(false);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
 //   * Pagination
-const [pageNumber, setPageNumber] = useState<number>(1);
-const [pageSize, setPageSize] = useState<number>(10);
-const [pageTotalSize, setPageTotalSize] = useState<number>(10);
+// const [pageNumber, setPageNumber] = useState<number>(1);
+// const [pageSize, setPageSize] = useState<number>(10);
+ const [totalRowSize, setTotalRowSize] = useState<number>(0);
 
 
 
@@ -114,11 +123,22 @@ const [pageTotalSize, setPageTotalSize] = useState<number>(10);
     setAnchorEl(null);
   };
 
+        useEffect(() => {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('page', JSON.stringify(page));
+          }
+        }, [page]);
+
   useEffect(() => {
     const fetchDrivers = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${BASE}/api/admin/users?page=${pageNumber}&limit=${pageSize}`, {
+        const res = await axios.get(`${BASE}/api/admin/users`, {
+            params : {
+                page:page,
+                limit: pageSize,
+                ...(searchQuery && { searchText: searchQuery})
+            },
           headers: {
             Authorization: `Bearer ${token}`,
             'ngrok-skip-browser-warning': '69420',
@@ -132,14 +152,12 @@ const [pageTotalSize, setPageTotalSize] = useState<number>(10);
         }
 
         const data = res.data.data;
-        setPageNumber(res.data.pageMeta.page);
-        setPageSize(res.data.pageMeta.limit);
-        setPageTotalSize(res.data.pageMeta.total);
+        setTotalRowSize(res.data.pageMeta.total);
 
 
         // Transform API data to Data[] structure
         const formatted: UserData[] = data.map((user: { firstName?: string; lastName?: string; gender?: string; phone?: string; status?: string; _id: string }, index: number) => ({
-          id:(pageNumber - 1) * pageSize + index + 1,
+          id:(page - 1) * pageSize + index + 1,
           firstName: user.firstName || '',
           lastName: user.lastName || '',
           gender: user.gender,
@@ -151,6 +169,10 @@ const [pageTotalSize, setPageTotalSize] = useState<number>(10);
         setUserData(formatted);
         showFeedback(res.data.message, "success");
       } catch (error) {
+        if (error instanceof Object && 'status' in error && error.status === 401) {
+            console.log("logout for 401");
+            dispatch(logout());
+        }
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
         console.error("Failed to update status:", errorMessage);
         showFeedback(`Failed to update status: ${errorMessage}`, "error");
@@ -160,10 +182,10 @@ const [pageTotalSize, setPageTotalSize] = useState<number>(10);
     };
 
     if (token) fetchDrivers();
-  }, [token,pageNumber,pageSize]);
+  }, [token, page, pageSize, searchQuery]);
 
-  const paginationModel = { page: pageNumber-1, pageSize: pageSize };
-  console.log(paginationModel);
+  const paginationModel = { page: page-1, pageSize };
+//   console.log(paginationModel);
 
 
 const columns: GridColDef[] = [
@@ -321,36 +343,12 @@ const statusHandler = async (id: string, status: string) => {
   };
 
 
-  if (loading) return <TableSkeleton />
-
   return (
     <div>
       <header className='flex items-center justify-between mb-4'>
         <h1 className='font-semibold'>User Management</h1>
         <div className='flex items-center gap-2'>
-        <div className="relative transition-all duration-300 ease-in-out">
-    {showSearch ? (
-      <input
-        autoFocus
-        type="text"
-        placeholder="Search drivers..."
-        className="px-3 py-1 rounded border bg-white dark:bg-gray-600 dark:text-slate-200 w-64"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        onBlur={() => {
-          if (!searchQuery) setShowSearch(false);
-        }}
-      />
-    ) : (
-      <Button
-        size="medium"
-        className='rounded-full'
-        variant="contained"
-        onClick={() => setShowSearch(true)}
-        startIcon={<GridSearchIcon />}
-      />
-    )}
-  </div>
+        <Search onSearch={((query) => setSearchQuery(query))} />
         <Button
             id="demo-customized-button"
             aria-controls={open ? 'demo-customized-menu' : undefined}
@@ -371,83 +369,66 @@ const statusHandler = async (id: string, status: string) => {
             open={open}
             onClose={handleClose}
         >
-            {/* <MenuItem onClick={() => {
-                handleClose();
-                printTable(userData, {
-                title: "Drivers Report",
-                logoUrl: "/images/logo/logo.svg", // Optional - use your app logo path
-                });
-                }} disableRipple>
-                Print
-            </MenuItem> */}
-            <MenuItem onClick={() => {
-                handleClose();
-                exportToExcelUsers(userData.map(user => ({
-                    ...user,
-                    phone: user.phone || '', // Ensure phone is a string
-                  })));
-              }} disableRipple>
-            Excel
+
+            <MenuItem onClick={() => downloadData({ context: 'users', format: 'pdf' })} disableRipple>
+                PDF
             </MenuItem>
-            <MenuItem onClick={() => {
-                handleClose();
-                exportToPDFUsers(userData.map(user => ({
-                  ...user,
-                  phone: user.phone || '', // Ensure phone is a string
-                })));
-            }} disableRipple>
-            PDF
+            <MenuItem onClick={() => downloadData({ context: 'users', format: 'csv' })} disableRipple>
+                Excel
             </MenuItem>
         </StyledMenu>
       </header>
 
-<div className="w-full overflow-hidden">
-  <Paper
-    elevation={0}
-    sx={{ width: '95%', height: "100%", overflow: 'hidden',backgroundColor: "transparent" }}
-  >
-    <DataGrid
-      rows={filteredData}
-      columns={columns}
-      initialState={{ pagination: { paginationModel } }}
-      paginationMode="server"
-        paginationModel={{ page: pageNumber - 1, pageSize }}
-        onPaginationModelChange={({ page, pageSize }) => {
-            setPageNumber(page + 1); // Convert zero-based to one-based
-            setPageSize(pageSize);
-        }}
-        rowCount={pageTotalSize} // You should keep total count in state too
-      checkboxSelection={false}
-      rowSelection={false}
-      slots={{ noRowsOverlay: CustomNoRowsOverlay }}
-      sx={(theme) => ({
-        height: '100%',
-        width: '100%',
-        padding: "10px",
-        backgroundColor: theme.palette.mode === 'dark' ? '#1e293b' : '#f9fafb', // slate-800 / gray-50
-        color: theme.palette.mode === 'dark' ? '#f3f4f6' : '#1f2937', // gray-100 / gray-800
+        {
+            loading ? <TableSkeleton /> : (
+            <div className="w-full overflow-hidden">
+            <Paper
+                elevation={0}
+                sx={{ width: '95%', height: "100%", overflow: 'hidden',backgroundColor: "transparent" }}
+            >
+                <DataGrid
+                rows={filteredData}
+                columns={columns}
+                initialState={{ pagination: { paginationModel } }}
+                paginationMode="server"
+                    paginationModel={{ page: page - 1, pageSize }}
+                    onPaginationModelChange={(model) => {
+                        setPage(model.page +1)
+                    }}
+                    rowCount={totalRowSize} // You should keep total count in state too
+                checkboxSelection={false}
+                rowSelection={false}
+                slots={{ noRowsOverlay: CustomNoRowsOverlay }}
+                sx={(theme) => ({
+                    height: '100%',
+                    width: '100%',
+                    padding: "10px",
+                    backgroundColor: theme.palette.mode === 'dark' ? '#1e293b' : '#f9fafb', // slate-800 / gray-50
+                    color: theme.palette.mode === 'dark' ? '#f3f4f6' : '#1f2937', // gray-100 / gray-800
 
-        '& .MuiDataGrid-cell': {
-          borderBottom: `1px solid ${
-            theme.palette.mode === 'dark' ? '#334155' : '#e5e7eb' // slate-700 / gray-200
-          }`,
-        },
-        '& .MuiDataGrid-columnHeaders': {
-          backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#f3f4f6', // slate-900 / gray-100
-          color: theme.palette.mode === 'dark' ? '#cbd5e1' : '#111827', // slate-300 / gray-900
-        },
-        '& .MuiDataGrid-footerContainer': {
-          backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#f3f4f6',
-          color: theme.palette.mode === 'dark' ? '#cbd5e1' : '#111827',
-        },
-        '& .MuiDataGrid-row:hover': {
-          backgroundColor: theme.palette.mode === 'dark' ? '#1e293b' : '#f1f5f9', // slate-800 / slate-100
-        },
-      })}
+                    '& .MuiDataGrid-cell': {
+                    borderBottom: `1px solid ${
+                        theme.palette.mode === 'dark' ? '#334155' : '#e5e7eb' // slate-700 / gray-200
+                    }`,
+                    },
+                    '& .MuiDataGrid-columnHeaders': {
+                    backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#f3f4f6', // slate-900 / gray-100
+                    color: theme.palette.mode === 'dark' ? '#cbd5e1' : '#111827', // slate-300 / gray-900
+                    },
+                    '& .MuiDataGrid-footerContainer': {
+                    backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#f3f4f6',
+                    color: theme.palette.mode === 'dark' ? '#cbd5e1' : '#111827',
+                    },
+                    '& .MuiDataGrid-row:hover': {
+                    backgroundColor: theme.palette.mode === 'dark' ? '#1e293b' : '#f1f5f9', // slate-800 / slate-100
+                    },
+                })}
 
-    />
-  </Paper>
-</div>
+                />
+            </Paper>
+            </div>
+            )
+        }
         <CustomSnackbar
         open={showAlert}
         message={alertMessage}

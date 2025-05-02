@@ -13,7 +13,16 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true
   },
   images: {
-        domains : ["4.imimg.com", "trip9.blr1.digitaloceanspaces.com"]
+    remotePatterns: [
+        {
+          protocol: 'https',
+          hostname: "4.imimg.com",
+        },
+        {
+          protocol: 'https',
+          hostname: "trip9.blr1.digitaloceanspaces.com",
+        },
+      ],
   }
 };
 

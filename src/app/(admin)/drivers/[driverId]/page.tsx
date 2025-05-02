@@ -16,6 +16,8 @@ const DriverPage = ({params}: {params: Promise<{driverId: string}>}) => {
     const token = useSelector(selectAccessToken);
     const [driverData, setDriverData] = useState<Driver>({} as Driver);
 
+    const currentPage = parseInt(localStorage.getItem('page') || '1');
+
     // Format date function
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -64,7 +66,7 @@ const DriverPage = ({params}: {params: Promise<{driverId: string}>}) => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-600 py-4 px-4 sm:px-6 lg:px-8">
-        <Link href={"/drivers"} className='flex gap-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-500 w-fit p-1 rounded-md px-4 mb-8' >
+        <Link href={`/drivers?page=${currentPage}`} className='flex gap-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-500 w-fit p-1 rounded-md px-4 mb-8' >
             <ArrowLeft />
             Back
         </Link>

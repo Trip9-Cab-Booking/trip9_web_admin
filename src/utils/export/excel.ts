@@ -1,17 +1,9 @@
 import Exceljs from "exceljs"
 import {saveAs} from "file-saver";
+import { DownloadData } from "@/types/common";
 
-export type Data = {
-    id: number;
-    lastName: string | null;
-    firstName: string | null;
-    gender?:string | null;
-    phone?: string;
-    status: string ;
-    userId: string;
-  };
 
-export const exportToExcelUsers = async (data: Data[]) => {
+export const exportToExcel = async (data: DownloadData[], context: string) => {
     const workBook = new Exceljs.Workbook();
     const workSheet = workBook.addWorksheet('Data');
 
@@ -27,5 +19,5 @@ export const exportToExcelUsers = async (data: Data[]) => {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
 
-    saveAs(file, "drivers.xlsx");
+    saveAs(file, `${context}.xlsx`);
 }
