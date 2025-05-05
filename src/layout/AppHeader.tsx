@@ -23,7 +23,7 @@ const AppHeader: React.FC = () => {
     if(user){
         setCurrentUser(user);
     }
-  }, []);
+  }, [user]);
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
 

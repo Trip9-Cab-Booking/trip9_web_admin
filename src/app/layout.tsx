@@ -3,12 +3,18 @@ import "./globals.css";
 
 import { ThemeProvider } from "@/context/ThemeContext";
 import ThemeWrapper from "./ThemeWrapper";
+import { Metadata } from "next";
 // import { getMuiTheme } from "@/hooks/muiTheme";
 
 const outfit = Outfit({
   variable: "--font-outfit-sans",
   subsets: ["latin"],
 });
+
+export const metadata: Metadata = {
+    title: "trip9 | trip9 Dashboard",
+    description: "This is trip9 main layout for Dashboard",
+  };
 
 
 export default function RootLayout({

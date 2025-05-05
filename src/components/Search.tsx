@@ -24,7 +24,7 @@ const Search: React.FC<SearchProps> = ({onSearch}) => {
 
     useEffect(() => {
         onSearch(debouncedQuery);
-    }, [debouncedQuery]);
+    }, [debouncedQuery, onSearch]);
 
 
   return (

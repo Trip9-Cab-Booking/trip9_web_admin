@@ -1,7 +1,7 @@
 'use client';
 
 import { logout, selectAccessToken } from '@/store/authSlice';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import Paper from '@mui/material/Paper';
@@ -177,7 +177,7 @@ const DriverManagement = () => {
     };
 
     if (token) fetchDrivers();
-  }, [token, page, pageSize, searchQuery]);
+  }, [token, page, pageSize, searchQuery, dispatch]);
 
   const paginationModel = {
     page: page - 1,
@@ -346,13 +346,17 @@ const statusHandler = async (id: string, status: string) => {
     }
   };
 
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
+
 
   return (
     <div>
       <header className='flex items-center justify-between mb-4'>
         <h1 className='font-semibold'>Driver Management</h1>
         <div className='flex items-center gap-2'>
-        <Search onSearch={(query) => setSearchQuery(query)} />
+        <Search onSearch={handleSearch}/>
         <Button
             id="demo-customized-button"
             aria-controls={open ? 'demo-customized-menu' : undefined}
@@ -453,32 +457,3 @@ const statusHandler = async (id: string, status: string) => {
 
 export default DriverManagement;
 
-
-
-// export function useTableQueryParams() {
-//     const router = useRouter();
-//     const searchParams = useSearchParams();
-
-//     const page = parseInt(searchParams.get('page') || '1', 10);
-//     const limit = parseInt(searchParams.get('limit') || '10', 10);
-
-//     const setPage = useCallback((newPage: number) => {
-//       const params = new URLSearchParams(searchParams.toString());
-//       params.set('page', String(newPage));
-//       router.replace(`?${params.toString()}`);
-//     }, [router, searchParams]);
-
-//     const setPageSize = useCallback((newSize: number) => {
-//       const params = new URLSearchParams(searchParams.toString());
-//       params.set('limit', String(newSize));
-//       params.set('page', '1'); // reset to page 1 when page size changes
-//       router.replace(`?${params.toString()}`);
-//     }, [router, searchParams]);
-
-//     return {
-//       page,
-//       pageSize: limit,
-//       setPage,
-//       setPageSize,
-//     };
-//   }

@@ -18,5 +18,5 @@ export const useRedirectIfAuthenticated = () => {
     if (accessToken && user?.role === "admin") {
       router.push('/');
     }
-  }, [accessToken, router]);
+  }, [accessToken, router, user]);
 };

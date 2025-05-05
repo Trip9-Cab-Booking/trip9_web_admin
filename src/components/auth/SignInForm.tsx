@@ -16,6 +16,8 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import CustomSnackbar from "../CustomSnackbar";
 import { useRedirectIfAuthenticated } from "@/hooks/useRedirectIfAuthenticated";
+import { toast } from "sonner";
+import { Box, CircularProgress } from "@mui/material";
 // import SendEmailAlert from "../ui/alert/SendEmail";
 
 const SignInSchema = z.object({
@@ -47,6 +49,7 @@ const SignInForm = () => {
     const [alertMessage, setAlertMessage] = useState("");
     const [alertSeverity, setAlertSeverity] = useState<"success" | "error" | "info">("info");
     const [showAlert, setShowAlert] = useState(false);
+    const [forgotLoading, setForgotLoading] = useState<boolean>(false)
 
     const showFeedback = (message: string, severity: "success" | "error" | "info" = "info") => {
       setAlertMessage(message);
@@ -55,10 +58,10 @@ const SignInForm = () => {
     };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormValues((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
   };
 
@@ -131,10 +134,8 @@ const SignInForm = () => {
 
 
     async function handleForgot(email: string){
-        console.log("email to forgot", email);
-
+        setForgotLoading(true);
         try {
-            dispatch(setLoading(true));
             const res = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/admin/forgot-password`, {email});
             const resData = res.data;
             console.log(resData);
@@ -144,17 +145,16 @@ const SignInForm = () => {
             showFeedback(resData?.message || "Email sent successfully", "success");
 
         } catch (error: unknown) {
-            console.log(error);
-
-            const msg = axios.isAxiosError(error) && error.response?.data?.message
-                ? (error.message || error.response.data.message)
-                : "Login failed";
-                console.log(msg);
-
-            setFormErrors((prev) => ({ ...prev, email: msg }));
-            showFeedback(msg, "error");
+            if (axios.isAxiosError(error) && error.response?.data?.message) {
+                showFeedback(error.response.data.message, "error");
+            } else {
+                showFeedback("An unexpected error occurred", "error");
             }
-    }
+            }finally{
+                setForgotLoading(false);
+                handleClose();
+            }
+        }
 
   return (
     <>
@@ -232,7 +232,9 @@ const SignInForm = () => {
       </div>
       <Dialog
           open={open}
-          onClose={handleClose}
+        //   onClose={handleClose}
+          sx={{ '& .MuiDialog-paper': { width: '50%', height: "50%", maxHeight: 300, paddingBottom: "20px", paddingX: "20px" } }}
+            maxWidth="md"
           slotProps={{
             paper: {
               component: 'form',
@@ -244,9 +246,8 @@ const SignInForm = () => {
                 if (typeof email === "string") {
                   handleForgot(email);
                 } else {
-                  console.error("Invalid email format");
+                  toast.error("Invalid email format");
                 }
-                handleClose();
               },
             },
           }}
@@ -256,7 +257,6 @@ const SignInForm = () => {
             <DialogContentText>
               Verify your email to reset the password
             </DialogContentText>
-
             <TextField
               autoFocus
               required
@@ -265,14 +265,23 @@ const SignInForm = () => {
               name="email"
               label="Email Address"
               type="email"
-              fullWidth
               variant="standard"
+              className="mt-10"
+              sx={{width: "80%", display: 'flex', justifyContent: "center", margin: "30px auto" }}
             />
           </DialogContent>
+          {forgotLoading ?
+            <DialogActions>
+                <Box sx={{ display: 'flex', alignItems: "center", width: "100%", justifyContent: "center" }}>
+                    <CircularProgress />
+                </Box>
+          </DialogActions>
+          :
           <DialogActions>
             <button onClick={handleClose} className="bg-gray-900 text-slate-50 p-1 px-2 rounded-sm" >Cancel</button>
             <button type="submit" className="bg-blue-900 text-slate-50 p-1 px-2 rounded-sm" >Send email</button>
           </DialogActions>
+        }
         </Dialog>
     </div>
 
