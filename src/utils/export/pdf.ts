@@ -11,6 +11,9 @@ const getCurrentTimestamp = () => {
 
 export const exportToPDF = (data: DownloadData[], context: string) => {
 
+  console.log(data);
+  
+
   const doc = new jsPDF();
   const pageSize = doc.internal.pageSize;
 

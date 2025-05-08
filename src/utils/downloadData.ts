@@ -3,8 +3,14 @@ import { exportToExcel } from "./export/excel";
 import { exportToPDF } from "./export/pdf";
 
 export const downloadData = async ({context, format}: {context: string, format: string}) => {
+ 
     try {
-      const res = await axiosInstance.get(`/api/admin/${context}`)
+      const res = await axiosInstance.get(`/api/admin/${context}`, {
+        params: { download: true },
+        headers: {
+            'ngrok-skip-browser-warning': 'true'
+          }
+      })
       console.log(res.data);
 
 
