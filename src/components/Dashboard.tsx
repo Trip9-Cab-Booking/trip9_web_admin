@@ -9,7 +9,7 @@ import { useSelector } from 'react-redux';
 const Dashboard = () => {
     useAuthGuard();
     const user = useSelector(selectCurrentUser);
-    console.log(user);
+    // console.log(user);
 
   return (
     <div>

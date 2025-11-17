@@ -13,7 +13,7 @@ import AccountMenu from "@/components/ProfileMenu";
 
 const AppHeader: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<UserData>();
-    console.log(currentUser);
+    // console.log(currentUser);
 
   const user = useSelector((state: RootState) => state.auth.user);
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);

@@ -11,7 +11,7 @@ export const useRedirectIfAuthenticated = () => {
   const router = useRouter();
   const accessToken = useSelector(selectAccessToken);
   const user = useSelector(selectCurrentUser);
-  console.log(accessToken);
+  // console.log(accessToken);
 
 
   useEffect(() => {

@@ -11,7 +11,7 @@ import {
   HorizontaLDots,
   UserCircleIcon
 } from "../icons/index";
-import SidebarWidget from "./SidebarFooter";
+// import SidebarWidget from "./SidebarFooter";
 
 type NavItem = {
   name: string;
@@ -231,7 +231,7 @@ const AppSidebar: React.FC = () => {
             </div>
           </div>
         </nav>
-        {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
+        {/* {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null} */}
       </div>
     </aside>
   );
