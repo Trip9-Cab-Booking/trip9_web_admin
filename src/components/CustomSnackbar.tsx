@@ -1,5 +1,3 @@
-// components/ui/CustomSnackbar.tsx
-
 "use client";
 
 import React from "react";
@@ -24,7 +22,7 @@ const CustomSnackbar: React.FC<CustomSnackbarProps> = ({
       open={open}
       autoHideDuration={4000}
       onClose={onClose}
-      anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
     >
       <Alert severity={severity} variant="filled" onClose={onClose} sx={{ width: "100%" }}>
         {message}
