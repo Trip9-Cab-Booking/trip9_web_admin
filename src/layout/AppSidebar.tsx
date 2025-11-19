@@ -11,7 +11,8 @@ import {
   HorizontaLDots,
   UserCircleIcon
 } from "../icons/index";
-// import SidebarWidget from "./SidebarFooter";
+import SidebarWidget from "./SidebarFooter";
+import { Ambulance, Award, BadgeIndianRupee,  FolderGit2, MessageCircle } from "lucide-react";
 
 type NavItem = {
   name: string;
@@ -35,6 +36,35 @@ const navItems: NavItem[] = [
     icon: <Drive />,
     name: "Drivers",
     path: "/drivers",
+  },
+  {
+    icon: <Ambulance />,
+    name: "Ride Management",
+    path: "/RideManagement",
+  },
+
+
+  {
+    icon: <Award />,
+    name: "Pricing Control",
+    path: "/PricingControl",
+  },
+
+ 
+  {
+    icon: <BadgeIndianRupee />,
+    name: "Payment Management",
+    path: "/PaymentManagement",
+  },
+  {
+    icon:  <FolderGit2 />,
+    name: "Analytics & Reports",
+    path: "/AnalyticsReports",
+  },
+  {
+    icon: <MessageCircle />,
+    name: "Chatbot",
+    path: "/Socket",
   },
 
 //   {
@@ -185,28 +215,35 @@ const AppSidebar: React.FC = () => {
         <Link href="/">
           {isExpanded || isHovered || isMobileOpen ? (
             <>
-              <Image
-                className="dark:hidden"
-                src="/images/logo/logo.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-              <Image
-                className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
+             <Image
+  className="dark:hidden w-auto h-auto"
+  src="/images/logo/logo.svg"
+  alt="Logo"
+  width={150}
+  height={40}
+  priority
+  style={{ height: "auto" }}
+/>
+<Image
+  className="hidden dark:block w-auto h-auto"
+  src="/images/logo/logo-dark.svg"
+  alt="Logo"
+  width={150}
+  height={40}
+  priority
+  style={{ height: "auto" }}
+/>
             </>
           ) : (
             <Image
-              src="/images/logo/logo-icon.svg"
-              alt="Logo"
-              width={32}
-              height={32}
-            />
+  src="/images/logo/logo-icon.svg"
+  alt="Logo"
+  width={32}
+  height={32}
+  priority
+  className="w-auto h-auto"
+  style={{ height: "auto" }}
+/>
           )}
         </Link>
       </div>
@@ -231,7 +268,7 @@ const AppSidebar: React.FC = () => {
             </div>
           </div>
         </nav>
-        {/* {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null} */}
+        {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
       </div>
     </aside>
   );

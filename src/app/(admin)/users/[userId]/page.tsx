@@ -9,12 +9,17 @@ import { UserCircle, Phone, Mail, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { User } from '@/types/users';
+import { useRouter } from 'next/navigation';
+
 
 const UserPage = ({params}: {params: Promise<{userId: string}>}) => {
 
-    const { userId } = use(params); // <-- this is the key fix
+    const { userId } = use(params); 
     const token = useSelector(selectAccessToken);
     const [userData, setUserData] = useState<User>({} as User);
+    const router = useRouter();
+
+
 
     const currentPage = parseInt(localStorage.getItem('page') || '1');
 
@@ -25,6 +30,7 @@ const UserPage = ({params}: {params: Promise<{userId: string}>}) => {
       month: 'long',
       day: 'numeric'
     });
+    
   };
 
     // Calculate age from DOB
@@ -39,6 +45,10 @@ const UserPage = ({params}: {params: Promise<{userId: string}>}) => {
     //     return age;
     //   };
 
+
+const viewHandler = (id: string) => {
+    router.push(`/UserHistory/${id}`);
+  }
 
 
     useEffect(() => {
@@ -226,9 +236,22 @@ const UserPage = ({params}: {params: Promise<{userId: string}>}) => {
                           </div>
                         </div>
                       </div>
+<button
+ onClick={() => viewHandler(userData._id)}
+  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+>
+  View History
+</button>
+
+</div>
+
+
+
+
+
                     </div>
                   </div>
-                </div>
+               
 
             ) : (
                 <div>No Data found</div>

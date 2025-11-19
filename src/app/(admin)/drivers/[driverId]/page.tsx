@@ -9,12 +9,14 @@ import { UserCircle, Phone, Mail, Calendar, Award, CheckCircle, MapPin, Car, Bri
 import { Driver } from '@/types/drivers';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 const DriverPage = ({params}: {params: Promise<{driverId: string}>}) => {
 
-    const { driverId } = use(params); // <-- this is the key fix
+    const { driverId } = use(params); // 
     const token = useSelector(selectAccessToken);
     const [driverData, setDriverData] = useState<Driver>({} as Driver);
+    const router = useRouter();
 
     const currentPage = parseInt(localStorage.getItem('page') || '1');
 
@@ -62,6 +64,10 @@ const DriverPage = ({params}: {params: Promise<{driverId: string}>}) => {
         }
         fetchDriverData();
     }, [driverId, token]);
+
+const viewHandler = (id: string) => {
+    router.push(`/DriverHistory/${id}`);
+  }
 
 
   return (
@@ -257,11 +263,21 @@ const DriverPage = ({params}: {params: Promise<{driverId: string}>}) => {
                             <p className="text-sm text-gray-500 dark:text-gray-400">Last Updated</p>
                             <p className="font-medium text-gray-900 dark:text-white">{formatDate(driverData.updatedAt)}</p>
                           </div>
+
+                         
+
+</div>
                         </div>
+                         <button
+ onClick={() => viewHandler(driverData._id)}
+  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+>
+  View History
+</button>
                       </div>
                     </div>
                   </div>
-                </div>
+                
 
             ) : (
                 <div>No Data found</div>
@@ -270,5 +286,4 @@ const DriverPage = ({params}: {params: Promise<{driverId: string}>}) => {
   </div>
   )
 }
-
 export default DriverPage;

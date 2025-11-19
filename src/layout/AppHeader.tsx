@@ -96,6 +96,7 @@ const AppHeader: React.FC = () => {
               height={32}
               className="dark:hidden"
               priority
+              style={{ height: "auto" }}
             />
             <Image
               src="/images/logo/logo-dark.svg"
@@ -104,6 +105,7 @@ const AppHeader: React.FC = () => {
               height={32}
               className="hidden dark:block"
               priority
+              style={{ height: "auto" }}
             />
           </Link>
 
