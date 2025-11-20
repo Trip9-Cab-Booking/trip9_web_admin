@@ -17,7 +17,7 @@ export function useTableQueryParams() {
     const setPageSize = useCallback((newSize: number) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set('limit', String(newSize));
-      params.set('page', '1'); // reset to page 1 when page size changes
+      params.set('page', '1'); 
       router.replace(`?${params.toString()}`);
     }, [router, searchParams]);
 
