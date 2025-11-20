@@ -13,12 +13,15 @@ import Logout from "@mui/icons-material/Logout";
 import { logout, selectCurrentUser } from "@/store/authSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { Typography } from "@mui/material";
+import { useRouter } from "next/navigation";
+
 
 export default function AccountMenu() {
   const currentUser = useSelector(selectCurrentUser);
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+const router = useRouter();
 
   // Only set initial on client after mount to avoid SSR/client mismatch
   const [initial, setInitial] = React.useState<string | null>(null);
@@ -34,8 +37,10 @@ export default function AccountMenu() {
     setAnchorEl(event.currentTarget);
   };
   const handleClose = () => {
-    setAnchorEl(null);
+  router.push("/profile")
+      setAnchorEl(null);
   };
+
   const handleLogout = () => {
     dispatch(logout());
     handleClose();
