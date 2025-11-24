@@ -1,5 +1,5 @@
 
-import PricingControl from '@/components/PricingControl';
+// import PricingControl from '@/components/PricingControl';
 import { Metadata } from 'next';
 import React, { Suspense } from 'react'
 
@@ -13,7 +13,8 @@ export const metadata: Metadata = {
 const PricingControls = () => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-        <PricingControl />
+        {/* <PricingControl /> */}
+        <h1>Pricing Control</h1>
     </Suspense>
   )
 }

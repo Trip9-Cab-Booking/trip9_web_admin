@@ -6,7 +6,7 @@ import autoTable from "jspdf-autotable";
 // Format timestamp
 const getCurrentTimestamp = () => {
   const now = new Date();
-  return now.toLocaleString(); // e.g., "4/20/2025, 3:45:22 PM"
+  return now.toLocaleString();
 };
 
 export const exportToPDF = (data: DownloadData[], context: string) => {
@@ -19,7 +19,7 @@ export const exportToPDF = (data: DownloadData[], context: string) => {
 
   // 💡 Custom Header
   doc.setFontSize(18);
-  doc.text("Trip9 Co.", 14, 15); // Company Name
+  doc.text("Trip9 Co.", 14, 15); 
 
   doc.setFontSize(14);
   doc.setTextColor(100);

@@ -10,7 +10,8 @@ export const metadata: Metadata = {
 
 export default function Admin() {
   return (
-    <div className="grid grid-cols-12 gap-4 md:gap-6">
+    // <div className="grid grid-cols-12 gap-4 md:gap-6">
+    <div>
       <Dashboard />
     </div>
   );

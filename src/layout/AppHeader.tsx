@@ -12,7 +12,7 @@ import AccountMenu from "@/components/ProfileMenu";
 
 
 const AppHeader: React.FC = () => {
-    const [currentUser, setCurrentUser] = useState<UserData>();
+  const [currentUser, setCurrentUser] = useState<UserData>();
   const user = useSelector((state: RootState) => state.auth.user);
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -54,16 +54,13 @@ const AppHeader: React.FC = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="flex flex-col justify-between lg:flex-row lg:px-6">
-        {/* Top bar */}
         <div className="flex items-center justify-between w-full px-3 py-3 border-b border-gray-200 dark:border-gray-800 lg:py-4 lg:border-b-0 lg:px-0">
-          {/* Sidebar Toggle */}
           <button
             onClick={handleToggle}
             className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 lg:h-11 lg:w-11 lg:border dark:border-gray-800"
             aria-label="Toggle sidebar"
           >
             {isMobileOpen ? (
-              // Close (X) icon
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <path
                   fillRule="evenodd"
@@ -73,7 +70,6 @@ const AppHeader: React.FC = () => {
                 />
               </svg>
             ) : (
-              // Hamburger icon
               <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
                 <path
                   fillRule="evenodd"
@@ -85,7 +81,6 @@ const AppHeader: React.FC = () => {
             )}
           </button>
 
-          {/* Logo (mobile only) */}
           <Link href="/" className="lg:hidden">
             <Image
               src="/images/logo/logo.svg"
@@ -107,7 +102,6 @@ const AppHeader: React.FC = () => {
             />
           </Link>
 
-          {/* App Menu Toggle (mobile) */}
           <button
             onClick={toggleApplicationMenu}
             className="lg:hidden flex h-10 w-10 items-center justify-center rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
@@ -125,7 +119,6 @@ const AppHeader: React.FC = () => {
 
         </div>
 
-        {/* Right Section */}
         <div
           className={`${
             isApplicationMenuOpen ? "flex" : "hidden"

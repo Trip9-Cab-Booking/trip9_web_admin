@@ -8,7 +8,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { selectAuthLoading, setCredentials, setLoading, updateAccessToken } from "@/store/authSlice";
-
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -18,14 +17,10 @@ import CustomSnackbar from "../CustomSnackbar";
 import { useRedirectIfAuthenticated } from "@/hooks/useRedirectIfAuthenticated";
 import { toast } from "sonner";
 import { Box, CircularProgress } from "@mui/material";
-// import SendEmailAlert from "../ui/alert/SendEmail";
 
 const SignInSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-//   acceptTerms: z.literal(true, {
-//     errorMap: () => ({ message: "You must accept the terms" }),
-//   }),
 });
 
 type SignInValues = z.infer<typeof SignInSchema>;
@@ -41,11 +36,8 @@ const SignInForm = () => {
     password: "",
   });
 
-  const [formErrors, setFormErrors] = useState<Partial<Record<keyof SignInValues, string>>>({});
-//   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-
-    // New states for alert/snackbar
+    const [formErrors, setFormErrors] = useState<Partial<Record<keyof SignInValues, string>>>({});
+    const [showPassword, setShowPassword] = useState(false);
     const [alertMessage, setAlertMessage] = useState("");
     const [alertSeverity, setAlertSeverity] = useState<"success" | "error" | "info">("info");
     const [showAlert, setShowAlert] = useState(false);
@@ -79,7 +71,6 @@ const SignInForm = () => {
         errors[field] = err.message;
       });
       setFormErrors(errors);
-    //   setLoading(false);
       return;
     }
 
@@ -140,10 +131,7 @@ const SignInForm = () => {
             const resData = res.data;
             console.log(resData);
             dispatch(updateAccessToken(resData?.resetToken));
-
-            //* Here I need to call send email alert based on resData message
             showFeedback(resData?.message || "Email sent successfully", "success");
-
         } catch (error: unknown) {
             if (axios.isAxiosError(error) && error.response?.data?.message) {
                 showFeedback(error.response.data.message, "error");
@@ -158,7 +146,6 @@ const SignInForm = () => {
 
   return (
     <>
-
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
         <div>
@@ -215,17 +202,20 @@ const SignInForm = () => {
                     Accept the terms and conditions
                   </span>
                 </div> */}
-                <button type="button" onClick={handleClickOpen}  className="text-sm text-brand-500 hover:text-brand-600">
-                  Forgot password?
-                </button>
+               
               </div>
 
               <button
                 disabled={loading}
-                className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600 disabled:opacity-50"
+                className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600 disabled:opacity-50 mb-2"
               >
                 {loading ? "Signing in..." : "Sign in"}
               </button>
+               <span className="flex w-full justify-end">
+                <button type="button" onClick={handleClickOpen}  className="text-sm text-brand-500 hover:text-brand-600">
+                  Forgot password?
+                </button>
+               </span>
             </div>
           </form>
         </div>

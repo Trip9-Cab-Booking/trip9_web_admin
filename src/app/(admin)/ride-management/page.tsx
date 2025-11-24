@@ -1,5 +1,5 @@
 
-import React, { Suspense } from 'react'
+import React from 'react'
 import RideManagement from '@/components/RideManagement';
 import { Metadata } from 'next';
 
@@ -11,9 +11,7 @@ export const metadata: Metadata = {
 const Ridemanagement = () => {
   return (
     <div className='w-full text-gray-800 dark:text-slate-200 overflow-hidden'>
-        <Suspense fallback={<div>Loading...</div>}>
             <RideManagement />
-        </Suspense>
     </div>
   )
 }

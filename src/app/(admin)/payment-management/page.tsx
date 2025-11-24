@@ -1,7 +1,7 @@
 
-import PaymentManagement from '@/components/PaymentManagement';
+import PaymentManagement from '@/components/Payment-Management/PaymentManagement';
 import { Metadata } from 'next';
-import React, { Suspense } from 'react'
+import React from 'react'
 
 
 export const metadata: Metadata = {
@@ -12,9 +12,7 @@ export const metadata: Metadata = {
 
 const PaymentManagements = () => {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
         <PaymentManagement />
-    </Suspense>
   )
 }
 

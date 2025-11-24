@@ -15,15 +15,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 
-
 export default function AccountMenu() {
   const currentUser = useSelector(selectCurrentUser);
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
-const router = useRouter();
+  const router = useRouter();
 
-  // Only set initial on client after mount to avoid SSR/client mismatch
   const [initial, setInitial] = React.useState<string | null>(null);
   React.useEffect(() => {
     if (currentUser?.firstName) {
@@ -37,13 +35,20 @@ const router = useRouter();
     setAnchorEl(event.currentTarget);
   };
   const handleClose = () => {
-  router.push("/profile")
-      setAnchorEl(null);
+    setAnchorEl(null);
   };
 
-  const handleLogout = () => {
+  const goToProfile = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setAnchorEl(null);
+    router.push("/profile");
+  };
+
+  const handleLogout = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     dispatch(logout());
-    handleClose();
+    setAnchorEl(null);
+    router.push("/signin");
   };
 
   return (
@@ -67,7 +72,6 @@ const router = useRouter();
         id="account-menu"
         open={open}
         onClose={handleClose}
-        onClick={handleClose}
         slotProps={{
           paper: {
             elevation: 0,
@@ -99,7 +103,7 @@ const router = useRouter();
         transformOrigin={{ horizontal: "right", vertical: "bottom" }}
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
-        <MenuItem onClick={handleClose} className="flex flex-col">
+        <MenuItem onClick={goToProfile} className="flex flex-col">
           <Typography variant="inherit">{currentUser?.firstName}</Typography>
           <Typography variant="body2">{currentUser?.email}</Typography>
         </MenuItem>

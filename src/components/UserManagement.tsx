@@ -30,9 +30,6 @@ export type UserData = {
   userId: string;
 };
 
-
-
-
 const StyledMenu = styled((props: MenuProps) => (
     <Menu
       elevation={0}
@@ -88,7 +85,6 @@ const UserManagement = () => {
         setPage,
       } = useTableQueryParams();
 
-//   const user = useSelector(selectCurrentUser);
   const token = useSelector(selectAccessToken);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -97,14 +93,8 @@ const UserManagement = () => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
-//   * Pagination
-// const [pageNumber, setPageNumber] = useState<number>(1);
-// const [pageSize, setPageSize] = useState<number>(10);
  const [totalRowSize, setTotalRowSize] = useState<number>(0);
 
-
-
-  // New states for alert/snackbar
         const [alertMessage, setAlertMessage] = useState("");
         const [alertSeverity, setAlertSeverity] = useState<"success" | "error" | "info">("info");
         const [showAlert, setShowAlert] = useState(false);
@@ -154,15 +144,13 @@ const UserManagement = () => {
         const data = res.data.data;
         setTotalRowSize(res.data.pageMeta.total);
 
-
-        // Transform API data to Data[] structure
         const formatted: UserData[] = data.map((user: { firstName?: string; lastName?: string; gender?: string; phone?: string; status?: string; _id: string }, index: number) => ({
           id:(page - 1) * pageSize + index + 1,
           firstName: user.firstName || '',
           lastName: user.lastName || '',
           gender: user.gender,
           phone: user.phone || '',
-          status: user.status?.toLowerCase() || 'pending', // default to pending
+          status: user.status?.toLowerCase() || 'pending',
           userId: user._id,
         }));
 
@@ -191,7 +179,6 @@ const UserManagement = () => {
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'SL No'},
     { field: 'firstName', headerName: 'First name',minWidth:150, maxWidth:200,
-      // disableColumnMenu: true,
     },
     { field: 'lastName', headerName: 'Last name',minWidth:150, maxWidth:200},
     { field: 'gender', headerName: 'Gender', maxWidth:100,
@@ -294,7 +281,6 @@ const columns: GridColDef[] = [
     );
   });
 
-  //! Actions
   const viewHandler = (id: string) => {
     router.push(`/users/${id}`);
   }
@@ -309,7 +295,7 @@ const statusHandler = async (id: string, status: string) => {
     }
     try {
       const res = await axios.patch(`${BASE}/api/admin/users/${id}/status?action=${status}`,
-        {}, // <-- no request body
+        {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -323,7 +309,6 @@ const statusHandler = async (id: string, status: string) => {
 
 
       if(res.status !== 200){
-        // throw new Error(res.data.message);
         const msg = res?.data?.message || "Failed to update the status";
         showFeedback(msg, "error");
       }
@@ -399,7 +384,7 @@ const statusHandler = async (id: string, status: string) => {
                     onPaginationModelChange={(model) => {
                         setPage(model.page +1)
                     }}
-                    rowCount={totalRowSize} // You should keep total count in state too
+                    rowCount={totalRowSize} 
                 checkboxSelection={false}
                 rowSelection={false}
                 slots={{ noRowsOverlay: CustomNoRowsOverlay }}
