@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { selectAccessToken } from '@/store/authSlice';
+import Link from "next/link";
 
 type Ride = {
   _id: string;
@@ -97,7 +98,7 @@ export default function RideListPage() {
     fetchRides();
   }, [token, searchTerm, statusFilter, currentPage]);
 
-  const totalTableColumns = 10;
+  const totalTableColumns = 12;
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -160,6 +161,7 @@ export default function RideListPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Date</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Cancellation</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Rating</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Action</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -190,6 +192,15 @@ export default function RideListPage() {
                         {ride.driverDetails.ratingStats
                           ? `${ride.driverDetails.ratingStats.average.toFixed(1)} ⭐ (${ride.driverDetails.ratingStats.totalRidesRated})`
                           : 'N/A'}
+                      </td>
+                       <td className="px-4 py-3">
+                       <Link
+  href={`/ride-management/${ride._id}`}
+  aria-label={`View ride ${ride._id}`}
+  className="inline-block px-3 py-1 text-sm font-medium border rounded-md hover:bg-gray-100"
+>
+  View
+</Link>
                       </td>
                     </tr>
                   ))

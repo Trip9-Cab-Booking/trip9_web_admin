@@ -26,15 +26,13 @@ const navItems: NavItem[] = [
   { icon: <GridIcon />, name: "Dashboard", path: "/" },
   { icon: <UserCircleIcon />, name: "Users", path: "/users" },
   { icon: <Drive />, name: "Drivers", path: "/drivers" },
-  { icon: <Ambulance />, name: "Ride Management", path: "/ride-management",  subItems: [
-      { name: "Ride Details", path: "/ride-management/ride-details" },
-    ] },
+  { icon: <Ambulance />, name: "Ride Management", path: "/ride-management" },
   { icon: <BadgeIndianRupee />, name: "Payment Management", path: "/payment-management",  subItems: [
     { name: "Wallet Management", path: "/payment-management/wallet-management" },
       { name: "Refund Management", path: "/payment-management/refund-management" },
       { name: "Subscription Management", path: "/payment-management/subscription-management" },
     ] },
-     { icon: <Award />, name: "Pricing Control", path: "/PricingControl" },
+     { icon: <Award />, name: "Pricing Control", path: "/pricing-control" },
   // { icon: <FolderGit2 />, name: "Analytics & Reports", path: "/AnalyticsReports" },
   // { icon: <MessageCircle />, name: "Chatbot", path: "/Socket" },
 ];
@@ -172,7 +170,7 @@ const AppSidebar: React.FC = () => {
   return (
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200
-        ${isExpanded || isMobileOpen ? "w-[290px]" : isHovered ? "w-[290px]" : "w-[90px]"}
+        ${isExpanded || isMobileOpen ? "w-[300px]" : isHovered ? "w-[290px]" : "w-[90px]"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
