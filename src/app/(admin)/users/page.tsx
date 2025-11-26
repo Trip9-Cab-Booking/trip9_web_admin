@@ -11,9 +11,7 @@ export const metadata: Metadata = {
 
 const Users = () => {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
         <UserManagement />
-    </Suspense>
   )
 }
 

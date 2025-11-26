@@ -6,6 +6,7 @@ import { IoMdCard } from "react-icons/io";
 import { RiCoupon3Line } from "react-icons/ri";
 import { AiFillStar } from "react-icons/ai";
 import { useRouter } from "next/navigation";
+import { BsArrowLeft } from "react-icons/bs";
 
 
 type Person = {
@@ -114,16 +115,19 @@ export default function RideDetailsPage({ initialRide }: { initialRide?: Ride | 
          <span className="">
              <button
             onClick={() => router.back()}
-            className="inline-flex items-center px-3 py-1 rounded-md border bg-white shadow-sm text-sm hover:bg-gray-100 mb-4"
+            className="inline-flex gap-2 items-center px-3 py-1 rounded-md border bg-white shadow-sm text-sm hover:bg-gray-100 mb-4"
           >
-            ← Back
+            <span>
+              <BsArrowLeft />
+            </span>
+            Back
           </button>
          </span>
             <h1 className="text-2xl md:text-3xl font-bold">Ride Details</h1>
             <p className="text-sm text-gray-500">Ride ID: <span className="font-mono">{ride.id}</span></p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-500">Status</p>
+            <p className="text-sm text-gray-500 text-center">Status</p>
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${ride.paymentStatus === 'Success' ? 'bg-green-100 text-green-800' : ride.paymentStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
               {ride.paymentStatus ?? "—"}
             </span>
@@ -227,7 +231,7 @@ export default function RideDetailsPage({ initialRide }: { initialRide?: Ride | 
           </div>
 
           <aside className="space-y-4">
-            <div className="sticky top-6">
+            <div className="sticky top-20">
               <div className="bg-white shadow-sm rounded-2xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
@@ -256,14 +260,14 @@ export default function RideDetailsPage({ initialRide }: { initialRide?: Ride | 
               </div>
             </div>
 
-            <div className="bg-white shadow-sm rounded-2xl p-4">
+            {/* <div className="bg-white shadow-sm rounded-2xl p-4">
               <h4 className="text-sm text-gray-500 mb-2">Trip route</h4>
               <div className="w-full aspect-[4/3] bg-gray-100 rounded-md flex items-center justify-center text-gray-400">Map preview</div>
-            </div>
+            </div> */}
           </aside>
         </section>
 
-        <footer className="text-center text-xs text-gray-400">Data shown above is sample when `initialRide` is not provided—replace with real API data.</footer>
+        {/* <footer className="text-center text-xs text-gray-400">Data shown above is sample when `initialRide` is not provided—replace with real API data.</footer> */}
       </div>
     </main>
   );

@@ -1,5 +1,4 @@
 'use client';
-
 import { logout, selectAccessToken } from '@/store/authSlice';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -16,8 +15,6 @@ import CustomSnackbar from './CustomSnackbar';
 import Search from './Search';
 import { useTableQueryParams } from '@/hooks/useQueryParams';
 import { downloadData } from '@/utils/downloadData';
-
-
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -84,8 +81,6 @@ const DriverManagement = () => {
         pageSize,
         setPage,
       } = useTableQueryParams();
-
-//   const user = useSelector(selectCurrentUser);
   const token = useSelector(selectAccessToken);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -93,8 +88,6 @@ const DriverManagement = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
-
-      // New states for alert/snackbar
       const [alertMessage, setAlertMessage] = useState("");
       const [alertSeverity, setAlertSeverity] = useState<"success" | "error" | "info">("info");
       const [showAlert, setShowAlert] = useState(false);
@@ -125,7 +118,6 @@ const DriverManagement = () => {
   }, [page]);
 
   useEffect(() => {
-    // if (!searchQuery.trim()) return;
     const fetchDrivers = async () => {
       setLoading(true);
       try {
@@ -291,18 +283,6 @@ const columns: GridColDef[] = [
     }
   ];
 
-//   const filteredData = userData.filter((row) => {
-//     const searchQuery = search.toLowerCase();
-//     return (
-//       row.firstName?.toLowerCase().includes(search) ||
-//       row.lastName?.toLowerCase().includes(search) ||
-//       row.address?.toLowerCase().includes(search) ||
-//       row.status.toLowerCase().includes(search) ||
-//       String(row.id).includes(search)
-//     );
-//   });
-
-  //TODO: Actions
   const viewHandler = (id: string) => {
     router.push(`/drivers/${id}`);
   }
@@ -315,9 +295,8 @@ const statusHandler = async (id: string, status: string) => {
     }
     try {
       const res = await axios.patch(
-        // make sure BASE ends with no slash, we add one here:
         `${BASE}/api/admin/drivers/update-status/${id}?status=${status}`,
-        {}, // <-- no request body
+        {}, 
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -404,39 +383,13 @@ const statusHandler = async (id: string, status: string) => {
                     paginationModel={{ page: page - 1, pageSize }}
                     onPaginationModelChange={(model) => {
                         setPage(model.page + 1);
-                        // setPageSize(pageSize);
                     }}
                     getRowId={(row) => row.driverId}
-                    rowCount={totalRowSize} // You should keep total count in state too
+                    rowCount={totalRowSize}
                     checkboxSelection={false}
                     rowSelection={false}
                     disableRowSelectionOnClick
                 slots={{ noRowsOverlay: CustomNoRowsOverlay }}
-                //   sx={(theme) => ({
-                //     height: '100%',
-                //     width: '100%',
-                //     padding: "10px",
-                //     backgroundColor: theme.palette.mode === 'dark' ? '#1e293b' : '#f9fafb', // slate-800 / gray-50
-                //     color: theme.palette.mode === 'dark' ? '#f3f4f6' : '#1f2937', // gray-100 / gray-800
-
-                //     '& .MuiDataGrid-cell': {
-                //       borderBottom: `1px solid ${
-                //         theme.palette.mode === 'dark' ? '#334155' : '#e5e7eb' // slate-700 / gray-200
-                //       }`,
-                //     },
-                //     '& .MuiDataGrid-columnHeaders': {
-                //       backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#f3f4f6', // slate-900 / gray-100
-                //       color: theme.palette.mode === 'dark' ? '#cbd5e1' : '#111827', // slate-300 / gray-900
-                //     },
-                //     '& .MuiDataGrid-footerContainer': {
-                //       backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#f3f4f6',
-                //       color: theme.palette.mode === 'dark' ? '#cbd5e1' : '#111827',
-                //     },
-                //     '& .MuiDataGrid-row:hover': {
-                //       backgroundColor: theme.palette.mode === 'dark' ? '#1e293b' : '#f1f5f9', // slate-800 / slate-100
-                //     },
-                //   })}
-
                 />
             </Paper>
             </div>

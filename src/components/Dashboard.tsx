@@ -318,14 +318,14 @@ export default function Dashboard() {
         )}
       </div>
 
-      <div className="mt-6 text-sm text-gray-500">
+      {/* <div className="mt-6 text-sm text-gray-500">
         <strong>Notes:</strong> This file is a UI scaffold. I can:
         <ul className="list-disc ml-5 mt-2">
           <li>Wire each card to your APIs and add loading states.</li>
           <li>Add server-side reporting endpoints for heavy queries (aggregation).</li>
           <li>Create reusable chart widgets and export CSV/PNG per report.</li>
         </ul>
-      </div>
+      </div> */}
     </div>
   );
 }
