@@ -83,13 +83,14 @@ const viewHandler = (id: string) => {
         </Link>
         {
             userData ? (
-                <div className="max-w-5xl mx-auto">
+                <div className="mx-auto">
 
                   {/* Header Section */}
                   <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-6 transition-colors duration-300">
                     <div className="flex items-center justify-between flex-wrap gap-4">
-                      <div className="flex items-center gap-6">
-                        <div className="w-24 h-24 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                      <div className="flex items-center gap-6 w-full justify-between">
+                       <div className='flex items-center gap-6'>
+                         <div className="w-24 h-24 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
                             {
                                 userData.profilePic ? (
                                     <Image src={userData?.profilePic} width={32} height={32}  alt='profile'
@@ -116,8 +117,15 @@ const viewHandler = (id: string) => {
                             </span>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-4">
+                       </div>
+                      <div className='flex flex-col gap-3'>
+                         <button
+                          onClick={() => viewHandler(userData._id)}
+                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                          >
+                            View History
+                        </button>
+                         <div className="flex items-center gap-4">
                         {userData.isProfileComplete && (
                           <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                             <CheckCircle className="w-5 h-5" />
@@ -131,6 +139,9 @@ const viewHandler = (id: string) => {
                           </div>
                         )} */}
                       </div>
+                      </div>
+                      </div>
+                     
                     </div>
                   </div>
 
@@ -236,19 +247,7 @@ const viewHandler = (id: string) => {
                           </div>
                         </div>
                       </div>
-<button
- onClick={() => viewHandler(userData._id)}
-  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
->
-  View History
-</button>
-
-</div>
-
-
-
-
-
+                      </div>
                     </div>
                   </div>
                

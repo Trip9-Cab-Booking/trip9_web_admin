@@ -78,13 +78,14 @@ const viewHandler = (id: string) => {
         </Link>
         {
             driverData ? (
-                <div className="max-w-5xl mx-auto">
+                <div className="mx-auto">
 
                   {/* Header Section */}
                   <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-6 transition-colors duration-300">
                     <div className="flex items-center justify-between flex-wrap gap-4">
-                      <div className="flex items-center gap-6">
-                        <div className="w-24 h-24 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                      <div className="flex items-center justify-between gap-6 w-full">
+                        <div className='flex items-center gap-6'>
+                          <div className="w-24 h-24 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
                             {
                                 driverData.profileImage ? (
                                     <Image src={driverData?.profileImage || ""} width={32} height={32} alt='profile'
@@ -111,6 +112,15 @@ const viewHandler = (id: string) => {
                               {driverData.status}
                             </span>
                           </div>
+                        </div>
+                        </div>
+                        <div>
+                           <button
+ onClick={() => viewHandler(driverData._id)}
+  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+>
+  View History
+</button>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
@@ -266,14 +276,8 @@ const viewHandler = (id: string) => {
 
                          
 
-</div>
+                      </div>
                         </div>
-                         <button
- onClick={() => viewHandler(driverData._id)}
-  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
->
-  View History
-</button>
                       </div>
                     </div>
                   </div>

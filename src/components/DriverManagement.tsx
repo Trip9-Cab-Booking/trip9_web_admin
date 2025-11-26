@@ -2,7 +2,6 @@
 import { logout, selectAccessToken } from '@/store/authSlice';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import Paper from '@mui/material/Paper';
 import TableSkeleton from './skeleton/Table';
 import { alpha, Button, Chip, IconButton, Menu, MenuItem, MenuProps, Stack, styled } from '@mui/material';
@@ -22,6 +21,7 @@ export type Data = {
   id: number;
   lastName: string | null;
   firstName: string | null;
+  gender: string | null;
   address: string | null;
   phone: string | null;
   status: string ;
@@ -93,8 +93,6 @@ const DriverManagement = () => {
       const [showAlert, setShowAlert] = useState(false);
 
       //   * Pagination
-    //   const [pageNumber, setPageNumber] = useState<number>(1);
-    //   const [pageSize, setPageSize] = useState<number>(10);
       const [totalRowSize, setTotalRowSize] = useState<number>(0);
 
       const showFeedback = (message: string, severity: "success" | "error" | "info" = "info") => {
@@ -149,14 +147,14 @@ const DriverManagement = () => {
           gender: driver.gender,
           address: driver.address || '',
           phone: driver.phone || '',
-          status: driver.status?.toLowerCase() || 'pending', // default to pending
+          status: driver.status?.toLowerCase() || 'pending',
           driverId: driver._id,
         }));
 
         setUserData(formatted);
         showFeedback(res.data.message, "success");
       } catch (error) {
-        if (error instanceof Object && 'status' in error && error.status === 401) {
+        if (error instanceof Object && 'status' in error && (error as any).status === 401) {
                 console.log("logout for 401");
                 dispatch(logout());
             }
@@ -171,124 +169,11 @@ const DriverManagement = () => {
     if (token) fetchDrivers();
   }, [token, page, pageSize, searchQuery, dispatch]);
 
-  const paginationModel = {
-    page: page - 1,
-    pageSize
-  };
-
-const columns: GridColDef[] = [
-    { field: 'id', headerName: 'SL No'},
-    { field: 'firstName', headerName: 'First name', maxWidth:100 },
-    { field: 'lastName', headerName: 'Last name', maxWidth:100},
-
-    { field: 'gender', headerName: 'Gender', maxWidth:100,
-      disableColumnMenu: true,
-      filterable: false,
-      sortable: false
-    },
-    {
-        field: "phone",
-        headerName: "Phone",
-    },
-  {
-      field: "address",
-      headerName: "Address",
-      minWidth: 200,
-      maxWidth:250
-  },
-
-    {
-      field: 'status',
-      headerName: 'Status',
-      maxWidth: 100,
-      renderCell: ({ value }) => {
-        let color: 'default' | 'primary' | 'success' | 'warning' | 'error' = 'default';
-        switch (value?.toLowerCase()) {
-          case 'approved':
-            color = 'success';
-            break;
-          case 'pending':
-            color = 'warning';
-            break;
-          case 'rejected':
-            color = 'error';
-            break;
-          case 'blocked':
-            color = 'error';
-            break;
-        }
-        return <Chip label={value} color={color} variant="outlined" />;
-      }
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      minWidth:200,
-      maxWidth: 220,
-      sortable: false,
-      filterable: false,
-      disableColumnMenu: true,
-      renderCell: (params) => {
-        const id = params.row.driverId;
-        const status = params.row.status;
-
-        const isApproved = status === 'approved';
-        const isRejected = status === 'rejected';
-        const isBlocked  = status === 'blocked';
-        return (
-          <Stack direction="row" spacing={1} className='w-full h-full flex items-center justify-center' >
-            <IconButton
-              aria-label='view'
-              size="small"
-              onClick={() => viewHandler(id)}
-              color='info'
-              sx={{backgroundColor:"oklch(0.952 0 0)", ":hover": { backgroundColor: "lightgray", color:"darkcyan" }}}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
-            </IconButton>
-            {/* Approve */}
-            <IconButton
-              size="small"
-              color='success'
-              disabled={isApproved}
-              onClick={() => statusHandler(id, "approved")}
-              sx={{backgroundColor:"oklch(0.952 0 0)", ":hover": { backgroundColor: "lightgray", color:"darkgreen" }}}
-            >
-              <CheckCircleIcon />
-              </IconButton>
-              {/* Reject */}
-            <IconButton
-              size="small"
-              color="error"
-              disabled={isRejected}
-              onClick={() => statusHandler(id, "rejected")}
-
-              sx={{backgroundColor:"oklch(0.952 0 0)", ":hover": { backgroundColor: "lightgray", color:"darkred" }}}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-circle-x-icon lucide-circle-x"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
-              </IconButton>
-              {/* Block */}
-            <IconButton
-              size="small"
-              color="error"
-              disabled={isBlocked}
-              onClick={() => statusHandler(id, "blocked")}
-              sx={{backgroundColor:"oklch(0.952 0 0)", ":hover": { backgroundColor: "lightgray", color:"darkred" }}}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-ban-icon lucide-ban"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
-              </IconButton>
-          </Stack>
-        );
-      }
-    }
-  ];
-
   const viewHandler = (id: string) => {
     router.push(`/drivers/${id}`);
   }
 
-
-const statusHandler = async (id: string, status: string) => {
+  const statusHandler = async (id: string, status: string) => {
     if (!token) {
       console.error("No auth token!");
       return;
@@ -329,6 +214,32 @@ const statusHandler = async (id: string, status: string) => {
     setSearchQuery(query);
   }, []);
 
+  // helpers for tailwind status badge
+  const statusBadgeClasses = (status?: string) => {
+    if (!status) return 'text-gray-700 bg-gray-100 border-gray-200';
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return 'text-green-700 bg-green-50 border-green-200';
+      case 'pending':
+        return 'text-yellow-800 bg-yellow-50 border-yellow-200';
+      case 'rejected':
+      case 'blocked':
+        return 'text-red-700 bg-red-50 border-red-200';
+      default:
+        return 'text-gray-700 bg-gray-50 border-gray-200';
+    }
+  };
+
+  // pagination helpers
+  const canPrev = page > 1;
+  const canNext = page * pageSize < totalRowSize;
+
+  const handlePrev = () => {
+    if (canPrev) setPage(page - 1);
+  };
+  const handleNext = () => {
+    if (canNext) setPage(page + 1);
+  };
 
   return (
     <div>
@@ -369,33 +280,122 @@ const statusHandler = async (id: string, status: string) => {
 
       {
         (loading) ? <TableSkeleton /> : (
-            <div className="w-full overflow-hidden">
-            <Paper
+            <div className="w-full overflow-auto">
+              <Paper
                 elevation={0}
                 sx={{ width: '95%', height: "100%", overflow: 'hidden',backgroundColor: "transparent" }}
-            >
-                <DataGrid
-                rows={userData}
-                columns={columns}
-                initialState={{ pagination: { paginationModel } }}
-                pageSizeOptions={[10]}
-                paginationMode="server"
-                    paginationModel={{ page: page - 1, pageSize }}
-                    onPaginationModelChange={(model) => {
-                        setPage(model.page + 1);
-                    }}
-                    getRowId={(row) => row.driverId}
-                    rowCount={totalRowSize}
-                    checkboxSelection={false}
-                    rowSelection={false}
-                    disableRowSelectionOnClick
-                slots={{ noRowsOverlay: CustomNoRowsOverlay }}
-                />
-            </Paper>
+              >
+                {/* Tailwind table */}
+                <div className="min-w-full">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-800">
+                      <tr>
+                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SL No</th>
+                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">First name</th>
+                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last name</th>
+                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
+                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                      {userData.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="px-4 py-6 text-center text-sm text-gray-500">
+                            <CustomNoRowsOverlay />
+                          </td>
+                        </tr>
+                      ) : (
+                        userData.map((row) => (
+                          <tr key={row.driverId} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{row.id}</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{row.firstName}</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{row.lastName}</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{row?.gender || '-'}</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{row.phone || '-'}</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 max-w-xs truncate">{row.address || '-'}</td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${statusBadgeClasses(row.status)}`}>
+                                {row.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="flex items-center justify-center space-x-1">
+                                <IconButton
+                                  aria-label='view'
+                                  size="small"
+                                  onClick={() => viewHandler(row.driverId)}
+                                  color='info'
+                                  sx={{backgroundColor:"oklch(0.952 0 0)", ":hover": { backgroundColor: "lightgray", color:"darkcyan" }}}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  color='success'
+                                  disabled={row.status === 'approved'}
+                                  onClick={() => statusHandler(row.driverId, "approved")}
+                                  sx={{backgroundColor:"oklch(0.952 0 0)", ":hover": { backgroundColor: "lightgray", color:"darkgreen" }}}
+                                >
+                                  <CheckCircleIcon />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  disabled={row.status === 'rejected'}
+                                  onClick={() => statusHandler(row.driverId, "rejected")}
+                                  sx={{backgroundColor:"oklch(0.952 0 0)", ":hover": { backgroundColor: "lightgray", color:"darkred" }}}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-circle-x-icon lucide-circle-x"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  disabled={row.status === 'blocked'}
+                                  onClick={() => statusHandler(row.driverId, "blocked")}
+                                  sx={{backgroundColor:"oklch(0.952 0 0)", ":hover": { backgroundColor: "lightgray", color:"darkred" }}}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-ban-icon lucide-ban"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+                                </IconButton>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination footer */}
+                <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+                  <div className="text-sm text-gray-700">
+                    Showing <span className="font-medium">{userData.length === 0 ? 0 : (page - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(page * pageSize, totalRowSize)}</span> of <span className="font-medium">{totalRowSize}</span> results
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={handlePrev}
+                      disabled={!canPrev}
+                      className={`px-3 py-1 rounded-md text-sm font-medium border ${canPrev ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
+                    >
+                      Prev
+                    </button>
+                    <div className="text-sm text-gray-700">Page {page}</div>
+                    <button
+                      onClick={handleNext}
+                      disabled={!canNext}
+                      className={`px-3 py-1 rounded-md text-sm font-medium border ${canNext ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+
+              </Paper>
             </div>
         )
       }
-
 
         <CustomSnackbar
         open={showAlert}
@@ -409,4 +409,5 @@ const statusHandler = async (id: string, status: string) => {
 };
 
 export default DriverManagement;
+
 

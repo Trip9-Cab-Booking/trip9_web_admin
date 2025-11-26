@@ -111,8 +111,7 @@ export default function RideDetailsPage({ initialRide }: { initialRide?: Ride | 
       <div className="max-w-full mx-auto space-y-6">
         <header className="flex items-center justify-between">
           <div>
-              {/* Back button (goes back in history) */}
-         <span className="">
+         <span>
              <button
             onClick={() => router.back()}
             className="inline-flex gap-2 items-center px-3 py-1 rounded-md border bg-white shadow-sm text-sm hover:bg-gray-100 mb-4"
@@ -215,7 +214,7 @@ export default function RideDetailsPage({ initialRide }: { initialRide?: Ride | 
                   <div className="text-sm text-gray-500">User rating for driver</div>
                   <div className="mt-2 flex items-center justify-between">
                     <Rating value={ride.userRating} />
-                    <div className="text-sm text-gray-600">{ride.userFeedback ?? "No feedback"}</div>
+                    {/* <div className="text-sm text-gray-600">{ride.userFeedback ?? "No feedback"}</div> */}
                   </div>
                 </div>
 
@@ -223,7 +222,7 @@ export default function RideDetailsPage({ initialRide }: { initialRide?: Ride | 
                   <div className="text-sm text-gray-500">Driver rating for user</div>
                   <div className="mt-2 flex items-center justify-between">
                     <Rating value={ride.driverRating} />
-                    <div className="text-sm text-gray-600">{ride.driverFeedback ?? "No feedback"}</div>
+                    {/* <div className="text-sm text-gray-600">{ride.driverFeedback ?? "No feedback"}</div> */}
                   </div>
                 </div>
               </div>

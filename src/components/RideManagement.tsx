@@ -120,7 +120,7 @@ export default function RideListPage() {
           <option value="accepted">Accepted</option>
           <option value="completed">Completed</option>
           <option value="cancelled">Cancelled</option>
-          <option value="pending">Ongoing</option>
+          <option value="ongoing">Ongoing</option>
           <option value="requested">Requested</option>
         </select>
 
