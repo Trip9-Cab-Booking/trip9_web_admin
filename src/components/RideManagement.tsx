@@ -41,13 +41,59 @@ const BASE = process.env.NEXT_PUBLIC_BASE_URL;
 
 export default function RideListPage() {
   const [rides, setRides] = useState<Ride[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  // const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  // const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const token = useSelector(selectAccessToken);
+  // States
+// basic search/paging (if you already have these, keep them)
+const [searchTerm, setSearchTerm] = useState('');
+const [currentPage, setCurrentPage] = useState(1);
+
+// dates
+const [dateFrom, setDateFrom] = useState<string | null>(null);
+const [dateTo, setDateTo] = useState<string | null>(null);
+
+// payment & status
+const paymentOptions = ['Cash', 'UPI', 'Card', 'Wallet', 'NetBanking'];
+const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
+const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
+
+const statusOptions = ['Accepted', 'Completed', 'Cancelled by User', 'Cancelled by Driver', 'Auto Cancelled', 'Ongoing', 'Requested'];
+const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+
+// helpers
+const toggleMulti = (list: string[], setList: (v: string[]) => void, value: string) => {
+  if (list.includes(value)) setList(list.filter((x) => x !== value));
+  else setList([...list, value]);
+};
+
+const resetFilters = () => {
+  setSearchTerm('');
+  setDateFrom(null);
+  setDateTo(null);
+  setSelectedPayments([]);
+  setSelectedStatuses([]);
+  setCurrentPage(1);
+};
+
+const applyFilters = () => {
+  // put your filtering call or local filter logic here
+  const filters = {
+    q: searchTerm || undefined,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+    payments: selectedPayments.length ? selectedPayments : undefined,
+    statuses: selectedStatuses.length ? selectedStatuses : undefined,
+  };
+  console.log('apply', filters);
+  setCurrentPage(1);
+};
+
 
   useEffect(() => {
     const fetchRides = async () => {
@@ -109,9 +155,9 @@ export default function RideListPage() {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen font-inter">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Ride Management</h1>
+       <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Ride Management</h1>
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-6 justify-center">
+      {/* <div className="flex flex-col sm:flex-row gap-4 mb-6 justify-center">
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -135,7 +181,120 @@ export default function RideListPage() {
           }}
           className="px-4 py-2 border border-gray-300 rounded-md shadow-sm w-full sm:w-64 focus:ring-blue-500 focus:border-blue-500"
         />
+      </div> */}
+
+      <div className="bg-white border rounded-xl p-3 shadow-sm mb-6">
+  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+    {/* Left group: search + date range */}
+    <div className="flex flex-col items-center gap-2 flex-1 min-w-0">
+      <div className='flex gap-4 w-full'>
+        <div className="relative flex-[2] w-1/2">
+        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+          {/* magnifier */}
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 100-15 7.5 7.5 0 000 15z"/></svg>
+        </span>
+        <input
+          type="search"
+          placeholder="Search user or driver"
+          value={searchTerm}
+          onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+          className="w-full pl-10 pr-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        />
+        </div>
+
+        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 text-sm text-gray-600">
+          <label className="sr-only">From</label>
+          <input
+            type="date"
+            value={dateFrom ?? ''}
+            onChange={(e) => setDateFrom(e.target.value || null)}
+            className="px-2 py-1 border rounded-md text-sm focus:ring-2 focus:ring-indigo-400"
+          />
+        </div>
+        <span className="text-gray-300">—</span>
+        <div className="flex items-center gap-1 text-sm text-gray-600">
+          <label className="sr-only">To</label>
+          <input
+            type="date"
+            value={dateTo ?? ''}
+            onChange={(e) => setDateTo(e.target.value || null)}
+            className="px-2 py-1 border rounded-md text-sm focus:ring-2 focus:ring-indigo-400"
+          />
+        </div>
+        </div>
       </div>
+
+      <div className='w-full flex gap-10 justify-center'>
+       <div className="flex items-center gap-2 mt-2 sm:mt-0">
+      <div className="relative">
+        <button
+          onClick={() => setShowPaymentDropdown((v) => !v)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border text-sm shadow-sm hover:shadow focus:outline-none"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 1.567-3 3.5S10.343 15 12 15s3-1.567 3-3.5S13.657 8 12 8zM12 3v2M12 19v2"/></svg>
+          <span className="text-xs">{selectedPayments.length ? `${selectedPayments.length} selected` : 'Payment'}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+
+        {showPaymentDropdown && (
+          <div className="absolute right-0 mt-2 w-44 bg-white border rounded-lg shadow-lg z-20 p-2">
+            {paymentOptions.map((opt) => (
+              <label key={opt} className="flex items-center gap-2 px-2 py-1 text-sm hover:bg-gray-50 rounded">
+                <input type="checkbox" checked={selectedPayments.includes(opt)} onChange={() => toggleMulti(selectedPayments, setSelectedPayments, opt)} />
+                <span className="ml-1">{opt}</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Status compact pills */}
+      <div className="flex gap-1 items-center">
+        {statusOptions.slice(0,4).map((s) => { // show a few quick pills
+          const active = selectedStatuses.includes(s);
+          return (
+            <button
+              key={s}
+              onClick={() => toggleMulti(selectedStatuses, setSelectedStatuses, s)}
+              className={`px-2 py-1 text-xs rounded-full border ${active ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-200'}`}
+            >
+              {s}
+            </button>
+          );
+        })}
+        {/* more dropdown for remaining statuses if any */}
+        {statusOptions.length > 4 && (
+          <div className="relative">
+            <button onClick={() => setShowStatusDropdown((v) => !v)} className="px-2 py-1 text-xs rounded-full border bg-white border-gray-200">More</button>
+            {showStatusDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-20 p-2">
+                {statusOptions.map((s) => (
+                  <label key={s} className="flex items-center gap-2 px-2 py-1 text-sm hover:bg-gray-50 rounded">
+                    <input type="checkbox" checked={selectedStatuses.includes(s)} onChange={() => toggleMulti(selectedStatuses, setSelectedStatuses, s)} />
+                    <span className="ml-1">{s}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-2">
+        <button onClick={resetFilters} className="px-3 py-1 text-xs rounded-lg border bg-white hover:bg-gray-50">Reset</button>
+        <button onClick={applyFilters} className="px-3 py-1 text-xs rounded-lg bg-indigo-600 text-white shadow-sm">Apply</button>
+      </div>
+       </div>
+      </div>
+    </div>
+
+   
+  </div>
+</div>
+
+
 
       {loading ? (
         <div className="flex justify-center items-center h-48 text-gray-500">
@@ -155,8 +314,8 @@ export default function RideListPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Pickup</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Drop</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Fare</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">User Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Driver Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">User Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">Driver Name</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Status</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Date</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Cancellation</th>
