@@ -1,3 +1,5 @@
+'use client'
+
 import UserManagement from '@/components/UserManagement'
 import { Metadata } from 'next';
 import React from 'react'

@@ -162,13 +162,14 @@ export default function SubscriptionManagement() {
     setDrivers((prev) => prev.map((d) => (d.planId === planId ? { ...d, planId: null } : d)));
   }
 
-  function savePlan(payload: Omit<Plan, "id"> & { id?: string }) {
+  function savePlan(payload: Partial<Plan> & { id?: string }) {
     if (payload.id) {
       setPlans((prev) => prev.map((p) => (p.id === payload.id ? { ...(payload as Plan) } : p)));
     } else {
-      const id = `p_${Math.random().toString(36).slice(2, 9)}`;
-      setPlans((prev) => [{ id, ...(payload as Plan) }, ...prev]);
-    }
+  const id = `p_${Math.random().toString(36).slice(2, 9)}`;
+  const { id: _payloadId, ...payloadWithoutId } = payload as Partial<Plan> & { id?: string };
+  setPlans((prev) => [{ id, ...(payloadWithoutId as Omit<Plan, "id">) }, ...prev]);
+}
     setShowPlanModal(false);
   }
 
@@ -360,7 +361,7 @@ export default function SubscriptionManagement() {
 }
 
 // Plan form component
-function PlanForm({ initial, onCancel, onSave }: { initial?: Plan; onCancel: () => void; onSave: (p: Partial<Plan> & { id?: string }) => void }) {
+function PlanForm({ initial, onCancel, onSave }: { initial?: Partial<Plan> & { id?: string }; onCancel: () => void; onSave: (p: Partial<Plan> & { id?: string }) => void }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [price, setPrice] = useState(initial?.pricePerMonth ?? 0);
   const [duration, setDuration] = useState(initial?.durationMonths ?? 1);

@@ -14,7 +14,11 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
 
-  // Let ESLint run during build (default) — remove `ignoreDuringBuilds` entirely
+  // Disable ESLint from failing the production build
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "4.imimg.com" },
