@@ -27,12 +27,12 @@ const navItems: NavItem[] = [
   { icon: <UserCircleIcon />, name: "Users", path: "/users" },
   { icon: <Drive />, name: "Drivers", path: "/drivers" },
   { icon: <Ambulance />, name: "Ride Management", path: "/ride-management" },
-  { icon: <BadgeIndianRupee />, name: "Payment Management", path: "/payment-management",  subItems: [
-    { name: "Wallet Management", path: "/payment-management/wallet-management" },
-      { name: "Refund Management", path: "/payment-management/refund-management" },
-      { name: "Subscription Management", path: "/payment-management/subscription-management" },
-    ] },
-     { icon: <Award />, name: "Pricing Control", path: "/pricing-control" },
+  // { icon: <BadgeIndianRupee />, name: "Payment Management", path: "/payment-management",  subItems: [
+  //   { name: "Wallet Management", path: "/payment-management/wallet-management" },
+  //     { name: "Refund Management", path: "/payment-management/refund-management" },
+  //     { name: "Subscription Management", path: "/payment-management/subscription-management" },
+  //   ] },
+    //  { icon: <Award />, name: "Pricing Control", path: "/pricing-control" },
   // { icon: <FolderGit2 />, name: "Analytics & Reports", path: "/AnalyticsReports" },
   // { icon: <MessageCircle />, name: "Chatbot", path: "/Socket" },
 ];

@@ -1,4 +1,4 @@
-"use client";
+/* "use client";
 import React, { useMemo, useState } from "react";
 import {
   LineChart,
@@ -317,37 +317,28 @@ export default function Dashboard() {
           </section>
         )}
       </div>
-
-      {/* <div className="mt-6 text-sm text-gray-500">
-        <strong>Notes:</strong> This file is a UI scaffold. I can:
-        <ul className="list-disc ml-5 mt-2">
-          <li>Wire each card to your APIs and add loading states.</li>
-          <li>Add server-side reporting endpoints for heavy queries (aggregation).</li>
-          <li>Create reusable chart widgets and export CSV/PNG per report.</li>
-        </ul>
-      </div> */}
     </div>
   );
 }
+*/
 
-// "use client"
+"use client"
 
+import { useAuthGuard } from '@/hooks/useAuthGaurd';
+import { selectCurrentUser } from '@/store/authSlice';
+import React from 'react'
+import { useSelector } from 'react-redux';
 
-// import { useAuthGuard } from '@/hooks/useAuthGaurd';
-// import { selectCurrentUser } from '@/store/authSlice';
-// import React from 'react'
-// import { useSelector } from 'react-redux';
+const Dashboard = () => {
+    useAuthGuard();
+    const user = useSelector(selectCurrentUser);
+    // console.log(user);
 
-// const Dashboard = () => {
-//     useAuthGuard();
-//     const user = useSelector(selectCurrentUser);
-//     // console.log(user);
+  return (
+    <div>
+        <div>ADMIN Dashboard</div>
+    </div>
+  )
+}
 
-//   return (
-//     <div>
-//         <div>ADMIN Dashboard</div>
-//     </div>
-//   )
-// }
-
-// export default Dashboard;
+export default Dashboard;
