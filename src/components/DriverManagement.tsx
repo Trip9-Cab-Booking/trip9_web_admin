@@ -14,6 +14,9 @@ import CustomSnackbar from './CustomSnackbar';
 import Search from './Search';
 import { useTableQueryParams } from '@/hooks/useQueryParams';
 import { downloadData } from '@/utils/downloadData';
+import { FaEye , FaRegEdit, FaBan } from "react-icons/fa";
+import { IoBanOutline } from "react-icons/io5";
+import { RxCrossCircled } from "react-icons/rx";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -328,36 +331,41 @@ const DriverManagement = () => {
                                   size="small"
                                   onClick={() => viewHandler(row.driverId)}
                                   color='info'
-                                  sx={{backgroundColor:"oklch(0.952 0 0)", ":hover": { backgroundColor: "lightgray", color:"darkcyan" }}}
+                                 sx={{
+  ":hover": {
+    backgroundColor: "lightgray",
+    color: "darkcyan"
+  }
+}}
                                 >
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+                                   <FaEye size={20} color='#465fff' />
                                 </IconButton>
                                 <IconButton
                                   size="small"
-                                  color='success'
+                                  // color='success'
                                   disabled={row.status === 'approved'}
                                   onClick={() => statusHandler(row.driverId, "approved")}
-                                  sx={{backgroundColor:"oklch(0.952 0 0)", ":hover": { backgroundColor: "lightgray", color:"darkgreen" }}}
+                                  sx={{color: "#465fff", ":hover": { backgroundColor: "lightgray", color:"darkgreen" }}}
                                 >
-                                  <CheckCircleIcon />
+                                  <CheckCircleIcon size={20} />
                                 </IconButton>
                                 <IconButton
                                   size="small"
                                   color="error"
                                   disabled={row.status === 'rejected'}
                                   onClick={() => statusHandler(row.driverId, "rejected")}
-                                  sx={{backgroundColor:"oklch(0.952 0 0)", ":hover": { backgroundColor: "lightgray", color:"darkred" }}}
+                                  sx={{":hover": { backgroundColor: "lightgray", color:"darkred" }}}
                                 >
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-circle-x-icon lucide-circle-x"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                                  <RxCrossCircled color='#465fff' size={20} />
                                 </IconButton>
                                 <IconButton
                                   size="small"
                                   color="error"
                                   disabled={row.status === 'blocked'}
                                   onClick={() => statusHandler(row.driverId, "blocked")}
-                                  sx={{backgroundColor:"oklch(0.952 0 0)", ":hover": { backgroundColor: "lightgray", color:"darkred" }}}
+                                  sx={{":hover": { backgroundColor: "lightgray", color:"darkred" }}}
                                 >
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-ban-icon lucide-ban"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+                                  <IoBanOutline size={20} color='#465fff'/>
                                 </IconButton>
                               </div>
                             </td>

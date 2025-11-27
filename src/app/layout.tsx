@@ -1,10 +1,8 @@
 import { Outfit } from "next/font/google";
 import "./globals.css";
-
 import { ThemeProvider } from "@/context/ThemeContext";
 import ThemeWrapper from "./ThemeWrapper";
 import { Metadata } from "next";
-// import { getMuiTheme } from "@/hooks/muiTheme";
 
 const outfit = Outfit({
   variable: "--font-outfit-sans",

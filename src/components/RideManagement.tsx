@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { selectAccessToken } from '@/store/authSlice';
 import Link from "next/link";
+import StatusBadge from './ui/badge/StatusBadge';
 
 type Ride = {
   _id: string;
@@ -146,11 +147,10 @@ export default function RideListPage() {
         </div>
       ) : (
         <>
-          <div className="bg-white shadow-md rounded-lg overflow-x-auto">
-            <table className="min-w-full table-auto text-sm divide-y divide-gray-200">
+          <div className="bg-white shadow-md rounded-lg overflow-auto max-h-[60vh]">
+            <table className="min-w-full w-full table-fixed text-sm divide-y divide-gray-200">
               <thead className="bg-gray-200">
                 <tr>
-                  {/* <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Ride Id</th> */}
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Vehicle</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Pickup</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Drop</th>
@@ -181,7 +181,7 @@ export default function RideListPage() {
                       <td className="px-4 py-3">₹{ride.rideDetails.estimatedFare}</td>
                       <td className="px-4 py-3">{ride.userDetails.firstName} {ride.userDetails.lastName}</td>
                       <td className="px-4 py-3">{ride.driverDetails.firstName} {ride.driverDetails.lastName}</td>
-                      <td className="px-4 py-3 capitalize">{ride.rideDetails.status}</td>
+                      <td className="px-4 py-3 capitalize"><StatusBadge status={ride.rideDetails.status} /></td>
                       <td className="px-4 py-3">{new Date(ride.rideDetails.createdAt).toLocaleString()}</td>
                       <td className="px-4 py-3">
                         {ride.rideDetails.status === 'cancelled'

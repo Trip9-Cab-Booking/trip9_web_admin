@@ -1,12 +1,13 @@
 "use client";
 
-import React from "react";
+import React,{useState, useEffect} from "react";
 import { FaUser, FaPhone, FaCar, FaMapMarkerAlt, FaSpinner } from "react-icons/fa";
 import { IoMdCard } from "react-icons/io";
 import { RiCoupon3Line } from "react-icons/ri";
 import { AiFillStar } from "react-icons/ai";
 import { useRouter } from "next/navigation";
 import { BsArrowLeft } from "react-icons/bs";
+import { axiosInstance } from "@/utils/axiosInstance";
 
 
 type Person = {
@@ -20,47 +21,51 @@ type Driver = Person & {
   vehicleNumber: string;
 };
 
-export type Ride = {
-  id: string;
-  user: Person;
-  driver: Driver;
-  pickup: string;
-  dropoff: string;
-  startTime: string;
-  endTime?: string;
-  durationMinutes?: number;
-  distanceKm?: number;
-  estimatedFare: number;
-  finalFare?: number;
-  paymentMethod?: string;
-  paymentStatus?: "Pending" | "Success" | "Failed";
-  coupon?: string | null;
-  userRating?: number;
-  driverRating?: number;
-  userFeedback?: string | null;
-  driverFeedback?: string | null;
-};
+// export type Ride = {
+//   id: string;
+//   rideId: string;
+//   rideDetails: string;
+//   user: Person;
+//   driver: Driver;
+//   pickup: string;
+//   dropoff: string;
+//   startTime: string;
+//   endTime?: string;
+//   durationMinutes?: number;
+//   distanceKm?: number;
+//   estimatedFare: number;
+//   finalFare?: number;
+//   paymentMethod?: string;
+//   paymentStatus?: "Pending" | "Success" | "Failed" | "Cancelled";
+//   coupon?: string | null;
+//   userRating?: number;
+//   driverRating?: number;
+//   userFeedback?: string | null;
+//   driverFeedback?: string | null;
+// };
 
-const sampleRide: Ride = {
-  id: "RIDE-20251125-001",
-  user: { name: "Ananya Roy", mobile: "+91 98765 43210", appVersion: "v3.4.1" },
-  driver: { name: "Ravi Kumar", mobile: "+91 91234 56789", vehicleType: "Sedan", vehicleNumber: "WB04AB1234" },
-  pickup: "Salt Lake Sector V, Kolkata",
-  dropoff: "Howrah Maidan, Howrah",
-  startTime: "2025-11-24T18:06:00.000Z",
-  endTime: "2025-11-24T18:46:00.000Z",
-  durationMinutes: 40,
-  distanceKm: 16.5,
-  estimatedFare: 350,
-  finalFare: 380,
-  paymentMethod: "Card",
-  paymentStatus: "Success",
-  coupon: "NEWUSER50",
-  userRating: 5,
-  driverRating: 4,
-  userFeedback: "Driver was polite, clean car.",
-  driverFeedback: "Passenger was on time and courteous.",
-};
+// const sampleRide: Ride = {
+//   id: "RIDE-20251125-001",
+//   user: { name: "Ananya Roy", mobile: "+91 98765 43210", appVersion: "v3.4.1" },
+//   driver: { name: "Ravi Kumar", mobile: "+91 91234 56789", vehicleType: "Sedan", vehicleNumber: "WB04AB1234" },
+//   pickup: "Salt Lake Sector V, Kolkata",
+//   dropoff: "Howrah Maidan, Howrah",
+//   startTime: "2025-11-24T18:06:00.000Z",
+//   endTime: "2025-11-24T18:46:00.000Z",
+//   durationMinutes: 40,
+//   distanceKm: 16.5,
+//   estimatedFare: 350,
+//   finalFare: 380,
+//   paymentMethod: "Card",
+//   paymentStatus: "Success",
+//   coupon: "NEWUSER50",
+//   userRating: 5,
+//   driverRating: 4,
+//   userFeedback: "Driver was polite, clean car.",
+//   driverFeedback: "Passenger was on time and courteous.",
+// };
+
+export type Ride = any;
 
 function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -92,44 +97,95 @@ function Rating({ value }: { value?: number }) {
   );
 }
 
-
-
-export default function RideDetailsPage({ initialRide }: { initialRide?: Ride | null }) {
-  const ride = initialRide ?? sampleRide;
+export default function RideDetailsPage({
+  initialRide,
+  rideId,
+}: {
+  initialRide?: Ride | null;
+  rideId?: string;
+}) {
   const router = useRouter();
+  const [ride, setRide] = useState<Ride | null>(initialRide ?? null);
+  const [loading, setLoading] = useState<boolean>(!initialRide);
+  const [error, setError] = useState<string | null>(null);
+  const status = ride?.rideDetails.status?.toLowerCase();
 
-  if (!ride) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Ride not found or failed to load.</p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!rideId) {
+      setLoading(false);
+      setError("Missing ride id");
+      return;
+    }
+    if (initialRide) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchRide = async () => {
+      setLoading(true);
+      try {
+        const response = await axiosInstance.get(`/api/admin/rides/${rideId}`);
+        const data = response.data?.data ?? response.data;
+        if (!cancelled) {
+          setRide(data ?? null);
+          setError(data ? null : "No ride data returned");
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          setError(err?.response?.data?.message || err.message || "Failed to load ride");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    fetchRide();
+    return () => {
+      cancelled = true;
+    };
+  }, [rideId, initialRide]);
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading ride details...</div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
+  if (!ride) return <div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">Ride not found.</p></div>;
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-full mx-auto space-y-6">
         <header className="flex items-center justify-between">
           <div>
-         <span>
-             <button
-            onClick={() => router.back()}
-            className="inline-flex gap-2 items-center px-3 py-1 rounded-md border bg-white shadow-sm text-sm hover:bg-gray-100 mb-4"
-          >
-            <span>
+            <button
+              onClick={() => router.back()}
+              className="inline-flex gap-2 items-center px-3 py-1 rounded-md border bg-white shadow-sm text-sm hover:bg-gray-100 mb-4"
+            >
               <BsArrowLeft />
-            </span>
-            Back
-          </button>
-         </span>
+              Back
+            </button>
+
             <h1 className="text-2xl md:text-3xl font-bold">Ride Details</h1>
-            <p className="text-sm text-gray-500">Ride ID: <span className="font-mono">{ride.id}</span></p>
+            <p className="text-sm text-gray-500">Ride ID: <span className="font-mono">{ride.rideId}</span></p>
           </div>
+
           <div className="text-right">
             <p className="text-sm text-gray-500 text-center">Status</p>
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${ride.paymentStatus === 'Success' ? 'bg-green-100 text-green-800' : ride.paymentStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
-              {ride.paymentStatus ?? "—"}
-            </span>
+            <span
+  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+    ${
+      status === "success" || status === "completed"
+        ? "bg-green-100 text-green-800"
+        : status === "pending" || status === "ongoing"
+        ? "bg-yellow-100 text-yellow-800"
+        : status === "cancelled"
+        ? "bg-red-100 text-red-800"
+        : "bg-gray-200 text-gray-700"
+    }
+  `}
+>
+  {ride.rideDetails.status ?? "—"}
+</span>
+
           </div>
         </header>
 
@@ -139,8 +195,9 @@ export default function RideDetailsPage({ initialRide }: { initialRide?: Ride | 
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-500"><FaUser /></div>
                 <div>
-                  <div className="font-semibold">{ride.user.name}</div>
-                  <div className="text-sm text-gray-500 flex items-center gap-2"><FaPhone /> {ride.user.mobile} • <span className="ml-1">{ride.user.appVersion}</span></div>
+                  <div className="font-semibold">{ride.userDetails.name}</div>
+                  <div className="text-sm text-gray-500 flex items-center gap-2"><FaPhone /> {ride.userDetails.phone}
+                   </div>
                 </div>
               </div>
             </InfoCard>
@@ -149,9 +206,9 @@ export default function RideDetailsPage({ initialRide }: { initialRide?: Ride | 
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-500"><FaCar /></div>
                 <div>
-                  <div className="font-semibold">{ride.driver.name}</div>
-                  <div className="text-sm text-gray-500">{ride.driver.mobile}</div>
-                  <div className="mt-2 text-sm text-gray-600">{ride.driver.vehicleType} • {ride.driver.vehicleNumber}</div>
+                  <div className="font-semibold">{ride.driverDetails.name ?? "—"}</div>
+                  <div className="text-sm text-gray-500">{ride.driverDetails.phone ?? "—"}</div>
+                  <div className="mt-2 text-sm text-gray-600">{ride.driverDetails.vehicleType ?? "—"} • {ride.driverDetails.vehicleModel ?? "—"}</div>
                 </div>
               </div>
             </InfoCard>
@@ -162,7 +219,7 @@ export default function RideDetailsPage({ initialRide }: { initialRide?: Ride | 
                   <span className="pt-1"><FaMapMarkerAlt /></span>
                   <div>
                     <div className="text-sm font-medium text-gray-700">Pickup</div>
-                    <div className="text-sm text-gray-600">{ride.pickup}</div>
+                    <div className="text-sm text-gray-600">{ride.pickupAndDropLocation.pickup.address ?? "—"}</div>
                   </div>
                 </div>
 
@@ -170,7 +227,7 @@ export default function RideDetailsPage({ initialRide }: { initialRide?: Ride | 
                   <span className="pt-1"><FaMapMarkerAlt /></span>
                   <div>
                     <div className="text-sm font-medium text-gray-700">Dropoff</div>
-                    <div className="text-sm text-gray-600">{ride.dropoff}</div>
+                    <div className="text-sm text-gray-600">{ride.pickupAndDropLocation.drop.address ?? "—"}</div>
                   </div>
                 </div>
               </div>
@@ -178,10 +235,10 @@ export default function RideDetailsPage({ initialRide }: { initialRide?: Ride | 
 
             <InfoCard title="Timing & Distance">
               <div className="grid grid-cols-2 gap-4">
-                <Stat label="Start Time" value={new Date(ride.startTime).toLocaleString()} />
-                <Stat label="End Time" value={ride.endTime ? new Date(ride.endTime).toLocaleString() : <span className="flex items-center gap-2"><FaSpinner className="animate-spin" /> In progress</span>} />
-                <Stat label="Duration" value={ride.durationMinutes ? `${ride.durationMinutes} min` : "—"} />
-                <Stat label="Distance" value={ride.distanceKm ? `${ride.distanceKm} km` : "—"} />
+                <Stat label="Start Time" value={new Date(ride.rideDetails.pickupTime).toLocaleString() ?? "—"} />
+                <Stat label="End Time" value={new Date(ride.rideDetails.completionTime).toLocaleString() ?? "—"} />
+                <Stat label="Duration" value={ride.timeAndDistance.estimatedTime ? `${ride.timeAndDistance.estimatedTime}` : "—"} />
+                <Stat label="Distance" value={ride.timeAndDistance.totalDistance ? `${ride.timeAndDistance.totalDistance}` : "—"} />
               </div>
             </InfoCard>
 
@@ -189,7 +246,7 @@ export default function RideDetailsPage({ initialRide }: { initialRide?: Ride | 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
                 <div>
                   <div className="text-sm text-gray-500">Estimated Fare</div>
-                  <div className="text-xl font-semibold">₹{ride.estimatedFare}</div>
+                  <div className="text-xl font-semibold">₹{ride.farePayment.estimatedFare ?? "—"}</div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-500">Final Fare</div>
@@ -213,16 +270,14 @@ export default function RideDetailsPage({ initialRide }: { initialRide?: Ride | 
                 <div>
                   <div className="text-sm text-gray-500">User rating for driver</div>
                   <div className="mt-2 flex items-center justify-between">
-                    <Rating value={ride.userRating} />
-                    {/* <div className="text-sm text-gray-600">{ride.userFeedback ?? "No feedback"}</div> */}
+                    <Rating value={ride.userDetails.ratingStats?.totalScore ?? "—"} />
                   </div>
                 </div>
 
                 <div>
                   <div className="text-sm text-gray-500">Driver rating for user</div>
                   <div className="mt-2 flex items-center justify-between">
-                    <Rating value={ride.driverRating} />
-                    {/* <div className="text-sm text-gray-600">{ride.driverFeedback ?? "No feedback"}</div> */}
+                    <Rating value={ride.driverDetails.ratingStats?.totalScore ?? "—"} />
                   </div>
                 </div>
               </div>
@@ -235,15 +290,15 @@ export default function RideDetailsPage({ initialRide }: { initialRide?: Ride | 
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-sm text-gray-500">Summary</h4>
-                    <div className="text-xl font-bold">₹{ride.finalFare ?? ride.estimatedFare}</div>
-                    <div className="text-xs text-gray-500">{ride.distanceKm ?? "—"} km • {ride.durationMinutes ?? "—"} min</div>
+                    <div className="text-xl font-bold">₹{ride.finalFare ?? ride.summary.estimatedPrice}</div>
+                    <div className="text-xs text-gray-500">{ride.summary.totalDistance ?? "—"} • {ride.summary.estimatedTime ?? "—"}</div>
                   </div>
                 </div>
 
                 <div className="pt-2 border-t border-gray-100">
                   <div className="flex items-center justify-between text-sm text-gray-600">
                     <span>Estimated</span>
-                    <span>₹{ride.estimatedFare}</span>
+                    <span>₹{ride.summary.estimatedPrice}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm text-gray-800 font-medium mt-1">
                     <span>Final</span>
@@ -252,21 +307,14 @@ export default function RideDetailsPage({ initialRide }: { initialRide?: Ride | 
                 </div>
 
                 <div className="pt-3">
-                  <a href={`tel:${ride.driver.mobile}`} className="w-full block text-center py-2 rounded-xl border border-transparent bg-indigo-600 text-white font-medium">Call driver</a>
+                  <a href={`tel:${ride.driverDetails.phone}`} className="w-full block text-center py-2 rounded-xl border border-transparent bg-indigo-600 text-white font-medium">Call driver</a>
                 </div>
 
-                <div className="pt-2 text-xs text-gray-500">Payment: {ride.paymentMethod} • <span className="font-semibold">{ride.paymentStatus}</span></div>
+                <div className="pt-2 text-xs text-gray-500">Payment: {ride.paymentMethod} • <span className="font-semibold">{ride.paymentStatus ?? "—"}</span></div>
               </div>
             </div>
-
-            {/* <div className="bg-white shadow-sm rounded-2xl p-4">
-              <h4 className="text-sm text-gray-500 mb-2">Trip route</h4>
-              <div className="w-full aspect-[4/3] bg-gray-100 rounded-md flex items-center justify-center text-gray-400">Map preview</div>
-            </div> */}
           </aside>
         </section>
-
-        {/* <footer className="text-center text-xs text-gray-400">Data shown above is sample when `initialRide` is not provided—replace with real API data.</footer> */}
       </div>
     </main>
   );
