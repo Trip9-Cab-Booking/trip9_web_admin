@@ -1,7 +1,7 @@
 "use client";
 
 import React,{useState, useEffect} from "react";
-import { FaUser, FaPhone, FaCar, FaMapMarkerAlt, FaSpinner } from "react-icons/fa";
+import { FaUser, FaPhone, FaCar, FaMapMarkerAlt } from "react-icons/fa";
 import { IoMdCard } from "react-icons/io";
 import { RiCoupon3Line } from "react-icons/ri";
 import { AiFillStar } from "react-icons/ai";
@@ -16,10 +16,10 @@ type Person = {
   appVersion?: string;
 };
 
-type Driver = Person & {
-  vehicleType: string;
-  vehicleNumber: string;
-};
+// type Driver = Person & {
+//   vehicleType: string;
+//   vehicleNumber: string;
+// };
 
 // export type Ride = {
 //   id: string;

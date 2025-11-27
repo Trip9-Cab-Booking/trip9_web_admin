@@ -1,6 +1,6 @@
 import UserManagement from '@/components/UserManagement'
 import { Metadata } from 'next';
-import React, { Suspense } from 'react'
+import React from 'react'
 
 
 export const metadata: Metadata = {

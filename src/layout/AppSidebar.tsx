@@ -12,8 +12,7 @@ import {
   UserCircleIcon
 } from "../icons/index";
 import SidebarWidget from "./SidebarFooter";
-import { Ambulance, Award, BadgeIndianRupee, FolderGit2, MessageCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Ambulance } from "lucide-react";
 
 type NavItem = {
   name: string;
@@ -40,7 +39,7 @@ const navItems: NavItem[] = [
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
-  const router = useRouter();
+  // const router = useRouter();
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import {
   User,
   Mail,
@@ -12,10 +13,6 @@ import {
   Key,
 } from "lucide-react";
 
-interface ProfileProps {
-  onBack?: () => void;
-}
-
 interface ProfileState {
   name: string;
   email: string;
@@ -25,7 +22,7 @@ interface ProfileState {
   avatarPreview: string | null;
 }
 
-const Profile: React.FC<ProfileProps> = ({ onBack }) => {
+const Profile: React.FC = () => {
   const [profile, setProfile] = useState<ProfileState>({
     name: "",
     email: "",
@@ -75,7 +72,7 @@ const Profile: React.FC<ProfileProps> = ({ onBack }) => {
     setIsEditing(false);
 
     // Save locally (no API)
-    const { name, email, phone, avatarPreview } = profile;
+    const { name, email, phone } = profile;
     const payload = {
       userName: name,
       email,
@@ -170,10 +167,13 @@ const Profile: React.FC<ProfileProps> = ({ onBack }) => {
                 <div className="relative">
                   <div className="h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
                     {profile.avatarPreview ? (
-                      <img
+                      <Image
                         src={profile.avatarPreview}
                         alt="Avatar"
-                        className="h-24 w-24 object-cover"
+                        width={96}
+                        height={96}
+                        className="object-cover"
+                        priority={false}
                       />
                     ) : (
                       <User className="h-12 w-12 text-blue-900" />
@@ -405,7 +405,7 @@ const Profile: React.FC<ProfileProps> = ({ onBack }) => {
               Forgot Password
             </h3>
             <p className="text-gray-600 mb-4">
-              Enter your email address and we'll send you a link to reset your
+              Enter your email address and we&apos;ll send you a link to reset your
               password.
             </p>
             <form onSubmit={handleForgotPassword} className="space-y-4">

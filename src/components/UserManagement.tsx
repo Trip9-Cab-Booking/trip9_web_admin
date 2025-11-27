@@ -4,7 +4,7 @@ import { logout, selectAccessToken } from '@/store/authSlice';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import TableSkeleton from './skeleton/Table';
-import { Button, Menu, MenuItem, MenuProps, styled } from '@mui/material';
+import { Menu, MenuItem, MenuProps, styled } from '@mui/material';
 import { CheckCircleIcon, DownloadIcon } from '@/icons';
 import CustomNoRowsOverlay from './CustomNoDataOverlay';
 import axios from 'axios';
@@ -16,7 +16,7 @@ import { useAppDispatch } from '@/store/store';
 import { useTableQueryParams } from '@/hooks/useQueryParams';
 import { downloadData } from '@/utils/downloadData';
 import { alpha } from '@mui/material/styles';
-import { FaEye , FaRegEdit, FaBan } from "react-icons/fa";
+import { FaEye , FaRegEdit} from "react-icons/fa";
 import { IoBanOutline } from "react-icons/io5";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL;

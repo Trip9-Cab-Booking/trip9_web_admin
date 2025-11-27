@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Paper from '@mui/material/Paper';
 import TableSkeleton from './skeleton/Table';
-import { alpha, Button, Chip, IconButton, Menu, MenuItem, MenuProps, Stack, styled } from '@mui/material';
+import { alpha, Button, IconButton, Menu, MenuItem, MenuProps, styled } from '@mui/material';
 import { CheckCircleIcon, DownloadIcon } from '@/icons';
 import CustomNoRowsOverlay from './CustomNoDataOverlay';
 import axios from 'axios';
@@ -14,7 +14,7 @@ import CustomSnackbar from './CustomSnackbar';
 import Search from './Search';
 import { useTableQueryParams } from '@/hooks/useQueryParams';
 import { downloadData } from '@/utils/downloadData';
-import { FaEye , FaRegEdit, FaBan } from "react-icons/fa";
+import { FaEye } from "react-icons/fa";
 import { IoBanOutline } from "react-icons/io5";
 import { RxCrossCircled } from "react-icons/rx";
 
@@ -94,8 +94,6 @@ const DriverManagement = () => {
       const [alertMessage, setAlertMessage] = useState("");
       const [alertSeverity, setAlertSeverity] = useState<"success" | "error" | "info">("info");
       const [showAlert, setShowAlert] = useState(false);
-
-      //   * Pagination
       const [totalRowSize, setTotalRowSize] = useState<number>(0);
 
       const showFeedback = (message: string, severity: "success" | "error" | "info" = "info") => {
@@ -217,7 +215,6 @@ const DriverManagement = () => {
     setSearchQuery(query);
   }, []);
 
-  // helpers for tailwind status badge
   const statusBadgeClasses = (status?: string) => {
     if (!status) return 'text-gray-700 bg-gray-100 border-gray-200';
     switch (status.toLowerCase()) {
@@ -233,7 +230,6 @@ const DriverManagement = () => {
     }
   };
 
-  // pagination helpers
   const canPrev = page > 1;
   const canNext = page * pageSize < totalRowSize;
 
@@ -288,7 +284,6 @@ const DriverManagement = () => {
                 elevation={0}
                 sx={{ width: '95%', height: "100%", overflow: 'hidden',backgroundColor: "transparent" }}
               >
-                {/* Tailwind table */}
                 <div className="min-w-full">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-800">
@@ -332,11 +327,11 @@ const DriverManagement = () => {
                                   onClick={() => viewHandler(row.driverId)}
                                   color='info'
                                  sx={{
-  ":hover": {
-    backgroundColor: "lightgray",
-    color: "darkcyan"
-  }
-}}
+                                  ":hover": {
+                                    backgroundColor: "lightgray",
+                                    color: "darkcyan"
+                                  }
+                                }}
                                 >
                                    <FaEye size={20} color='#465fff' />
                                 </IconButton>
@@ -376,7 +371,6 @@ const DriverManagement = () => {
                   </table>
                 </div>
 
-                {/* Pagination footer */}
                 <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700">
                   <div className="text-sm text-gray-700">
                     Showing <span className="font-medium">{userData.length === 0 ? 0 : (page - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(page * pageSize, totalRowSize)}</span> of <span className="font-medium">{totalRowSize}</span> results

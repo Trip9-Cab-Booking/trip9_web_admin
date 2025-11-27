@@ -112,20 +112,20 @@ export default function PaymentManagementPage() {
     });
   }, [transactions, selectedTypes, selectedMode, selectedStatus, q, dateFrom, dateTo]);
 
-  const settlementSummary = useMemo(() => {
-    const received = filtered
-      .filter((t) => t.type === "ride" && t.status === "success")
-      .reduce((s, t) => s + t.amount, 0);
+  // const settlementSummary = useMemo(() => {
+  //   const received = filtered
+  //     .filter((t) => t.type === "ride" && t.status === "success")
+  //     .reduce((s, t) => s + t.amount, 0);
 
-    const fees = filtered.reduce((s, t) => s + (t.tdr ?? 0), 0);
+  //   const fees = filtered.reduce((s, t) => s + (t.tdr ?? 0), 0);
 
-    const byMode = filtered.reduce<Record<string, number>>((acc, t) => {
-      acc[t.mode] = (acc[t.mode] || 0) + t.amount;
-      return acc;
-    }, {});
+  //   const byMode = filtered.reduce<Record<string, number>>((acc, t) => {
+  //     acc[t.mode] = (acc[t.mode] || 0) + t.amount;
+  //     return acc;
+  //   }, {});
 
-    return { received, fees, byMode };
-  }, [filtered]);
+  //   return { received, fees, byMode };
+  // }, [filtered]);
 
   return (
     <div className="min-h-screen p-6 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
