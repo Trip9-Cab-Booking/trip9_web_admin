@@ -49,8 +49,7 @@ export default function RideListPage() {
   const [totalPages, setTotalPages] = useState(1);
   const token = useSelector(selectAccessToken);
   // States
-// basic search/paging (if you already have these, keep them)
-const [searchTerm, setSearchTerm] = useState('');
+const [searchText, setSearchText] = useState('');
 const [currentPage, setCurrentPage] = useState(1);
 
 // dates
@@ -73,7 +72,7 @@ const toggleMulti = (list: string[], setList: (v: string[]) => void, value: stri
 };
 
 const resetFilters = () => {
-  setSearchTerm('');
+  setSearchText('');
   setDateFrom(null);
   setDateTo(null);
   setSelectedPayments([]);
@@ -82,68 +81,91 @@ const resetFilters = () => {
 };
 
 const applyFilters = () => {
-  // put your filtering call or local filter logic here
+  setCurrentPage(1);
   const filters = {
-    q: searchTerm || undefined,
+    q: searchText || undefined,
     dateFrom: dateFrom || undefined,
     dateTo: dateTo || undefined,
     payments: selectedPayments.length ? selectedPayments : undefined,
     statuses: selectedStatuses.length ? selectedStatuses : undefined,
   };
   console.log('apply', filters);
-  setCurrentPage(1);
 };
 
+useEffect(() => {
+  const fetchRides = async () => {
+    setLoading(true);
+    setError(null);
 
-  useEffect(() => {
-    const fetchRides = async () => {
-      setLoading(true);
-      setError(null);
+    if (!token) {
+      setError('Authentication token is missing. Please log in.');
+      setLoading(false);
+      return;
+    }
 
-      if (!token) {
-        setError('Authentication token is missing. Please log in.');
-        setLoading(false);
-        return;
+    try {
+      const params = new URLSearchParams();
+      if (searchText) params.append('searchText', searchText);
+
+      if (dateFrom) params.append('dateFrom', dateFrom);
+      if (dateTo) params.append('dateTo', dateTo);
+
+      if (selectedPayments.length) {
+        params.append('payments', selectedPayments.join(','));
       }
 
-      try {
-        const params = new URLSearchParams();
-        if (searchTerm) params.append('searchTerm', searchTerm);
-        if (statusFilter) params.append('status', statusFilter);
-        params.append('page', currentPage.toString());
-        params.append('limit', '10');
+      if (selectedStatuses.length) {
+  // send as comma-separated lowercase values using the single 'status' key
+  const statusesCsv = selectedStatuses.map(s => s.toLowerCase()).join(',');
+  params.append('status', statusesCsv);
+} else if (statusFilter) {
+  params.append('status', statusFilter.toLowerCase());
+}
 
-        const apiUrl = `${BASE}/api/admin/rides?${params.toString()}`;
+      params.append('page', currentPage.toString());
+      params.append('limit', '10');
 
-        const response = await axios.get(apiUrl, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'ngrok-skip-browser-warning': '69420',
-          },
-        });
+      const apiUrl = `${BASE}/api/admin/rides?${params.toString()}`;
 
-        if (response.data.success !== false) {
-          setRides(response.data.data || []);
-          setTotalPages(response.data.totalPages || 10);
-        } else {
-          setError(response.data?.message || 'Failed to fetch rides data.');
-          setRides([]);
-        }
-      } catch (err) {
-        console.error('Failed to fetch rides:', err);
-        if (axios.isAxiosError(err)) {
-          setError(err.response?.data?.message || 'Network error or server issue.');
-        } else {
-          setError('An unexpected error occurred.');
-        }
+      const response = await axios.get(apiUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'ngrok-skip-browser-warning': '69420',
+        },
+      });
+
+      if (response.data.success !== false) {
+        setRides(response.data.data || []);
+        setTotalPages(response.data.totalPages || 1);
+      } else {
+        setError(response.data?.message || 'Failed to fetch rides data.');
         setRides([]);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      console.error('Failed to fetch rides:', err);
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || 'Network error or server issue.');
+      } else {
+        setError('An unexpected error occurred.');
+      }
+      setRides([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchRides();
-  }, [token, searchTerm, statusFilter, currentPage]);
+  fetchRides();
+}, [
+  token,
+  searchText,
+  currentPage,
+  dateFrom,
+  dateTo,
+  selectedPayments,
+  selectedStatuses,
+  statusFilter, 
+]);
+
 
   const totalTableColumns = 12;
 
@@ -156,33 +178,6 @@ const applyFilters = () => {
   return (
     <div className="p-6 bg-gray-100 min-h-screen font-inter">
        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Ride Management</h1>
-
-      {/* <div className="flex flex-col sm:flex-row gap-4 mb-6 justify-center">
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="">All Statuses</option>
-          <option value="accepted">Accepted</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-          <option value="ongoing">Ongoing</option>
-          <option value="requested">Requested</option>
-        </select>
-
-        <input
-          type="text"
-          placeholder="Search by name (user or driver)..."
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setCurrentPage(1); 
-          }}
-          className="px-4 py-2 border border-gray-300 rounded-md shadow-sm w-full sm:w-64 focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div> */}
-
       <div className="bg-white border rounded-xl p-3 shadow-sm mb-6">
   <div className="flex flex-col sm:flex-row sm:items-center gap-2">
     {/* Left group: search + date range */}
@@ -190,14 +185,13 @@ const applyFilters = () => {
       <div className='flex gap-4 w-full'>
         <div className="relative flex-[2] w-1/2">
         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-          {/* magnifier */}
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 100-15 7.5 7.5 0 000 15z"/></svg>
         </span>
         <input
           type="search"
           placeholder="Search user or driver"
-          value={searchTerm}
-          onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+          value={searchText}
+          onChange={(e) => { setSearchText(e.target.value); setCurrentPage(1); }}
           className="w-full pl-10 pr-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
         />
         </div>
@@ -251,7 +245,7 @@ const applyFilters = () => {
 
       {/* Status compact pills */}
       <div className="flex gap-1 items-center">
-        {statusOptions.slice(0,4).map((s) => { // show a few quick pills
+        {statusOptions.slice(0,4).map((s) => { 
           const active = selectedStatuses.includes(s);
           return (
             <button
@@ -289,8 +283,6 @@ const applyFilters = () => {
        </div>
       </div>
     </div>
-
-   
   </div>
 </div>
 

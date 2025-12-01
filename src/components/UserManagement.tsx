@@ -16,8 +16,10 @@ import { useAppDispatch } from '@/store/store';
 import { useTableQueryParams } from '@/hooks/useQueryParams';
 import { downloadData } from '@/utils/downloadData';
 import { alpha } from '@mui/material/styles';
-import { FaEye , FaRegEdit} from "react-icons/fa";
+import { FaEye, FaRegEdit } from "react-icons/fa";
 import { IoBanOutline } from "react-icons/io5";
+import CreateUserModal, { UserFormData } from './CreateUserModal';
+import { axiosInstance } from '@/utils/axiosInstance';
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -94,24 +96,10 @@ const UserManagement = () => {
   const [alertSeverity, setAlertSeverity] = useState<'success' | 'error' | 'info'>('info');
   const [showAlert, setShowAlert] = useState(false);
 
-  // Create/Edit/Delete modal state
+  // Modal / edit state (keep these)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-
-  const initialForm = {
-    firstName: '',
-    lastName: '',
-    phone: '',
-    email: '',
-    image: null as File | null,
-    bankAccountNumber: '',
-    bankName: '',
-    panNumber: '',
-    dob: '',
-  };
-  const [form, setForm] = useState(initialForm);
-  const [submitting, setSubmitting] = useState(false);
 
   const showFeedback = (message: string, severity: 'success' | 'error' | 'info' = 'info') => {
     setAlertMessage(message);
@@ -210,7 +198,6 @@ const UserManagement = () => {
     }
   };
 
-
   const filteredData = userData.filter((row) => {
     const search = searchQuery.toLowerCase();
     return (
@@ -224,39 +211,18 @@ const UserManagement = () => {
 
   const viewHandler = (id: string) => router.push(`/users/${id}`);
 
-  // open create modal
+  // open create modal — now only opens modal; modal component will handle submit
   const openCreateModal = () => {
     setIsEditing(false);
     setEditingUserId(null);
-    setForm(initialForm);
     setIsModalOpen(true);
   };
 
-  // open edit modal and populate form
-  const openEditModal = async (userId: string) => {
+  // open edit modal — just set editing id and open the modal; the modal component can fetch details or accept initial data
+  const openEditModal = (userId: string) => {
     setIsEditing(true);
     setEditingUserId(userId);
     setIsModalOpen(true);
-    try {
-      const res = await axios.get(`${BASE}/api/admin/users/${userId}`, {
-        headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': '69420' },
-      });
-      const user = res.data.data;
-      setForm({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        phone: user.phone || '',
-        email: user.email || '',
-        image: null,
-        bankAccountNumber: user.bankAccountNumber || '',
-        bankName: user.bankName || '',
-        panNumber: user.panNumber || '',
-        dob: user.dob || '',
-      });
-    } catch (error: any) {
-      console.error('Failed to fetch user for edit', error);
-      showFeedback('Failed to fetch user details', 'error');
-    }
   };
 
   const handleDelete = async (userId: string) => {
@@ -266,7 +232,6 @@ const UserManagement = () => {
         headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': '69420' },
       });
       showFeedback(res.data?.message || 'User deleted', 'success');
-      // refresh
       fetchUsers();
     } catch (error: any) {
       console.error('Delete failed', error);
@@ -274,95 +239,71 @@ const UserManagement = () => {
     }
   };
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
+  const createUser = async (form: UserFormData) => {
+    const fd = new FormData();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files && e.target.files[0];
-    setForm((prev) => ({ ...prev, image: file || null }));
-  };
+    // make sure we never pass `undefined` to append
+    fd.append("firstName", form.firstName ?? "");
+    fd.append("lastName", form.lastName ?? "");
+    fd.append("phone", form.mobileNumber ?? "");
+    fd.append("email", form.email ?? "");
+    fd.append("pan", form.panNumber ?? "");
+    fd.append("name", form.fullName ?? `${form.firstName ?? ""} ${form.lastName ?? ""}`.trim());
+    fd.append("dob", form.dob ?? "");
+    fd.append("bankPhone", form.phoneNumber ?? "");
 
-  const submitForm = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!form.firstName || !form.lastName || !form.phone || !form.email) {
-      showFeedback('Please fill required fields', 'error');
-      return;
+    // append file only when it is a File
+    if (form.image instanceof File) {
+      fd.append("profilePic", form.image);
     }
-    setSubmitting(true);
+
+    const res = await axiosInstance.post("/api/admin/user/create", fd, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return res.data;
+  };
+
+  const handleEditUser = async (data: UserFormData) => {
+    if (!editingUserId) return;
     try {
-      let res;
-      // use FormData if image present or bank details
-      const useFormData = !!form.image;
-      if (isEditing && editingUserId) {
-        if (useFormData) {
-          const fd = new FormData();
-          fd.append('firstName', form.firstName);
-          fd.append('lastName', form.lastName);
-          fd.append('phone', form.phone);
-          fd.append('email', form.email);
-          if (form.image) fd.append('image', form.image);
-          if (form.bankAccountNumber) fd.append('bankAccountNumber', form.bankAccountNumber);
-          if (form.bankName) fd.append('bankName', form.bankName);
-          if (form.panNumber) fd.append('panNumber', form.panNumber);
-          if (form.dob) fd.append('dob', form.dob);
-          res = await axios.put(`${BASE}/api/admin/users/${editingUserId}`, fd, {
-            headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': '69420', 'Content-Type': 'multipart/form-data' },
-          });
-        } else {
-          res = await axios.put(`${BASE}/api/admin/users/${editingUserId}`, {
-            firstName: form.firstName,
-            lastName: form.lastName,
-            phone: form.phone,
-            email: form.email,
-            bankAccountNumber: form.bankAccountNumber,
-            bankName: form.bankName,
-            panNumber: form.panNumber,
-            dob: form.dob,
-          }, { headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': '69420' } });
-        }
-        showFeedback(res.data?.message || 'User updated', 'success');
-      } else {
-        if (useFormData) {
-          const fd = new FormData();
-          fd.append('firstName', form.firstName);
-          fd.append('lastName', form.lastName);
-          fd.append('phone', form.phone);
-          fd.append('email', form.email);
-          if (form.image) fd.append('image', form.image);
-          if (form.bankAccountNumber) fd.append('bankAccountNumber', form.bankAccountNumber);
-          if (form.bankName) fd.append('bankName', form.bankName);
-          if (form.panNumber) fd.append('panNumber', form.panNumber);
-          if (form.dob) fd.append('dob', form.dob);
-          res = await axios.post(`${BASE}/api/admin/users`, fd, {
-            headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': '69420', 'Content-Type': 'multipart/form-data' },
-          });
-        } else {
-          res = await axios.post(`${BASE}/api/admin/users`, {
-            firstName: form.firstName,
-            lastName: form.lastName,
-            phone: form.phone,
-            email: form.email,
-            bankAccountNumber: form.bankAccountNumber,
-            bankName: form.bankName,
-            panNumber: form.panNumber,
-            dob: form.dob,
-          }, { headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': '69420' } });
-        }
-        showFeedback(res.data?.message || 'User created', 'success');
+      const fd = new FormData();
+      fd.append('firstName', data.firstName ?? '');
+      fd.append('lastName', data.lastName ?? '');
+      fd.append('phone', data.mobileNumber ?? '');
+      fd.append('email', data.email ?? '');
+      fd.append('bankAccountNumber', data.accountNumber ?? '');
+      fd.append('bankName', data.bankName ?? '');
+      fd.append('panNumber', data.panNumber ?? '');
+      fd.append('dob', data.dob ?? '');
+
+      if (data.image instanceof File) {
+        // backend may expect field name 'profilePic' or 'image' — use whichever your API expects
+        fd.append('profilePic', data.image);
       }
 
-      // close and refresh
-      setIsModalOpen(false);
+      const res = await axios.put(`${BASE}/api/admin/users/${editingUserId}`, fd, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'ngrok-skip-browser-warning': '69420',
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      showFeedback(res.data?.message || 'User updated', 'success');
       fetchUsers();
-    } catch (error: any) {
-      console.error('Submit failed', error);
-      showFeedback('Failed to submit user', 'error');
+    } catch (err: any) {
+      console.error('Update user failed', err);
+      showFeedback('Failed to update user', 'error');
     } finally {
-      setSubmitting(false);
+      setIsModalOpen(false);
+      setEditingUserId(null);
+      setIsEditing(false);
     }
   };
+
 
   const handleSearch = useCallback((query: string) => setSearchQuery(query), []);
 
@@ -449,9 +390,8 @@ const UserManagement = () => {
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-200">{row.phone}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-200">{row.email}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                          row.status === 'active' ? 'bg-green-50 text-green-700' : row.status === 'blocked' ? 'bg-red-50 text-red-700' : 'bg-gray-50 text-gray-700'
-                        }`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${row.status === 'active' ? 'bg-green-50 text-green-700' : row.status === 'blocked' ? 'bg-red-50 text-red-700' : 'bg-gray-50 text-gray-700'
+                          }`}>
                           {row.status}
                         </span>
                       </td>
@@ -463,7 +403,7 @@ const UserManagement = () => {
                             className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700"
                             title="View user"
                           >
-                           <FaEye size={20} color='#465fff' />
+                            <FaEye size={20} color='#465fff' />
                           </button>
 
                           <button
@@ -492,7 +432,7 @@ const UserManagement = () => {
                             className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-40"
                             title="Block"
                           >
-                           <IoBanOutline size={20} color='#465fff'/>
+                            <IoBanOutline size={20} color='#465fff' />
                           </button>
 
                           <button
@@ -545,63 +485,10 @@ const UserManagement = () => {
 
       {/* Modal for create/edit */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setIsModalOpen(false)} />
-          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-lg w-full max-w-2xl p-6 z-10">
-            <h2 className="text-lg font-semibold mb-4">{isEditing ? 'Edit User' : 'Create User'}</h2>
-            <form onSubmit={submitForm} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">First Name *</label>
-                  <input name="firstName" value={form.firstName} onChange={handleFormChange} className="w-full border rounded px-3 py-2" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Last Name *</label>
-                  <input name="lastName" value={form.lastName} onChange={handleFormChange} className="w-full border rounded px-3 py-2" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Mobile Number *</label>
-                  <input name="phone" value={form.phone} onChange={handleFormChange} className="w-full border rounded px-3 py-2" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Email ID *</label>
-                  <input name="email" value={form.email} onChange={handleFormChange} className="w-full border rounded px-3 py-2" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Image (optional)</label>
-                  <input type="file" accept="image/*" onChange={handleFileChange} className="w-full" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">DOB (optional)</label>
-                  <input type="date" name="dob" value={form.dob} onChange={handleFormChange} className="w-full border rounded px-3 py-2" />
-                </div>
-              </div>
-
-              <div className="mt-2">
-                <h3 className="font-medium">Bank Details (optional)</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Account Number</label>
-                    <input name="bankAccountNumber" value={form.bankAccountNumber} onChange={handleFormChange} className="w-full border rounded px-3 py-2" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Bank Name</label>
-                    <input name="bankName" value={form.bankName} onChange={handleFormChange} className="w-full border rounded px-3 py-2" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">PAN Number</label>
-                    <input name="panNumber" value={form.panNumber} onChange={handleFormChange} className="w-full border rounded px-3 py-2" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 mt-4">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-3 py-2 rounded border">Cancel</button>
-                <button type="submit" disabled={submitting} className="px-4 py-2 rounded bg-blue-600 text-white">{submitting ? 'Saving...' : isEditing ? 'Update User' : 'Create User'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <CreateUserModal open={isModalOpen}
+          onOpenChange={(val) => setIsModalOpen(val)}
+          // onSubmit={handleCreateOrEditFromModal}
+          onSubmit={createUser} />
       )}
 
       <CustomSnackbar
