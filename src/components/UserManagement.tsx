@@ -100,6 +100,8 @@ const UserManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editingUserData, setEditingUserData] = useState<Partial<UserFormData> | null>(null);
+  const [initialLoading, setInitialLoading] = useState(false);
 
   const showFeedback = (message: string, severity: 'success' | 'error' | 'info' = 'info') => {
     setAlertMessage(message);
@@ -120,7 +122,6 @@ const UserManagement = () => {
     }
   }, [page]);
 
-  // fetch users function (used by effect and after create/edit/delete)
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -164,6 +165,42 @@ const UserManagement = () => {
   useEffect(() => {
     if (token) fetchUsers();
   }, [token, page, pageSize, searchQuery, dispatch]);
+
+  const fetchUserById = async (id: string) => {
+    if (!token) return null;
+    try {
+      setInitialLoading(true);
+      const res = await axios.get(`${BASE}/api/admin/users/userId=${id}`, {
+        headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': '69420' },
+      });
+
+      const u = res.data?.data ?? res.data;
+      if (!u) return null;
+
+      // Map API user to modal form fields
+      const mapped: Partial<UserFormData> = {
+        firstName: u.firstName ?? '',
+        lastName: u.lastName ?? '',
+        mobileNumber: u.phone ?? '',
+        email: u.email ?? '',
+        // image: ??? (you probably don't send remote image as File)
+        dob: u.bankDetails?.dob ?? u.dob ?? '',
+        fullName: u.bankDetails?.name ?? `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(),
+        phoneNumber: u.bankDetails?.phone ?? '',
+        panNumber: u.bankDetails?.pan ?? u.panNumber ?? '',
+        accountNumber: u.bankDetails?.accountNumber ?? '',
+        bankName: u.bankDetails?.bankName ?? '',
+      };
+
+      return mapped;
+    } catch (err: any) {
+      console.error('Failed to fetch user:', err);
+      showFeedback('Failed to load user data', 'error');
+      return null;
+    } finally {
+      setInitialLoading(false);
+    }
+  };
 
   const statusHandler = async (id: string, status: string) => {
     if (!token) {
@@ -211,59 +248,78 @@ const UserManagement = () => {
 
   const viewHandler = (id: string) => router.push(`/users/${id}`);
 
-  // open create modal — now only opens modal; modal component will handle submit
   const openCreateModal = () => {
     setIsEditing(false);
     setEditingUserId(null);
     setIsModalOpen(true);
   };
 
-  // open edit modal — just set editing id and open the modal; the modal component can fetch details or accept initial data
-  const openEditModal = (userId: string) => {
+  const openEditModal = async (userId: string) => {
     setIsEditing(true);
     setEditingUserId(userId);
-    setIsModalOpen(true);
-  };
 
-  const handleDelete = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
-    try {
-      const res = await axios.delete(`${BASE}/api/admin/users/${userId}`, {
-        headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': '69420' },
-      });
-      showFeedback(res.data?.message || 'User deleted', 'success');
-      fetchUsers();
-    } catch (error: any) {
-      console.error('Delete failed', error);
-      showFeedback('Failed to delete user', 'error');
+    // clear any stale editing data
+    setEditingUserData(null);
+
+    // fetch user, set editing data, then open modal
+    const data = await fetchUserById(userId);
+    if (data) {
+      setEditingUserData(data);
+      setIsModalOpen(true);
+    } else {
+      // failed to fetch; reset editing state
+      setIsEditing(false);
+      setEditingUserId(null);
     }
   };
 
+
   const createUser = async (form: UserFormData) => {
     const fd = new FormData();
-
-    // make sure we never pass `undefined` to append
     fd.append("firstName", form.firstName ?? "");
     fd.append("lastName", form.lastName ?? "");
     fd.append("phone", form.mobileNumber ?? "");
     fd.append("email", form.email ?? "");
-    fd.append("pan", form.panNumber ?? "");
-    fd.append("name", form.fullName ?? `${form.firstName ?? ""} ${form.lastName ?? ""}`.trim());
-    fd.append("dob", form.dob ?? "");
-    fd.append("bankPhone", form.phoneNumber ?? "");
+    fd.append("bankDetails[pan]", form.panNumber ?? "");
+    fd.append(
+      "bankDetails[name]",
+      form.fullName ?? `${form.firstName ?? ""} ${form.lastName ?? ""}`.trim()
+    );
+    fd.append("bankDetails[dob]", form.dob ?? "");
+    fd.append("bankDetails[phone]", form.phoneNumber ?? "");
 
-    // append file only when it is a File
     if (form.image instanceof File) {
       fd.append("profilePic", form.image);
     }
 
-    const res = await axiosInstance.post("/api/admin/user/create", fd, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    try {
+      setLoading(true);
 
-    return res.data;
+      const res = await axiosInstance.post("/api/admin/user/create", fd, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (res?.status === 200 || res?.data?.success) {
+        const msg = res.data?.message ?? "User created successfully";
+        showFeedback(msg, "success");
+        await fetchUsers();
+
+        return res.data;
+      } else {
+        const msg = res?.data?.message ?? "Failed to create user";
+        showFeedback(msg, "error");
+        throw new Error(msg);
+      }
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.message ?? err?.message ?? "Unknown error";
+      console.error("Create user failed:", err);
+      showFeedback(`Failed to create user: ${errMsg}`, "error");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEditUser = async (data: UserFormData) => {
@@ -274,17 +330,16 @@ const UserManagement = () => {
       fd.append('lastName', data.lastName ?? '');
       fd.append('phone', data.mobileNumber ?? '');
       fd.append('email', data.email ?? '');
-      fd.append('bankAccountNumber', data.accountNumber ?? '');
-      fd.append('bankName', data.bankName ?? '');
-      fd.append('panNumber', data.panNumber ?? '');
-      fd.append('dob', data.dob ?? '');
+      fd.append('bankDetails[pan]', data.panNumber ?? '');
+      fd.append("bankDetails[name]", data.fullName ?? `${data.firstName ?? ""} ${data.lastName ?? ""}`.trim());
+      fd.append("bankDetails[dob]", data.dob ?? "");
+      fd.append("bankDetails[phone]", data.phoneNumber ?? "");
 
       if (data.image instanceof File) {
-        // backend may expect field name 'profilePic' or 'image' — use whichever your API expects
         fd.append('profilePic', data.image);
       }
 
-      const res = await axios.put(`${BASE}/api/admin/users/${editingUserId}`, fd, {
+      const res = await axios.put(`${BASE}/api/admin/user/update/${editingUserId}`, fd, {
         headers: {
           Authorization: `Bearer ${token}`,
           'ngrok-skip-browser-warning': '69420',
@@ -304,6 +359,19 @@ const UserManagement = () => {
     }
   };
 
+  const handleDelete = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user?')) return;
+    try {
+      const res = await axios.delete(`${BASE}/api/admin/user/softdelete/${userId}`, {
+        headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': '69420' },
+      });
+      showFeedback(res.data?.message || 'User deleted', 'success');
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Delete failed', error);
+      showFeedback('Failed to delete user', 'error');
+    }
+  };
 
   const handleSearch = useCallback((query: string) => setSearchQuery(query), []);
 
@@ -484,12 +552,28 @@ const UserManagement = () => {
       )}
 
       {/* Modal for create/edit */}
-      {isModalOpen && (
+      {/* {isModalOpen && (
         <CreateUserModal open={isModalOpen}
           onOpenChange={(val) => setIsModalOpen(val)}
-          // onSubmit={handleCreateOrEditFromModal}
           onSubmit={createUser} />
+      )} */}
+
+      {isModalOpen && (
+        <CreateUserModal
+          open={isModalOpen}
+          onOpenChange={(val) => {
+            setIsModalOpen(val);
+            if (!val) {
+              setIsEditing(false);
+              setEditingUserId(null);
+              setEditingUserData(null);
+            }
+          }}
+          initialData={isEditing ? editingUserData ?? undefined : undefined}
+          onSubmit={isEditing ? handleEditUser : createUser}
+        />
       )}
+
 
       <CustomSnackbar
         open={showAlert}

@@ -14,12 +14,12 @@ import { Input } from '@/components/ui/input/Input';
 import { Label } from '@/components/ui/label/Label';
 import { cn } from '@/lib/utils';
 
-interface CreateUserModalProps {
+type CreateUserModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: UserFormData) => void;
+  onSubmit: (data: UserFormData) => Promise<any>;
   initialData?: Partial<UserFormData>;
-}
+};
 
 export interface UserFormData {
   firstName: string;
@@ -39,19 +39,19 @@ export default function CreateUserModal({
   open,
   onOpenChange,
   onSubmit,
-  initialData = {},
+  initialData,
 }: CreateUserModalProps) {
   const [formData, setFormData] = React.useState<UserFormData>({
-    firstName: initialData.firstName ?? '',
-    lastName: initialData.lastName ?? '',
-    mobileNumber: initialData.mobileNumber ?? '',
-    email: initialData.email ?? '',
-    image: (initialData.image as File) ?? null,
-    dob: initialData.dob ?? '',
-    fullName: initialData.fullName ?? '',
+    firstName: initialData?.firstName ?? '',
+    lastName: initialData?.lastName ?? '',
+    mobileNumber: initialData?.mobileNumber ?? '',
+    email: initialData?.email ?? '',
+    image: (initialData?.image as File) ?? null,
+    dob: initialData?.dob ?? '',
+    fullName: initialData?.fullName ?? '',
     // bankName: initialData.bankName ?? '',
-    phoneNumber: initialData.phoneNumber ?? "",
-    panNumber: initialData.panNumber ?? '',
+    phoneNumber: initialData?.phoneNumber ?? "",
+    panNumber: initialData?.panNumber ?? '',
   });
 
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
@@ -61,6 +61,7 @@ export default function CreateUserModal({
   const [isDragging, setIsDragging] = React.useState(false);
 
   React.useEffect(() => {
+    if (!initialData) return;
     setFormData((prev) => ({
       ...prev,
       firstName: initialData.firstName ?? prev.firstName,
@@ -161,7 +162,7 @@ export default function CreateUserModal({
 
   const initials = `${(formData.firstName || '').slice(0, 1)}${(formData.lastName || '').slice(0, 1)}`.toUpperCase();
 
-  
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
