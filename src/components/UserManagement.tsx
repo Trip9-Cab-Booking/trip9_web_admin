@@ -20,6 +20,7 @@ import { FaEye, FaRegEdit } from "react-icons/fa";
 import { IoBanOutline } from "react-icons/io5";
 import CreateUserModal, { UserFormData } from './CreateUserModal';
 import { axiosInstance } from '@/utils/axiosInstance';
+import DeleteConfirmModal from './DeleteConfirmModal';
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -103,6 +104,19 @@ const UserManagement = () => {
   const [editingUserData, setEditingUserData] = useState<Partial<UserFormData> | null>(null);
   const [initialLoading, setInitialLoading] = useState(false);
 
+  // inside your component
+  const [deleteModalOpen, setDeleteModalOpen] = React.useState(false);
+  const [deletingUserId, setDeletingUserId] = React.useState<string | null>(null);
+  const [deletingUserName, setDeletingUserName] = React.useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = React.useState(false);
+
+  const openDeleteModal = (userId: string, name?: string) => {
+    setDeletingUserId(userId);
+    setDeletingUserName(name ?? null);
+    setDeleteModalOpen(true);
+  };
+
+
   const showFeedback = (message: string, severity: 'success' | 'error' | 'info' = 'info') => {
     setAlertMessage(message);
     setAlertSeverity(severity);
@@ -166,24 +180,24 @@ const UserManagement = () => {
     if (token) fetchUsers();
   }, [token, page, pageSize, searchQuery, dispatch]);
 
+
   const fetchUserById = async (id: string) => {
     if (!token) return null;
     try {
       setInitialLoading(true);
-      const res = await axios.get(`${BASE}/api/admin/users/userId=${id}`, {
+      const res = await axios.get(`${BASE}/api/admin/users?userId=${id}`, {
         headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': '69420' },
       });
+      const payload = res.data;
+      const u = Array.isArray(payload?.data) ? payload.data[0] : payload?.data ?? payload;
 
-      const u = res.data?.data ?? res.data;
       if (!u) return null;
-
-      // Map API user to modal form fields
       const mapped: Partial<UserFormData> = {
         firstName: u.firstName ?? '',
         lastName: u.lastName ?? '',
-        mobileNumber: u.phone ?? '',
+        mobileNumber: u.phone ?? u.mobileNumber ?? '',
         email: u.email ?? '',
-        // image: ??? (you probably don't send remote image as File)
+        imageUrl: typeof u.profilePic === 'string' && u.profilePic.length ? u.profilePic : null,
         dob: u.bankDetails?.dob ?? u.dob ?? '',
         fullName: u.bankDetails?.name ?? `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(),
         phoneNumber: u.bankDetails?.phone ?? '',
@@ -192,6 +206,7 @@ const UserManagement = () => {
         bankName: u.bankDetails?.bankName ?? '',
       };
 
+      console.log('fetchUserById mapped:', mapped);
       return mapped;
     } catch (err: any) {
       console.error('Failed to fetch user:', err);
@@ -257,17 +272,12 @@ const UserManagement = () => {
   const openEditModal = async (userId: string) => {
     setIsEditing(true);
     setEditingUserId(userId);
-
-    // clear any stale editing data
     setEditingUserData(null);
-
-    // fetch user, set editing data, then open modal
     const data = await fetchUserById(userId);
     if (data) {
       setEditingUserData(data);
       setIsModalOpen(true);
     } else {
-      // failed to fetch; reset editing state
       setIsEditing(false);
       setEditingUserId(null);
     }
@@ -360,7 +370,7 @@ const UserManagement = () => {
   };
 
   const handleDelete = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+    // if (!confirm('Are you sure you want to delete this user?')) return;
     try {
       const res = await axios.delete(`${BASE}/api/admin/user/softdelete/${userId}`, {
         headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': '69420' },
@@ -370,6 +380,27 @@ const UserManagement = () => {
     } catch (error: any) {
       console.error('Delete failed', error);
       showFeedback('Failed to delete user', 'error');
+    }
+  };
+
+  const handleDeleteConfirmed = async () => {
+    if (!deletingUserId) return;
+    setDeleteLoading(true);
+    try {
+      const res = await axios.delete(`${BASE}/api/admin/user/softdelete/${deletingUserId}`, {
+        headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': '69420' },
+      });
+
+      showFeedback(res.data?.message ?? 'User deleted', 'success');
+      fetchUsers();
+    } catch (err) {
+      console.error('Delete failed', err);
+      showFeedback('Failed to delete user', 'error');
+    } finally {
+      setDeleteLoading(false);
+      setDeleteModalOpen(false);
+      setDeletingUserId(null);
+      setDeletingUserName(null);
     }
   };
 
@@ -505,7 +536,8 @@ const UserManagement = () => {
 
                           <button
                             aria-label="delete"
-                            onClick={() => handleDelete(row.userId)}
+                            // onClick={() => handleDelete(row.userId)}
+                            onClick={() => openDeleteModal(row.userId, `${row.firstName} ${row.lastName}`)}
                             className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700 text-red-600"
                             title="Delete"
                           >
@@ -551,13 +583,6 @@ const UserManagement = () => {
         </div>
       )}
 
-      {/* Modal for create/edit */}
-      {/* {isModalOpen && (
-        <CreateUserModal open={isModalOpen}
-          onOpenChange={(val) => setIsModalOpen(val)}
-          onSubmit={createUser} />
-      )} */}
-
       {isModalOpen && (
         <CreateUserModal
           open={isModalOpen}
@@ -573,6 +598,23 @@ const UserManagement = () => {
           onSubmit={isEditing ? handleEditUser : createUser}
         />
       )}
+
+      <DeleteConfirmModal
+        open={deleteModalOpen}
+        onOpenChange={(v) => {
+          setDeleteModalOpen(v);
+          if (!v) {
+            setDeletingUserId(null);
+            setDeletingUserName(null);
+          }
+        }}
+        onConfirm={handleDeleteConfirmed}
+        loading={deleteLoading}
+        title={`Delete user${deletingUserName ? ` — ${deletingUserName}` : ''}`}
+        description={`Are you sure you want to delete ${deletingUserName ?? 'this user'}? This action cannot be undone.`}
+        destructiveLabel="Delete user"
+      />
+
 
 
       <CustomSnackbar

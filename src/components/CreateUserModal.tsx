@@ -26,13 +26,16 @@ export interface UserFormData {
   lastName: string;
   mobileNumber: string;
   email: string;
-  image?: File | null;
   dob?: string;
   phoneNumber?: string;
   fullName?: string;
   accountNumber?: string;
   bankName?: string;
   panNumber?: string;
+  image?: File | null;
+  imageUrl?: string | null;
+  profilePic?: string | null;
+  userId: string;
 }
 
 export default function CreateUserModal({
@@ -42,6 +45,7 @@ export default function CreateUserModal({
   initialData,
 }: CreateUserModalProps) {
   const [formData, setFormData] = React.useState<UserFormData>({
+    userId: initialData?.userId ?? '',
     firstName: initialData?.firstName ?? '',
     lastName: initialData?.lastName ?? '',
     mobileNumber: initialData?.mobileNumber ?? '',
@@ -49,9 +53,9 @@ export default function CreateUserModal({
     image: (initialData?.image as File) ?? null,
     dob: initialData?.dob ?? '',
     fullName: initialData?.fullName ?? '',
-    // bankName: initialData.bankName ?? '',
     phoneNumber: initialData?.phoneNumber ?? "",
     panNumber: initialData?.panNumber ?? '',
+
   });
 
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
@@ -59,6 +63,7 @@ export default function CreateUserModal({
   const [touched, setTouched] = React.useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = React.useState(false);
   const [isDragging, setIsDragging] = React.useState(false);
+  const isEditMode = Boolean(initialData && (initialData.userId || initialData.email || initialData.firstName));
 
   React.useEffect(() => {
     if (!initialData) return;
@@ -72,18 +77,28 @@ export default function CreateUserModal({
       accountNumber: initialData.accountNumber ?? prev.accountNumber,
       bankName: initialData.bankName ?? prev.bankName,
       panNumber: initialData.panNumber ?? prev.panNumber,
+      image: null, // don't set File from a remote URL
+      imageUrl: initialData.imageUrl ?? initialData.profilePic ?? null,
     }));
   }, [initialData]);
 
   React.useEffect(() => {
-    if (formData.image) {
+    // prefer file preview if user selected a file
+    if (formData.image instanceof File) {
       const url = URL.createObjectURL(formData.image);
       setImagePreview(url);
       return () => URL.revokeObjectURL(url);
-    } else {
-      setImagePreview(null);
     }
-  }, [formData.image]);
+
+    // otherwise use remote URL if available
+    if (formData.imageUrl) {
+      setImagePreview(formData.imageUrl);
+      return; // nothing to cleanup
+    }
+
+    setImagePreview(null);
+  }, [formData.image, formData.imageUrl]);
+
 
   const handleChange = (field: keyof UserFormData, value: string | File | null) => {
     setFormData((prev) => ({ ...prev, [field]: value as any }));
@@ -97,23 +112,6 @@ export default function CreateUserModal({
     } else {
       setImagePreview(null);
     }
-  };
-
-
-  const handleInputChange = (field: keyof UserFormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.type === 'file' ? (e.target.files?.[0] ?? null) : e.target.value;
-    handleChange(field, val as any);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const file = e.dataTransfer.files?.[0] ?? null;
-    if (file && file.type.startsWith('image/')) handleFileSelect(file);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
   };
 
   const validate = () => {
@@ -137,6 +135,7 @@ export default function CreateUserModal({
       await onSubmit(formData);
       onOpenChange(false);
       setFormData({
+        userId: '',
         firstName: '',
         lastName: '',
         mobileNumber: '',
@@ -179,7 +178,9 @@ export default function CreateUserModal({
       "
       >
         <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold">Create User</DialogTitle>
+          <DialogTitle className="text-2xl font-semibold">
+            {isEditMode ? 'Edit User' : 'Create User'}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
@@ -237,7 +238,6 @@ export default function CreateUserModal({
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    {/* thumbnail or icon */}
                     <div className="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center overflow-hidden border">
                       {imagePreview ? (
                         <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
@@ -246,7 +246,6 @@ export default function CreateUserModal({
                       )}
                     </div>
 
-                    {/* text */}
                     <div className="text-sm min-w-0">
                       <div className="font-medium truncate">{formData.image?.name ?? 'Choose an image'}</div>
                       <div className="text-xs text-gray-500">PNG, JPG · up to 5MB</div>
@@ -254,7 +253,6 @@ export default function CreateUserModal({
                   </div>
 
                   <div className="flex items-center">
-                    {/* remove button appears when file selected */}
                     {formData.image && (
                       <div className='flex gap-3 items-center mt-2'>
                         <button
@@ -397,7 +395,7 @@ export default function CreateUserModal({
                 Cancel
               </Button>
               <Button type="submit" className="h-11 px-8" disabled={!isValid || submitting} aria-disabled={!isValid || submitting}>
-                {submitting ? 'Saving…' : 'Create User'}
+                {submitting ? (isEditMode ? 'Updating…' : 'Saving…') : (isEditMode ? 'Update User' : 'Create User')}
               </Button>
             </div>
           </DialogFooter>
