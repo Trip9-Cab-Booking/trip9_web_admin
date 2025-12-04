@@ -29,7 +29,7 @@ const navItems: NavItem[] = [
   {
     icon: <BadgeIndianRupee />, name: "Payment Management", path: "/payment-management", subItems: [
       { name: "Wallet Management", path: "/payment-management/wallet-management" },
-      { name: "Refund Management", path: "/payment-management/refund-management" },
+      // { name: "Refund Management", path: "/payment-management/refund-management" },
       { name: "Subscription Management", path: "/payment-management/subscription-management" },
     ]
   },
