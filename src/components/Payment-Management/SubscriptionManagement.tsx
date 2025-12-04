@@ -7,9 +7,13 @@ type Plan = {
   id: string;
   name: string;
   pricePerMonth: number;
-  durationMonths: number; 
+  durationMonths: number;
   description?: string;
   isActive: boolean;
+  vehicleType?: VehicleType;
+  rideLimit?: number;
+  rideLimitPeriod?: RideLimitPeriod;
+  rideLimitPeriodDays?: number;
 };
 
 type Driver = {
@@ -18,7 +22,7 @@ type Driver = {
   phone?: string;
   email?: string;
   planId?: string | null;
-  subscriptionStart?: string | null; 
+  subscriptionStart?: string | null;
   subscriptionEnd?: string | null;
 };
 
@@ -30,6 +34,9 @@ type Payment = {
   planId?: string | null;
 };
 
+type VehicleType = "car_economy" | "car_premium" | "bike" | "auto";
+type RideLimitPeriod = "daily" | "weekly" | "monthly";
+
 // Small helpers
 const formatCurrency = (n: number) => {
   return `₹${n.toFixed(2)}`;
@@ -39,9 +46,9 @@ const todayISO = () => new Date().toISOString();
 
 // Mock data (in real app replace with API calls)
 const mockPlans: Plan[] = [
-  { id: "p1", name: "Basic", pricePerMonth: 199, durationMonths: 1, description: "Essential features", isActive: true },
-  { id: "p2", name: "Pro", pricePerMonth: 499, durationMonths: 1, description: "Most popular", isActive: true },
-  { id: "p3", name: "Enterprise", pricePerMonth: 1499, durationMonths: 1, description: "For large fleets", isActive: false },
+  { id: "p1", name: "Daily", pricePerMonth: 199, durationMonths: 1, description: "Essential features", isActive: true },
+  { id: "p2", name: "Weekly", pricePerMonth: 499, durationMonths: 1, description: "Most popular", isActive: true },
+  { id: "p3", name: "Monthly", pricePerMonth: 1499, durationMonths: 1, description: "For large fleets", isActive: false },
 ];
 
 const mockDrivers: Driver[] = [
@@ -118,6 +125,7 @@ export default function SubscriptionManagement() {
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [showPaymentsModalForDriver, setShowPaymentsModalForDriver] = useState<string | null>(null);
 
+
   // Pagination for plans list
   const [page, setPage] = useState(1);
   const pageSize = 5;
@@ -166,10 +174,10 @@ export default function SubscriptionManagement() {
     if (payload.id) {
       setPlans((prev) => prev.map((p) => (p.id === payload.id ? { ...(payload as Plan) } : p)));
     } else {
-  const id = `p_${Math.random().toString(36).slice(2, 9)}`;
-  const { id: _payloadId, ...payloadWithoutId } = payload as Partial<Plan> & { id?: string };
-  setPlans((prev) => [{ id, ...(payloadWithoutId as Omit<Plan, "id">) }, ...prev]);
-}
+      const id = `p_${Math.random().toString(36).slice(2, 9)}`;
+      const { id: _payloadId, ...payloadWithoutId } = payload as Partial<Plan> & { id?: string };
+      setPlans((prev) => [{ id, ...(payloadWithoutId as Omit<Plan, "id">) }, ...prev]);
+    }
     setShowPlanModal(false);
   }
 
@@ -360,47 +368,138 @@ export default function SubscriptionManagement() {
   );
 }
 
-// Plan form component
-function PlanForm({ initial, onCancel, onSave }: { initial?: Partial<Plan> & { id?: string }; onCancel: () => void; onSave: (p: Partial<Plan> & { id?: string }) => void }) {
+function PlanForm({
+  initial,
+  onCancel,
+  onSave,
+}: {
+  initial?: Partial<Plan> & { id?: string };
+  onCancel: () => void;
+  onSave: (p: Partial<Plan> & { id?: string }) => void;
+}) {
   const [name, setName] = useState(initial?.name ?? "");
   const [price, setPrice] = useState(initial?.pricePerMonth ?? 0);
   const [duration, setDuration] = useState(initial?.durationMonths ?? 1);
   const [desc, setDesc] = useState(initial?.description ?? "");
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
 
+  // New fields
+  const [vehicleType, setVehicleType] = useState<VehicleType>(
+    (initial?.vehicleType as VehicleType) ?? "car_economy"
+  );
+
+  const [rideLimit, setRideLimit] = useState<number>(initial?.rideLimit ?? 0);
+  const [rideLimitPeriod, setRideLimitPeriod] = useState<RideLimitPeriod>(
+    (initial?.rideLimitPeriod as RideLimitPeriod) ?? "monthly"
+  );
+
+  const periodDays = (p: RideLimitPeriod) => (p === "daily" ? 1 : p === "weekly" ? 7 : 30);
+
   return (
     <div className="space-y-3">
       <div>
         <label className="block text-sm font-medium">Name</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} className="mt-1 block w-full border rounded-md p-2" />
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="mt-1 block w-full border rounded-md p-2"
+        />
       </div>
+
       <div className="grid grid-cols-2 gap-3">
+        {/* Vehicle type selector */}
         <div>
-          <label className="block text-sm font-medium">Price / month</label>
-          <input type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} className="mt-1 block w-full border rounded-md p-2" />
+          <label className="block text-sm font-medium">Vehicle type</label>
+          <select
+            value={vehicleType}
+            onChange={(e) => setVehicleType(e.target.value as VehicleType)}
+            className="mt-1 block w-full border rounded-md p-2"
+          >
+            <option value="bike">Bike</option>
+            <option value="auto">Auto</option>
+            <option value="car_economy">Car (economy)</option>
+            <option value="car_premium">Car (premium)</option>
+          </select>
         </div>
         <div>
-          <label className="block text-sm font-medium">Duration (months)</label>
-          <input type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="mt-1 block w-full border rounded-md p-2" />
+          <label className="block text-sm font-medium">Price</label>
+          <input
+            type="number"
+            value={price}
+            onChange={(e) => setPrice(Number(e.target.value))}
+            className="mt-1 block w-full border rounded-md p-2"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">Ride limit period</label>
+          <select
+            value={rideLimitPeriod}
+            onChange={(e) => setRideLimitPeriod(e.target.value as RideLimitPeriod)}
+            className="mt-1 block w-full border rounded-md p-2"
+          >
+            <option value="daily">Daily (1 day)</option>
+            <option value="weekly">Weekly (7 days)</option>
+            <option value="monthly">Monthly (30 days)</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">Ride limit (per selected period)</label>
+          <input
+            type="number"
+            min={0}
+            value={rideLimit}
+            onChange={(e) => setRideLimit(Number(e.target.value))}
+            className="mt-1 block w-full border rounded-md p-2"
+          />
         </div>
       </div>
+
+      {/* Ride limit controls */}
+      {/* <div className="grid grid-cols-2 gap-3 items-end">
+      </div> */}
       <div>
-        <label className="block text-sm font-medium">Description</label>
-        <textarea value={desc} onChange={(e) => setDesc(e.target.value)} className="mt-1 block w-full border rounded-md p-2" />
+        <label className="block text-sm font-medium">Description <span className="text-xs text-gray-500">(Optional)</span></label>
+        <textarea
+          value={desc}
+          onChange={(e) => setDesc(e.target.value)}
+          className="mt-1 block w-full border rounded-md p-2"
+        />
       </div>
+
       <div className="flex items-center gap-3">
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={(e) => setIsActive(e.target.checked)}
+          />
           <span className="text-sm">Active</span>
         </label>
       </div>
+
       <div className="flex justify-end gap-2">
         <button className="px-4 py-2 rounded-md bg-gray-100" onClick={onCancel}>
           Cancel
         </button>
         <button
           className="px-4 py-2 rounded-md bg-indigo-600 text-white"
-          onClick={() => onSave({ id: initial?.id, name, pricePerMonth: price, durationMonths: duration, description: desc, isActive })}
+          onClick={() =>
+            onSave({
+              id: initial?.id,
+              name,
+              pricePerMonth: price,
+              durationMonths: duration,
+              description: desc,
+              isActive,
+              vehicleType,
+              rideLimit,
+              rideLimitPeriod,
+              // If you prefer to store numeric days too:
+              rideLimitPeriodDays: periodDays(rideLimitPeriod),
+            })
+          }
         >
           Save
         </button>
@@ -408,6 +507,7 @@ function PlanForm({ initial, onCancel, onSave }: { initial?: Partial<Plan> & { i
     </div>
   );
 }
+
 
 // Payments view
 function PaymentsView({ driver, payments, plans, onAdd }: { driver: Driver; payments: Payment[]; plans: Plan[]; onAdd: (payload: { driverId: string; amount: number; planId?: string | null }) => void }) {
@@ -421,7 +521,7 @@ function PaymentsView({ driver, payments, plans, onAdd }: { driver: Driver; paym
         <div className="font-medium">{driver.name}</div>
       </div>
 
-      <div className="mb-4">
+      {/* <div className="mb-4">
         <div className="text-sm text-gray-500">Add payment / charge</div>
         <div className="flex gap-2 mt-2">
           <input type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="p-2 border rounded-md w-32" placeholder="Amount" />
@@ -444,7 +544,7 @@ function PaymentsView({ driver, payments, plans, onAdd }: { driver: Driver; paym
             Add
           </button>
         </div>
-      </div>
+      </div> */}
 
       <div>
         <h4 className="font-medium mb-2">Payment history</h4>
