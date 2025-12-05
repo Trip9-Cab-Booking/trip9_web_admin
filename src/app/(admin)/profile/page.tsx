@@ -59,7 +59,6 @@ const Profile: React.FC = () => {
         avatarPreview: storedAvatar || null,
       });
     } else {
-      // default values
       setProfile((p) => ({
         ...p,
         name: "Admin",
@@ -71,7 +70,6 @@ const Profile: React.FC = () => {
     e.preventDefault();
     setIsEditing(false);
 
-    // Save locally (no API)
     const { name, email, phone } = profile;
     const payload = {
       userName: name,
@@ -109,8 +107,6 @@ const Profile: React.FC = () => {
       alert("Passwords do not match.");
       return;
     }
-
-    // Simulate update (local only)
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
@@ -145,19 +141,19 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="space-y-8">
           {/* Profile Information Card */}
-          <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
             <div className="px-6 py-8">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                   Personal Information
                 </h2>
                 <button
                   onClick={() => setIsEditing(!isEditing)}
-                  className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-700 transition-colors dark:bg-blue-800 dark:hover:bg-blue-700"
                 >
                   {isEditing ? "Cancel" : "Edit Profile"}
                 </button>
@@ -165,7 +161,7 @@ const Profile: React.FC = () => {
 
               <div className="flex items-center mb-8">
                 <div className="relative">
-                  <div className="h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
+                  <div className="h-24 w-24 rounded-full bg-blue-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
                     {profile.avatarPreview ? (
                       <Image
                         src={profile.avatarPreview}
@@ -176,7 +172,7 @@ const Profile: React.FC = () => {
                         priority={false}
                       />
                     ) : (
-                      <User className="h-12 w-12 text-blue-900" />
+                      <User className="h-12 w-12 text-blue-900 dark:text-gray-100" />
                     )}
                   </div>
                   {isEditing && (
@@ -192,17 +188,17 @@ const Profile: React.FC = () => {
                   )}
                 </div>
                 <div className="ml-6">
-                  <h3 className="text-2xl font-bold text-gray-900">
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {profile.name}
                   </h3>
-                  <p className="text-gray-600">Administrator</p>
+                  <p className="text-gray-600 dark:text-gray-400">Administrator</p>
                 </div>
               </div>
 
               <form onSubmit={handleProfileUpdate} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2 flex items-center gap-2">
                       <User className="inline h-4 w-4" />
                       Full name
                     </label>
@@ -216,12 +212,12 @@ const Profile: React.FC = () => {
                         }))
                       }
                       disabled={!isEditing}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 transition-colors"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       placeholder="Full name"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2 flex items-center gap-2">
                       <Mail className="inline h-4 w-4" />
                       Email
                     </label>
@@ -235,12 +231,12 @@ const Profile: React.FC = () => {
                         }))
                       }
                       disabled={!isEditing}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 transition-colors"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       placeholder="Email"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2 flex items-center gap-2">
                       <Phone className="inline h-4 w-4" />
                       Phone
                     </label>
@@ -254,7 +250,7 @@ const Profile: React.FC = () => {
                         }))
                       }
                       disabled={!isEditing}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 transition-colors"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       placeholder="Phone"
                     />
                   </div>
@@ -264,7 +260,7 @@ const Profile: React.FC = () => {
                   <div className="flex justify-end">
                     <button
                       type="submit"
-                      className="px-6 py-3 bg-blue-900 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="px-6 py-3 bg-blue-900 text-white rounded-lg hover:bg-blue-700 transition-colors dark:bg-blue-800 dark:hover:bg-blue-700"
                     >
                       Save changes
                     </button>
@@ -275,28 +271,28 @@ const Profile: React.FC = () => {
           </div>
 
           {/* Security Settings Card */}
-          <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
             <div className="px-6 py-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
                 Security Settings
               </h2>
               <div className="space-y-4">
                 <button
                   onClick={() => setShowResetModal(true)}
-                  className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors group"
+                  className="w-full flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors group bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 >
                   <div className="flex items-center">
-                    <Key className="h-5 w-5 text-gray-400 group-hover:text-blue-600 mr-3" />
+                    <Key className="h-5 w-5 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 mr-3" />
                     <div className="text-left">
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-gray-900 dark:text-gray-100">
                         Update Password
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         Change your account password
                       </p>
                     </div>
                   </div>
-                  <ArrowLeft className="h-5 w-5 text-gray-400 group-hover:text-blue-600 rotate-180" />
+                  <ArrowLeft className="h-5 w-5 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 rotate-180" />
                 </button>
               </div>
             </div>
@@ -307,27 +303,25 @@ const Profile: React.FC = () => {
       {/* Reset Password Modal */}
       {showResetModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Update Password
-            </h3>
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 text-gray-900 dark:text-gray-100">
+            <h3 className="text-lg font-semibold mb-4">Update Password</h3>
             <form onSubmit={handlePasswordReset} className="space-y-4">
               {/* Current Password */}
               <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                   Current password
                 </label>
                 <input
                   type={showOld ? "text" : "password"}
                   value={oldPassword}
                   onChange={(e) => setOldPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowOld(!showOld)}
-                  className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
                 >
                   {showOld ? <Eye size={18} /> : <EyeOff size={18} />}
                 </button>
@@ -335,20 +329,20 @@ const Profile: React.FC = () => {
 
               {/* New Password */}
               <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                   New password
                 </label>
                 <input
                   type={showNew ? "text" : "password"}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowNew(!showNew)}
-                  className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
                 >
                   {showNew ? <Eye size={18} /> : <EyeOff size={18} />}
                 </button>
@@ -356,20 +350,20 @@ const Profile: React.FC = () => {
 
               {/* Confirm New Password */}
               <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                   Confirm new password
                 </label>
                 <input
                   type={showConfirm ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
                 >
                   {showConfirm ? <Eye size={18} /> : <EyeOff size={18} />}
                 </button>
@@ -380,7 +374,7 @@ const Profile: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowResetModal(false)}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 >
                   Cancel
                 </button>
@@ -400,24 +394,21 @@ const Profile: React.FC = () => {
       {/* Forgot Password Modal */}
       {showForgotModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Forgot Password
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Enter your email address and we&apos;ll send you a link to reset your
-              password.
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 text-gray-900 dark:text-gray-100">
+            <h3 className="text-lg font-semibold mb-4">Forgot Password</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Enter your email address and we&apos;ll send you a link to reset your password.
             </p>
             <form onSubmit={handleForgotPassword} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                   Email Address
                 </label>
                 <input
                   type="email"
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="Enter your email"
                   required
                 />
@@ -426,7 +417,7 @@ const Profile: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowForgotModal(false)}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 >
                   Cancel
                 </button>

@@ -182,7 +182,7 @@ export default function RideListPage() {
   ]);
 
 
-  const totalTableColumns = 12;
+  const totalTableColumns = 10;
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -191,9 +191,9 @@ export default function RideListPage() {
   };
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen font-inter">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Ride Management</h1>
-      <div className="bg-white border rounded-xl p-3 shadow-sm mb-6">
+    <div className="p-6 bg-gray-100 dark:bg-gray-900 min-h-screen font-inter">
+      <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6 text-center">Ride Management</h1>
+      <div className="bg-white dark:bg-gray-900 border rounded-xl p-3 shadow-sm mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           {/* Left group: search + date range */}
           <div className="flex flex-col items-center gap-2 flex-1 min-w-0">
@@ -239,7 +239,7 @@ export default function RideListPage() {
                 <div className="relative">
                   <button
                     onClick={() => setShowPaymentDropdown((v) => !v)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border text-sm shadow-sm hover:shadow focus:outline-none"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-gray-900 border text-sm shadow-sm hover:shadow focus:outline-none"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 1.567-3 3.5S10.343 15 12 15s3-1.567 3-3.5S13.657 8 12 8zM12 3v2M12 19v2" /></svg>
                     <span className="text-xs">{selectedPayments.length ? `${selectedPayments.length} selected` : 'Payment'}</span>
@@ -247,7 +247,7 @@ export default function RideListPage() {
                   </button>
 
                   {showPaymentDropdown && (
-                    <div className="absolute right-0 mt-2 w-44 bg-white border rounded-lg shadow-lg z-20 p-2">
+                    <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-gray-900 border rounded-lg shadow-lg z-20 p-2">
                       {paymentOptions.map((opt) => (
                         <label key={opt} className="flex items-center gap-2 px-2 py-1 text-sm hover:bg-gray-50 rounded">
                           <input type="checkbox" checked={selectedPayments.includes(opt)} onChange={() => toggleMulti(selectedPayments, setSelectedPayments, opt)} />
@@ -266,7 +266,7 @@ export default function RideListPage() {
                       <button
                         key={s}
                         onClick={() => toggleMulti(selectedStatuses, setSelectedStatuses, s)}
-                        className={`px-2 py-1 text-xs rounded-full border ${active ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-200'}`}
+                        className={`px-2 py-1 text-xs rounded-full border ${active ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-white border-gray-200'}`}
                       >
                         {s}
                       </button>
@@ -275,9 +275,9 @@ export default function RideListPage() {
                   {/* more dropdown for remaining statuses if any */}
                   {statusOptions.length > 4 && (
                     <div className="relative">
-                      <button onClick={() => setShowStatusDropdown((v) => !v)} className="px-2 py-1 text-xs rounded-full border bg-white border-gray-200">More</button>
+                      <button onClick={() => setShowStatusDropdown((v) => !v)} className="px-2 py-1 text-xs rounded-full border bg-white dark:bg-gray-900 border-gray-200">More</button>
                       {showStatusDropdown && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-20 p-2">
+                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 border rounded-lg shadow-lg z-20 p-2">
                           {statusOptions.map((s) => (
                             <label key={s} className="flex items-center gap-2 px-2 py-1 text-sm hover:bg-gray-50 rounded">
                               <input type="checkbox" checked={selectedStatuses.includes(s)} onChange={() => toggleMulti(selectedStatuses, setSelectedStatuses, s)} />
@@ -292,7 +292,7 @@ export default function RideListPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-2">
-                  <button onClick={resetFilters} className="px-3 py-1 text-xs rounded-lg border bg-white hover:bg-gray-50">Reset</button>
+                  <button onClick={resetFilters} className="px-3 py-1 text-xs rounded-lg border bg-white dark:bg-gray-900 hover:bg-gray-50">Reset</button>
                   <button onClick={applyFilters} className="px-3 py-1 text-xs rounded-lg bg-indigo-600 text-white shadow-sm">Apply</button>
                 </div>
               </div>
@@ -313,7 +313,7 @@ export default function RideListPage() {
         </div>
       ) : (
         <>
-          <div className="bg-white shadow-md rounded-lg overflow-auto max-h-[60vh]">
+          <div className="bg-white dark:bg-gray-900 shadow-md rounded-lg overflow-auto max-h-[60vh]">
             <table className="min-w-full w-full table-fixed text-sm divide-y divide-gray-200">
               <thead className="bg-gray-200">
                 <tr>
@@ -330,7 +330,7 @@ export default function RideListPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Action</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200">
                 {rides.length === 0 ? (
                   <tr>
                     <td colSpan={totalTableColumns} className="text-center py-4 text-gray-500">
