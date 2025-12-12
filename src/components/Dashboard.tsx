@@ -15,6 +15,9 @@ import {
   Legend,
   CartesianGrid,
 } from "recharts";
+import CompactPlanUsageRecharts from "./CompactPlanUsageRecharts";
+import CompactPlanUsageBarChart from "./CompactPlanUsageRecharts";
+import RidesPerUserBarChart from "./RidesPerUserBarChart";
 
 const COLORS = ["#6366F1", "#06B6D4", "#10B981", "#F59E0B", "#EF4444"];
 
@@ -101,6 +104,20 @@ export default function Dashboard() {
   const avgDuration = 18;
   const completionRate = Math.round((mock.funnel.find((s) => s.step === "Completed")?.count || 0) / (mock.funnel[0].count || 1) * 100);
 
+  const planUsageData = [
+    { name: "Daily", value: 42 },
+    { name: "Weekly", value: 30 },
+    { name: "Monthly", value: 15 },
+    { name: "Unlimited", value: 12 },
+  ];
+
+  const rideBuckets = [
+    { range: "1–5", users: 120 },
+    { range: "6–10", users: 75 },
+    { range: "11–20", users: 40 },
+    { range: "21–30", users: 20 },
+    { range: "30+", users: 8 },
+  ];
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
@@ -260,7 +277,15 @@ export default function Dashboard() {
 
             <div className="bg-white p-4 rounded-2xl shadow-sm border">
               <h3 className="text-lg font-medium mb-3">Subscription plan usage</h3>
-              <div className="text-sm text-gray-600">Show plan distribution, popular plans, revenue contribution per plan — use a pie or stacked bar.</div>
+              <CompactPlanUsageBarChart
+                title="Subscription Plan Usage"
+                subtitle="Active drivers by plan"
+                data={planUsageData}
+              // onBarClick={(slice) => {
+              //   console.log("Clicked plan:", slice);
+              //   // e.g. setSelectedPlanId(slice.name)
+              // }}
+              />
             </div>
           </section>
         )}
@@ -291,7 +316,8 @@ export default function Dashboard() {
 
             <div className="bg-white p-4 rounded-2xl shadow-sm border">
               <h3 className="text-lg font-medium mb-3">Rides per user distribution</h3>
-              <div className="text-sm text-gray-600">Histogram or CDF to show heavy users vs casual users (placeholder)</div>
+              {/* <div className="text-sm text-gray-600">Histogram or CDF to show heavy users vs casual users (placeholder)</div> */}
+              <RidesPerUserBarChart data={rideBuckets} />
             </div>
           </section>
         )}
