@@ -13,10 +13,10 @@ type CategoryPricing = Record<VehicleCategory, {
 
 type NightCharge = {
   enabled: boolean;
-  start: string; 
+  start: string;
   end: string;
   type: "percentage" | "flat";
-  value: number; 
+  value: number;
 };
 
 type Surge = {
@@ -114,7 +114,7 @@ export default function PricingControl() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <aside className="md:col-span-1 bg-white rounded-lg shadow p-4">
           <nav className="space-y-2">
-            <button onClick={() => setActiveTab("settings")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "settings" ? "bg-indigo-600 text-white" : "hover:bg-gray-50"}`}>Pricing Settings</button>
+            {/* <button onClick={() => setActiveTab("settings")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "settings" ? "bg-indigo-600 text-white" : "hover:bg-gray-50"}`}>Pricing Settings</button> */}
             <button onClick={() => setActiveTab("categories")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "categories" ? "bg-indigo-600 text-white" : "hover:bg-gray-50"}`}>Vehicle Categories</button>
             <button onClick={() => setActiveTab("promo")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "promo" ? "bg-indigo-600 text-white" : "hover:bg-gray-50"}`}>Promo & Discounts</button>
           </nav>
@@ -122,7 +122,7 @@ export default function PricingControl() {
           <div className="mt-4">
             <h3 className="text-sm font-medium text-gray-600">Quick actions</h3>
             <div className="flex gap-2 mt-2">
-              <button className="px-3 py-2 rounded bg-green-500 text-white text-sm">Save settings</button>
+              <button className="px-3 py-2 rounded bg-indigo-600 text-white text-sm">Save settings</button>
               <button className="px-3 py-2 rounded bg-gray-200 text-sm">Reset</button>
             </div>
           </div>

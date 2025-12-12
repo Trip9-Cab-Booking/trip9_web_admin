@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog/Dialog'; // adjust import paths
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog/Dialog';
 import { Button } from './ui/button/Button';
 
 type DeleteConfirmModalProps = {
@@ -9,8 +9,8 @@ type DeleteConfirmModalProps = {
     loading?: boolean;
     title?: string;
     description?: string;
-    destructiveLabel?: string; // e.g. "Delete"
-    cancelLabel?: string; // e.g. "Cancel"
+    destructiveLabel?: string;
+    cancelLabel?: string;
 };
 
 export default function DeleteConfirmModal({
@@ -27,7 +27,6 @@ export default function DeleteConfirmModal({
         try {
             await onConfirm();
         } finally {
-            // parent should close modal if appropriate; we also close here for convenience
             onOpenChange(false);
         }
     };

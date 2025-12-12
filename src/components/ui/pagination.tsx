@@ -11,7 +11,7 @@ type Props = {
   onPageSizeChange?: (size: number) => void;
   siblingCount?: number;
   showFirstLast?: boolean;
-  compact?: boolean; 
+  compact?: boolean;
 };
 
 export default function Pagination({
@@ -52,24 +52,6 @@ export default function Pagination({
 
   return (
     <div className={`flex items-center justify-between gap-3 ${compact ? "text-sm" : "text-base"}`}>
-      <div className="flex items-center gap-2">
-        {onPageSizeChange && (
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">Rows:</label>
-            <select
-              value={pageSize}
-              onChange={(e) => onPageSizeChange(Number(e.target.value))}
-              className="border rounded-md px-2 py-1 text-sm"
-              aria-label="Rows per page"
-            >
-              {pageSizeOptions.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
-
       <nav className="inline-flex items-center gap-1" aria-label="Pagination">
         {showFirstLast && (
           <button

@@ -1,5 +1,9 @@
+// src/types/types.ts
 export type VehicleType = "car_economy" | "car_premium" | "bike" | "auto";
-export type RideLimitPeriod = "daily" | "weekly" | "monthly" | "unlimited";
+export type RideLimitPeriod = "daily" | "weekly" | "monthly" | "yearly" | "unlimited";
+
+// union used by form components / payloads
+export type SubscriptionType = "daily" | "weekly" | "monthly" | "yearly" | "unlimited";
 
 export type VehiclePricingEntry = {
     price?: number;
@@ -8,17 +12,20 @@ export type VehiclePricingEntry = {
 };
 
 export type Plan = {
-  id: string;
-  name: string;
-  pricePerMonth: number;
-  durationMonths: number;
-  description?: string;
-  isActive: boolean;
-  vehicleTypes?: VehicleType[];
-  vehiclePricing?: Partial<Record<VehicleType, VehiclePricingEntry>>; 
-  rideLimit?: number; 
-  rideLimitPeriod?: RideLimitPeriod;
-  rideLimitPeriodDays?: number;
+    id: string;
+    name: string;
+    subscriptionType?: SubscriptionType;
+    pricePerMonth?: number;
+    durationMonths?: number;
+    days?: number | null;
+    isUnlimited?: boolean;
+    description?: string;
+    isActive?: boolean;
+    vehicleTypes?: VehicleType[];
+    vehiclePricing?: Partial<Record<VehicleType, VehiclePricingEntry>>;
+    rideLimit?: number;
+    rideLimitPeriod?: RideLimitPeriod;
+    rideLimitPeriodDays?: number;
 };
 
 export type Driver = {
@@ -27,6 +34,12 @@ export type Driver = {
     phone?: string;
     email?: string;
     planId?: string | null;
+    driverName?: string | null;
+    mobile?: string | null;
+    walletBalance?: number;
+    _id?: string;
+    driverId?: string;
+    subscriptionPlanId?: string | null;
     subscriptionStart?: string | null;
     subscriptionEnd?: string | null;
 };
@@ -43,11 +56,11 @@ export type Payment = {
 export const formatCurrency = (n: number) => `₹${n.toFixed(2)}`;
 export const todayISO = () => new Date().toISOString();
 
+// UI meta (if you use it inside TS files)
+import React from "react";
 const VEHICLE_META: Record<VehicleType, { label: string; emoji?: string; svg?: React.ReactNode }> = {
     car_economy: { label: "Car (economy)", emoji: "🚗" },
     car_premium: { label: "Car (premium)", emoji: "🚘" },
     auto: { label: "Auto", emoji: "🛺" },
     bike: { label: "Bike", emoji: "🏍️" },
 };
-
-

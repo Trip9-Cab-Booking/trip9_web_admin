@@ -2,141 +2,132 @@ import React from "react";
 import type { Plan, VehicleType } from "../../../types/types";
 import { formatCurrency } from "../../../types/types";
 
-const ALL_VEHICLE_TYPES: VehicleType[] = ["car_economy", "car_premium", "auto", "bike"];
-
-const VEHICLE_META: Record<VehicleType, { label: string; emoji?: string }> = {
-    car_economy: { label: "Car (economy)", emoji: "🚗" },
-    car_premium: { label: "Car (premium)", emoji: "🚘" },
-    auto: { label: "Auto", emoji: "🛺" },
-    bike: { label: "Bike", emoji: "🏍️" },
-};
-
-function periodLabel(period?: string) {
-    switch (period) {
-        case "daily":
-            return "day";
-        case "weekly":
-            return "week";
-        case "monthly":
-            return "month";
-        case "unlimited":
-            return "unlimited";
-        default:
-            return "period";
-    }
-}
-
-export default function PlanCard({
-    plan,
-    onEdit,
-    onDelete,
-    onViewDrivers,
-}: {
+type Props = {
     plan: Plan;
-    onEdit: (p: Plan) => void;
+    onEdit: (plan: Plan) => void;
+    onView?: (plan: Plan) => void;
     onDelete: (id: string) => void;
     onViewDrivers: (id: string) => void;
-}) {
-    const supported = new Set(plan.vehicleTypes ?? []);
-    const vp = plan.vehiclePricing ?? ({} as Partial<Record<VehicleType, { price?: number; durationDays?: number; rideLimit?: number }>>);
+};
 
-    const planRideLimit = plan.rideLimit;
-    const planRidePeriod = plan.rideLimitPeriod ?? "monthly";
+export default function PlanCard({ plan, onEdit, onDelete, onView, onViewDrivers }: Props) {
+    const vehicleList = plan.vehicleTypes ?? [];
+    const vp = plan.vehiclePricing ?? {};
+
+    const priceLabel = typeof plan.pricePerMonth === "number" ? formatCurrency(plan.pricePerMonth) : "—";
+    const statusLabel = plan.isActive ? "Active" : "Inactive";
+
+    let durationLabel: string | undefined;
+
+    if (plan.subscriptionType === "unlimited") {
+        durationLabel = "Unlimited";
+    } else if (typeof plan.days === "number") {
+        durationLabel = `${Math.round(plan.days)}d`;
+    } else if (typeof plan.durationMonths === "number") {
+        durationLabel = `${plan.durationMonths} mo`;
+    } else {
+        durationLabel = "—";
+    }
+
 
     return (
-        <div className="border rounded-md p-4 flex flex-col gap-3 bg-white dark:bg-gray-800">
-            <div className="flex justify-between items-start">
-                <div>
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{plan.name}</h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{plan.description}</p>
+        <article className="border rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 truncate">{plan.name}</h3>
+                        <span
+                            className={`text-xs font-medium px-2 py-0.5 rounded-full ${plan.isActive ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-600 dark:bg-gray-700"
+                                }`}
+                            aria-hidden
+                        >
+                            {statusLabel}
+                        </span>
+                    </div>
+
+                    {plan.description && (
+                        <p className="text-sm text-gray-500 dark:text-gray-300 mt-1 truncate">{plan.description}</p>
+                    )}
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                        {vehicleList.length ? (
+                            vehicleList.map((vt) => {
+                                // vt is the canonical vehicle key (e.g. "car_economy", "auto", "bike")
+                                let label: string = vt;
+                                if ((vt as string).startsWith("car_")) {
+                                    label = `Car — ${vt.includes("economy") ? "Economy" : "Premium"}`;
+                                } else if (vt === "auto") {
+                                    label = "Auto";
+                                } else if (vt === "bike") {
+                                    label = "Bike";
+                                }
+
+                                const override = vp[vt as keyof typeof vp];
+                                const smallPrice = override?.price ?? plan.pricePerMonth;
+                                const durationDaysFromOverride = override?.durationDays;
+                                const smallDur =
+                                    durationDaysFromOverride ??
+                                    (typeof plan.days === "number" ? plan.days : undefined);
+
+                                const smallDurLabel =
+                                    typeof smallDur === "number" ? `${Math.round(smallDur)}d` : undefined;
+
+                                return (
+                                    <span
+                                        key={vt}
+                                        className={`text-xs px-2 py-1 rounded-md border ${override ? "bg-indigo-50 border-indigo-200 text-indigo-900" : "bg-gray-50 border-gray-100 text-gray-700 dark:bg-gray-700"
+                                            }`}
+                                        title={`${label}`}
+                                    >
+                                        <div className="font-medium">{label}</div>
+                                        <div className="text-xs text-gray-500 mt-0.5">
+                                            {smallPrice ? formatCurrency(smallPrice) : "—"}{smallDurLabel ? ` • ${smallDurLabel}` : ""}
+                                        </div>
+                                    </span>
+                                );
+                            })
+                        ) : (
+                            <span className="text-xs italic text-gray-500">No vehicle types configured</span>
+                        )}
+                    </div>
                 </div>
 
-                {/* <div className="text-right">
-                    <div className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(plan.pricePerMonth)}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">/ month (fallback)</div>
-                </div> */}
+                <div className="flex flex-col items-end gap-2">
+                    <div className="text-lg font-bold text-gray-900 dark:text-gray-50">{priceLabel}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{durationLabel ?? "—"}</div>
+                </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-                {ALL_VEHICLE_TYPES.map((vt) => {
-                    const isSupported = supported.has(vt);
-                    const override = vp[vt];
-                    const showOverride = !!override && (typeof override.price === "number" || typeof override.durationDays === "number" || typeof override.rideLimit === "number");
-
-                    const effectivePriceLabel =
-                        showOverride && typeof override?.price === "number"
-                            ? formatCurrency(override!.price!)
-                            : plan.pricePerMonth
-                                ? formatCurrency(plan.pricePerMonth)
-                                : "—";
-
-                    const effectiveDurationLabel =
-                        showOverride && typeof override?.durationDays === "number"
-                            ? `${override!.durationDays}d`
-                            : plan.durationMonths
-                                ? `${plan.durationMonths}mo`
-                                : "—";
-
-                    const effectiveRideLimit = typeof override?.rideLimit === "number" ? override!.rideLimit! : typeof planRideLimit === "number" ? planRideLimit : null;
-
-                    const ridePeriod = plan.rideLimitPeriod ?? "monthly";
-
-                    const rideText =
-                        ridePeriod === "unlimited"
-                            ? "Unlimited"
-                            : effectiveRideLimit !== null
-                                ? `${effectiveRideLimit} ride${effectiveRideLimit === 1 ? "" : "s"}/${periodLabel(ridePeriod)}`
-                                : "—";
-
-                    return (
-                        <div
-                            key={vt}
-                            className={`flex items-center gap-3 px-3 py-1 rounded-md text-sm select-none transition-colors
-                ${isSupported
-                                    ? "bg-indigo-50 border border-indigo-200 text-indigo-900 dark:bg-indigo-900/30 dark:border-indigo-700"
-                                    : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
-                                }`}
-                            title={`${VEHICLE_META[vt].label}${isSupported ? "" : " — not included"}`}
-                        >
-                            <span className="text-lg">{VEHICLE_META[vt].emoji}</span>
-
-                            <div className="flex flex-col leading-tight">
-                                <span className={`${isSupported ? "font-medium text-indigo-900 dark:text-indigo-200" : "text-gray-700 dark:text-gray-200"}`}>
-                                    {VEHICLE_META[vt].label}
-                                </span>
-
-                                <div className="text-xs text-gray-600 dark:text-gray-300">
-                                    {isSupported ? (
-                                        <>
-                                            <span className="mr-1">
-                                                <strong className="text-gray-900 dark:text-gray-100">{effectivePriceLabel}</strong>
-                                                <span className="mx-1">•</span>
-                                                <span>{effectiveDurationLabel}</span>
-                                            </span>
-                                            {/* <span className="ml-2 text-xs text-indigo-600">{showOverride ? "override" : "fallback"}</span> */}
-                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{rideText}</div>
-                                        </>
-                                    ) : (
-                                        <span className="text-xs italic text-gray-500">Not included</span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-
-            <div className="flex gap-2 mt-3">
-                <button className="px-3 py-1 rounded-md bg-indigo-600 text-white text-sm" onClick={() => onEdit(plan)}>
+            <div className="mt-4 flex items-center justify-end gap-2">
+                <button
+                    type="button"
+                    onClick={() => onEdit(plan)}
+                    className="px-3 py-1 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm"
+                    aria-label={`Edit ${plan.name}`}
+                >
                     Edit
                 </button>
-                <button className="px-3 py-1 rounded-md bg-red-100 text-red-700 text-sm" onClick={() => onDelete(plan.id)}>
+
+                {onView && (
+                    <button
+                        type="button"
+                        onClick={() => onView(plan)}
+                        className="px-3 py-1 rounded-md bg-white border text-sm hover:bg-gray-50"
+                        aria-label={`View ${plan.name}`}
+                    >
+                        View
+                    </button>
+                )}
+
+                <button
+                    type="button"
+                    onClick={() => onDelete(plan.id)}
+                    className="px-3 py-1 rounded-md bg-red-50 text-red-700 border border-red-100 text-sm hover:bg-red-100"
+                    aria-label={`Delete ${plan.name}`}
+                >
                     Delete
                 </button>
-                <button className="px-3 py-1 rounded-md bg-gray-100 text-sm" onClick={() => onViewDrivers(plan.id)}>
-                    View drivers
-                </button>
             </div>
-        </div>
+        </article>
     );
 }
