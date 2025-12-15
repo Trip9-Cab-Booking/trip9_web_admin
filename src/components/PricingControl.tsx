@@ -114,7 +114,7 @@ export default function PricingControl() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <aside className="md:col-span-1 bg-white rounded-lg shadow p-4">
           <nav className="space-y-2">
-            {/* <button onClick={() => setActiveTab("settings")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "settings" ? "bg-indigo-600 text-white" : "hover:bg-gray-50"}`}>Pricing Settings</button> */}
+            <button onClick={() => setActiveTab("settings")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "settings" ? "bg-indigo-600 text-white" : "hover:bg-gray-50"}`}>Pricing Settings</button>
             <button onClick={() => setActiveTab("categories")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "categories" ? "bg-indigo-600 text-white" : "hover:bg-gray-50"}`}>Vehicle Categories</button>
             <button onClick={() => setActiveTab("promo")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "promo" ? "bg-indigo-600 text-white" : "hover:bg-gray-50"}`}>Promo & Discounts</button>
           </nav>

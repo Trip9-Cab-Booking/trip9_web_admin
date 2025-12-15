@@ -36,8 +36,22 @@ type DriversPage = {
   error?: string | null;
 };
 
+type DriversCountByPlan = {
+  subscriptionId: string;
+  planName: string;
+  subscriptionType: string;
+  isUnlimited: boolean;
+  days: number;
+  price: number;
+  driverCount: number;
+};
+
+
 
 export default function SubscriptionManagement() {
+  const [plansWithCounts, setPlansWithCounts] = useState<DriversCountByPlan[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
+  const [plansError, setPlansError] = useState<string | null>(null);
   const [plans, setPlans] = useState<TPlan[]>([]);
   const [plansLoading, setPlansLoading] = useState(false);
   const [plansTotalCount, setPlansTotalCount] = useState<number | null>(null);
@@ -50,7 +64,7 @@ export default function SubscriptionManagement() {
   const [isSavingPlan, setIsSavingPlan] = useState(false);
   const [isAddingPayment, setIsAddingPayment] = useState(false);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(3);
+  const [pageSize, setPageSize] = useState(2);
   const totalPlanPages = Math.max(1, Math.ceil(plans.length / pageSize));
   const pagedPlans = useMemo(() => plans.slice((page - 1) * pageSize, page * pageSize), [plans, page]);
   const [subscriptionStats, setSubscriptionStats] = useState({
@@ -571,22 +585,48 @@ export default function SubscriptionManagement() {
   }
 
 
-  function toggleShowPlan(plan: TPlan) {
-    // toggle same id -> hide
-    if (selectedPlanId === plan.id) {
-      setSelectedPlanId(null);
-      return;
-    }
+  // function toggleShowPlan(plan: TPlan) {
+  //   // toggle same id -> hide
+  //   if (selectedPlanId === plan.id) {
+  //     setSelectedPlanId(null);
+  //     return;
+  //   }
 
-    setSelectedPlanId(plan.id);
+  //   setSelectedPlanId(plan.id);
 
-    // If we already have cached drivers for this plan, don't re-fetch.
-    const existing = remoteDriversByPlan[plan.id];
-    if (existing && existing.drivers && existing.drivers.length > 0) return;
+  //   // If we already have cached drivers for this plan, don't re-fetch.
+  //   const existing = remoteDriversByPlan[plan.id];
+  //   if (existing && existing.drivers && existing.drivers.length > 0) return;
 
-    // Fetch first page
-    fetchDriversForSubscription(String(plan.subscriptionType ?? ""), plan.id, 1, DEFAULT_PAGE_SIZE);
+  //   // Fetch first page
+  //   fetchDriversForSubscription(String(plan.subscriptionType ?? ""), plan.id, 1, DEFAULT_PAGE_SIZE);
+  // }
+
+  function toggleShowPlan(planId: string) {
+    setSelectedPlanId((prev) => {
+      // closing
+      if (prev === planId) return null;
+
+      // opening → fetch drivers
+      const plan = plansWithCounts.find(p => p.subscriptionId === planId);
+      if (!plan) return planId;
+
+      const existing = remoteDriversByPlan[planId];
+
+      // fetch only if not already loaded
+      if (!existing || existing.drivers.length === 0) {
+        fetchDriversForSubscription(
+          plan.subscriptionType,
+          planId,
+          1,
+          DEFAULT_PAGE_SIZE
+        );
+      }
+
+      return planId;
+    });
   }
+
 
   function changePlanDriversPage(planId: string, newPage: number) {
     const pageSize = DEFAULT_PAGE_SIZE;
@@ -595,6 +635,28 @@ export default function SubscriptionManagement() {
     fetchDriversForSubscription(String(plan.subscriptionType ?? ""), planId, newPage, pageSize);
   }
 
+  async function fetchDriversCountByPlan() {
+    setLoadingPlans(true);
+    setPlansError(null);
+
+    try {
+      const res = await axiosInstance.get(
+        "/api/subscription/drivers-count-by-plan"
+      );
+
+      setPlansWithCounts(res.data.data ?? []);
+    } catch (err) {
+      console.error("drivers-count-by-plan error:", err);
+      setPlansError("Failed to load plans");
+      setPlansWithCounts([]);
+    } finally {
+      setLoadingPlans(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchDriversCountByPlan();
+  }, []);
 
 
   return (
@@ -674,8 +736,7 @@ export default function SubscriptionManagement() {
                       onEdit={(p) => handleEditPlan(p)}
                       onDelete={(id) => openDeleteModal(id)}
                       onView={handleViewPlan}
-                      onViewDrivers={() => toggleShowPlan(plan)}
-                    // onViewDrivers={(id: string) => setSelectedPlanId(id)}
+                      onViewDrivers={() => toggleShowPlan(plan.id)}
                     />
                   ))}
 
@@ -684,14 +745,6 @@ export default function SubscriptionManagement() {
                     totalPages={totalPages}
                     onPageChange={(p) => {
                       setPage(p);
-                      setSelectedPlanId(null);      // close open plan when plans page changes
-                      setRemoteDriversByPlan({});   // optional: clear cached remote driver pages
-                    }}
-                    pageSize={pageSize}
-                    pageSizeOptions={[5, 10, 25]}
-                    onPageSizeChange={(size) => {
-                      setPageSize(size);
-                      setPage(1);
                       setSelectedPlanId(null);
                       setRemoteDriversByPlan({});
                     }}
@@ -706,84 +759,126 @@ export default function SubscriptionManagement() {
         <div>
           <h3 className="text-lg font-medium mb-3 text-gray-900 dark:text-gray-100">Drivers by plan</h3>
           <div className="space-y-4">
-            {pagedPlans.map((p) => {
-              const pageData = remoteDriversByPlan[p.id];
-              const isOpen = selectedPlanId === p.id;
-              const driversToShow = pageData?.drivers ?? (driversByPlan[p.id] ?? []).slice(0, DEFAULT_PAGE_SIZE);
+            {plansWithCounts.map((p) => {
+              const pageData = remoteDriversByPlan[p.subscriptionId];
+              const isOpen = selectedPlanId === p.subscriptionId;
 
+              const driversToShow =
+                pageData?.drivers ??
+                (driversByPlan[p.subscriptionId] ?? []).slice(0, DEFAULT_PAGE_SIZE);
 
               return (
-                <div key={p.id} className="border rounded-md p-3 bg-white dark:bg-gray-800">
+                <div
+                  key={p.subscriptionId}
+                  className="border rounded-md p-3 bg-white dark:bg-gray-800"
+                >
+                  {/* Header */}
                   <div className="flex justify-between items-center mb-2">
                     <div>
-                      <div className="font-medium text-gray-900 dark:text-gray-100">{p.name}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">{(driversByPlan[p.id]?.length ?? 0)} drivers</div>
+                      <div className="font-medium text-gray-900 dark:text-gray-100">
+                        {p.planName}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        {p.driverCount} drivers
+                      </div>
                     </div>
-                    <div>
-                      <button
-                        className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-sm"
-                        onClick={() => toggleShowPlan(p)}
-                      >
-                        {isOpen ? "Hide" : "Show"}
-                      </button>
-                    </div>
+
+                    <button
+                      className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-sm disabled:opacity-50"
+                      onClick={() => toggleShowPlan(p.subscriptionId)}
+                      disabled={p.driverCount === 0}
+                    >
+                      {isOpen ? "Hide" : "Show"}
+                    </button>
                   </div>
 
+                  {/* Expanded content */}
                   {isOpen && (
                     <div className="mt-2 space-y-2">
-                      {pageData?.loading && <div className="text-sm text-gray-500">Loading…</div>}
+                      {/* Loading */}
+                      {pageData?.loading && (
+                        <div className="text-sm text-gray-500">Loading…</div>
+                      )}
 
+                      {/* Error */}
                       {pageData?.error && (
-                        <div className="text-sm text-red-600">Error: {pageData.error}</div>
+                        <div className="text-sm text-red-600">
+                          Error: {pageData.error}
+                        </div>
                       )}
 
-                      {driversToShow.length === 0 && !pageData?.loading && (
-                        <div className="text-sm text-gray-500">No drivers found.</div>
+                      {/* Empty */}
+                      {!pageData?.loading && driversToShow.length === 0 && (
+                        <div className="text-sm text-gray-500">
+                          No drivers found.
+                        </div>
                       )}
 
+                      {/* Drivers list */}
                       {driversToShow.map((d) => {
-                        const displayName = (d.name ?? "").toString().trim() || "Unknown Driver";
-                        const displayContact = (d.email ?? "").toString().trim() || (d.phone ?? "").toString().trim() || "N/A";
+                        const displayName =
+                          (d.name ?? "").trim() || "Unknown Driver";
+                        const displayContact =
+                          (d.email ?? "").trim() ||
+                          (d.phone ?? "").trim() ||
+                          "N/A";
 
                         return (
-                          <div key={d.id} className="flex justify-between items-center">
+                          <div
+                            key={d.id}
+                            className="flex justify-between items-center"
+                          >
                             <div>
-                              <div className="font-medium text-gray-900 dark:text-gray-100">{displayName}</div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 break-all">{displayContact}</div>
+                              <div className="font-medium text-gray-900 dark:text-gray-100">
+                                {displayName}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 break-all">
+                                {displayContact}
+                              </div>
                             </div>
 
-                            <div className="flex gap-2">
-                              <button
-                                className="px-2 py-1 rounded-md bg-indigo-600 text-white text-sm"
-                                onClick={() => openPaymentHistory(d.id)}
-                              >
-                                Payments
-                              </button>
-                            </div>
+                            <button
+                              className="px-2 py-1 rounded-md bg-indigo-600 text-white text-sm"
+                              onClick={() => openPaymentHistory(d.id)}
+                            >
+                              Payments
+                            </button>
                           </div>
                         );
                       })}
 
-
-                      {/* Pagination (only if remote results present) */}
+                      {/* Pagination */}
                       {pageData && pageData.totalPages > 1 && (
-                        <div className="flex items-center gap-2 justify-end pt-2">
+                        <div className="flex items-center justify-end gap-2 pt-2">
                           <button
-                            className="px-2 py-1 rounded-md bg-gray-100 text-sm"
-                            onClick={() => changePlanDriversPage(p.id, Math.max(1, (pageData.page || 1) - 1))}
-                            disabled={pageData.loading || (pageData.page || 1) <= 1}
+                            className="px-2 py-1 rounded-md bg-gray-100 text-sm disabled:opacity-50"
+                            onClick={() =>
+                              changePlanDriversPage(
+                                p.subscriptionId,
+                                Math.max(1, pageData.page - 1)
+                              )
+                            }
+                            disabled={pageData.loading || pageData.page <= 1}
                           >
                             Prev
                           </button>
 
-                          <div className="text-sm text-gray-500">
+                          <span className="text-sm text-gray-500">
                             Page {pageData.page} / {pageData.totalPages}
-                          </div>
+                          </span>
 
                           <button
-                            className="px-2 py-1 rounded-md bg-gray-100 text-sm"
-                            onClick={() => changePlanDriversPage(p.id, Math.min(pageData.totalPages, (pageData.page || 1) + 1))}
-                            disabled={pageData.loading || (pageData.page || 1) >= pageData.totalPages}
+                            className="px-2 py-1 rounded-md bg-gray-100 text-sm disabled:opacity-50"
+                            onClick={() =>
+                              changePlanDriversPage(
+                                p.subscriptionId,
+                                Math.min(pageData.totalPages, pageData.page + 1)
+                              )
+                            }
+                            disabled={
+                              pageData.loading ||
+                              pageData.page >= pageData.totalPages
+                            }
                           >
                             Next
                           </button>
@@ -794,6 +889,7 @@ export default function SubscriptionManagement() {
                 </div>
               );
             })}
+
 
             {/* Unassigned block (unchanged) */}
             <div className="border rounded-md p-3 bg-white dark:bg-gray-800">

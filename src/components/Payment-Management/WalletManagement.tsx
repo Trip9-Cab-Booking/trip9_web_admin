@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { axiosInstance } from "@/utils/axiosInstance";
 import Pagination from "../ui/pagination";
+import CustomSnackbar from "../CustomSnackbar";
 
 type Role = "user" | "driver";
 
@@ -38,24 +39,47 @@ export default function WalletManagement() {
   const [selectedTxns, setSelectedTxns] = useState<Transaction[]>([]);
   const [showLockModal, setShowLockModal] = useState(false);
   const [modalTargetWallet, setModalTargetWallet] = useState<Wallet | null>(null);
-  // Pagination states
+
+  // Pagination States for User/Driver wallets
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [txnPage, setTxnPage] = useState<number>(1);
-  const [txnLimit, setTxnLimit] = useState<number>(2);
-  const [txnTotal, setTxnTotal] = useState<number>(0);
-  const [txnTotalPages, setTxnTotalPages] = useState<number>(0);
+
+  // Transaction pagination
+  const [txnPage, setTxnPage] = useState(1);
+  const [txnLimit] = useState(5);
+  const [txnTotal, setTxnTotal] = useState(0);
+  const [txnTotalPages, setTxnTotalPages] = useState(1);
+
+  // Snackbar Notifications
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMsg, setSnackbarMsg] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error" | "info">("info");
+
+  function openSnackbar(message: string, severity: "success" | "error" | "info" = "info") {
+    setSnackbarMsg(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  }
+
+  function closeSnackbar() {
+    setSnackbarOpen(false);
+  }
 
 
   async function fetchWallets(role: Role, page: number, limit: number) {
     try {
-      const res = await axiosInstance.get(
-        `/api/admin/getAllWallets?ownerType=${role}&page=${page}&limit=${limit}`
-      );
-      console.log("fetchWallets response:", res?.data);
+      const res = await axiosInstance.get("/api/admin/getAllWallets", {
+        params: {
+          ownerType: role,
+          page,
+          limit,
+        },
+      });
+
       const apiWallets = res.data.data ?? [];
+      const pagination = res.data.pagination ?? {};
 
       const mapped: Wallet[] = apiWallets.map((w: any) => ({
         id: w._id,
@@ -73,98 +97,24 @@ export default function WalletManagement() {
 
       return {
         wallets: mapped,
-        pagination: {
-          page: res.data.page,
-          limit: res.data.limit,
-          total: res.data.total,
-          totalPages: res.data.totalPages,
+        meta: {
+          page: pagination.page,
+          limit: pagination.limit,
+          total: pagination.total,
+          totalPages: pagination.totalPages,
         },
       };
     } catch (err) {
       console.error("fetchWallets error:", err);
       return {
         wallets: [],
-        pagination: { page: 1, limit: 2, total: 0, totalPages: 1 },
+        meta: {
+          page: 1,
+          limit,
+          total: 0,
+          totalPages: 1,
+        },
       };
-    }
-  }
-
-  async function fetchWalletDetails(ownerId: string, ownerType: Role, txnPage = 1, txnLimit = 2) {
-    setLoadingDetails(true);
-    try {
-      const res = await axiosInstance.get(
-        `/api/admin/getwalletsDetails?ownerId=${encodeURIComponent(ownerId)}&ownerType=${encodeURIComponent(ownerType)}&txnPage=${txnPage}&txnLimit=${txnLimit}`
-      );
-      const payload = res.data.data;
-
-      const profile = payload?.profileDetails ?? null;
-      setSelectedProfile(profile);
-
-      const walletDetails = payload?.walletDetails;
-      if (walletDetails) {
-        setWallets(prev =>
-          prev.map(w =>
-            (w.walletId === walletDetails.walletId || w.ownerId === ownerId)
-              ? {
-                ...w,
-                walletId: walletDetails.walletId ?? w.walletId,
-                balance: Number(walletDetails.balance ?? w.balance ?? 0),
-                locked: Boolean(walletDetails.isWalletLock ?? w.locked)
-              }
-              : w
-          )
-        );
-      }
-
-      // transactions: server-sent rows
-      const rows = payload?.transactionHistory?.rows ?? [];
-
-      // map transactions
-      const mappedTxns: Transaction[] = rows.map((r: any) => {
-        const txType: "credit" | "debit" | "other" = (() => {
-          if (r.transactionType === "payout") return "credit";
-          if (r.transactionType === "ride" || r.transactionType === "subscription" || r.transactionType === "payment") return "debit";
-          return "other";
-        })();
-
-        return {
-          id: r.transactionId ?? `${Math.random().toString(36).slice(2, 9)}`,
-          walletId: walletDetails?.walletId,
-          type: txType,
-          amount: Number(r.totalAmount ?? r.amount ?? 0),
-          date: r.createdAt ?? r.date,
-          note: r.transactionType ?? r.note
-        };
-      });
-
-      // sort if server doesn't already
-      mappedTxns.sort((a, b) => +new Date(b.date) - +new Date(a.date));
-
-      setSelectedTxns(mappedTxns);
-
-      const txnMeta = payload?.transactionHistory;
-      if (txnMeta && (txnMeta.page || txnMeta.totalPages || txnMeta.total)) {
-        setTxnPage(Number(txnMeta.page ?? txnPage));
-        setTxnLimit(Number(txnMeta.limit ?? txnLimit));
-        setTxnTotal(Number(txnMeta.total ?? mappedTxns.length));
-        setTxnTotalPages(Number(txnMeta.totalPages ?? Math.ceil((txnMeta.total ?? mappedTxns.length) / (txnMeta.limit ?? txnLimit))));
-      } else {
-        setTxnPage(txnPage);
-        setTxnLimit(txnLimit);
-        setTxnTotal(mappedTxns.length);
-        setTxnTotalPages(Math.max(1, Math.ceil(mappedTxns.length / txnLimit)));
-      }
-
-    } catch (err) {
-      console.error("fetchWalletDetails error:", err);
-      setSelectedProfile(null);
-      setSelectedTxns([]);
-      setTxnPage(1);
-      setTxnLimit(2);
-      setTxnTotal(0);
-      setTxnTotalPages(0);
-    } finally {
-      setLoadingDetails(false);
     }
   }
 
@@ -174,18 +124,39 @@ export default function WalletManagement() {
     async function load() {
       setLoading(true);
 
-      const { wallets: fetched, pagination } = await fetchWallets(activeRole, page, pageSize);
+      const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+      const safeLimit =
+        Number.isFinite(pageSize) && pageSize > 0 ? pageSize : 5;
+
+      const { wallets: fetched, meta } = await fetchWallets(
+        activeRole,
+        safePage,
+        safeLimit
+      );
 
       if (!mounted) return;
 
       setWallets(fetched);
-      setTotalPages(pagination.totalPages);
-      setTotal(pagination.total);
+
+      const safeTotal = Number.isFinite(meta.total) ? meta.total : 0;
+      const safeTotalPages =
+        Number.isFinite(meta.totalPages) && meta.totalPages > 0
+          ? meta.totalPages
+          : Math.max(1, Math.ceil(safeTotal / safeLimit));
+
+      setTotal(safeTotal);
+      setTotalPages(safeTotalPages);
 
       const first = fetched[0] ?? null;
       if (first) {
         setSelectedWalletId(first.id);
-        await fetchWalletDetails(first.ownerId ?? first.id, activeRole);
+        fetchWalletDetails(
+          first.ownerId ?? first.id,
+          activeRole,
+          txnPage,
+          txnLimit
+        );
+
       } else {
         setSelectedWalletId(null);
         setSelectedProfile(null);
@@ -196,23 +167,110 @@ export default function WalletManagement() {
     }
 
     load();
-
     return () => {
       mounted = false;
     };
   }, [activeRole, page, pageSize]);
 
-  async function handleSelectWallet(w: Wallet) {
-    setSelectedWalletId(w.id);
-    setTxnPage(1);
+
+  async function fetchWalletDetails(
+    ownerId: string,
+    ownerType: Role,
+    page: number,
+    limit: number
+  ) {
+    setLoadingDetails(true);
+
+    try {
+      const res = await axiosInstance.get("/api/admin/getwalletsDetails", {
+        params: {
+          ownerId,
+          ownerType,
+          page,
+          limit,
+        },
+      });
+
+      const payload = res.data.data ?? {};
+
+      /* Profile */
+      setSelectedProfile(payload.profileDetails ?? null);
+
+      /* Wallet details */
+      const walletDetails = payload.walletDetails;
+      if (walletDetails) {
+        setWallets(prev =>
+          prev.map(w =>
+            w.ownerId === ownerId || w.walletId === walletDetails.walletId
+              ? {
+                ...w,
+                walletId: walletDetails.walletId ?? w.walletId,
+                balance: Number(walletDetails.balance ?? w.balance),
+                locked: Boolean(walletDetails.isWalletLock ?? w.locked),
+              }
+              : w
+          )
+        );
+      }
+
+      /* Transactions */
+      const history = payload.transactionHistory ?? {};
+      const rows = history.rows ?? [];
+      const pagination = history.pagination ?? {};
+
+      const mappedTxns: Transaction[] = rows.map((r: any) => ({
+        id: r.transactionId ?? crypto.randomUUID(),
+        walletId: walletDetails?.walletId,
+        type:
+          r.transactionType === "payout"
+            ? "credit"
+            : ["ride", "subscription", "payment"].includes(r.transactionType)
+              ? "debit"
+              : "other",
+        amount: Number(r.totalAmount ?? r.amount ?? 0),
+        date: r.createdAt ?? r.date,
+        note: r.transactionType ?? r.note,
+      }));
+
+      mappedTxns.sort((a, b) => +new Date(b.date) - +new Date(a.date));
+      setSelectedTxns(mappedTxns);
+
+      /* Pagination meta */
+      setTxnPage(Number.isFinite(pagination.page) ? pagination.page : page);
+      setTxnTotal(Number.isFinite(pagination.total) ? pagination.total : 0);
+      setTxnTotalPages(
+        Number.isFinite(pagination.totalPages) ? pagination.totalPages : 1
+      );
+
+    } catch (err) {
+      console.error("fetchWalletDetails error:", err);
+      setSelectedProfile(null);
+      setSelectedTxns([]);
+      setTxnTotal(0);
+      setTxnTotalPages(1);
+    } finally {
+      setLoadingDetails(false);
+    }
   }
 
   useEffect(() => {
     if (!selectedWalletId) return;
+
     const owner = wallets.find(w => w.id === selectedWalletId);
     if (!owner) return;
-    fetchWalletDetails(owner.ownerId ?? owner.id, owner.role, txnPage, txnLimit);
-  }, [selectedWalletId, txnPage, txnLimit]);
+
+    fetchWalletDetails(
+      owner.ownerId ?? owner.id,
+      owner.role,
+      txnPage,
+      txnLimit
+    );
+  }, [selectedWalletId, txnPage]);
+
+  function handleSelectWallet(w: Wallet) {
+    setSelectedWalletId(w.id);
+    setTxnPage(1);
+  }
 
   const filtered = useMemo(
     () =>
@@ -238,12 +296,48 @@ export default function WalletManagement() {
     setShowLockModal(true);
   }
 
-  function toggleLockWallet(w: Wallet | null) {
-    if (!w) return;
-    setWallets(prev => prev.map(p => p.id === w.id ? { ...p, locked: !p.locked } : p));
-    setShowLockModal(false);
-    setModalTargetWallet(null);
+  async function updateWalletLockStatus(walletId: string, isLocked: boolean) {
+    try {
+      const res = await axiosInstance.patch(
+        "/api/admin/walletStatuscheck",
+        { isWalletLock: isLocked },
+        { params: { walletId } }
+      );
+      return res.data;
+    } catch (err) {
+      console.error("Failed to update wallet lock status:", err);
+      throw err;
+    }
   }
+
+  async function toggleLockWallet(w: Wallet | null) {
+    if (!w) return;
+
+    const newStatus = !w.locked;
+
+    try {
+      // Call PATCH API
+      await updateWalletLockStatus(w.walletId!, newStatus);
+
+      // Update UI state
+      setWallets(prev =>
+        prev.map(p =>
+          p.id === w.id ? { ...p, locked: newStatus } : p
+        )
+      );
+
+      setShowLockModal(false);
+      setModalTargetWallet(null);
+
+      openSnackbar(
+        newStatus ? "Wallet locked successfully" : "Wallet unlocked successfully",
+        "success"
+      );
+    } catch (err) {
+      openSnackbar("Failed to update wallet status", "error");
+    }
+  }
+
 
   return (
     <div className="min-h-screen p-6 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -257,9 +351,9 @@ export default function WalletManagement() {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Left column */}
-          <aside className="md:col-span-1 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <aside className="md:col-span-4 lg:col-span-4 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
             <div className="flex gap-2 mb-4">
               <button
                 onClick={() => {
@@ -311,19 +405,28 @@ export default function WalletManagement() {
               ))}
 
             </div>
-            <Pagination currentPage={page}
-              totalPages={totalPages}
-              pageSize={pageSize}
-              pageSizeOptions={[10, 25, 50]}
-              onPageChange={(newPage) => setPage(newPage)}
-              onPageSizeChange={(newSize) => {
-                setPageSize(newSize);
-                setPage(1);
-              }} />
+            <div className="mt-3 border-t dark:border-gray-700 pt-3">
+              <div className="text-xs text-gray-500 mb-2">
+                Showing {(page - 1) * pageSize + 1}–
+                {Math.min(page * pageSize, total)} of {total}
+              </div>
+
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={(newPage) => {
+                  if (!Number.isFinite(newPage) || newPage < 1) return;
+                  setPage(newPage);
+                }}
+                compact
+              />
+
+            </div>
+
           </aside>
 
           {/* Right column */}
-          <main className="md:col-span-3 space-y-6">
+          <main className="md:col-span-8 lg:col-span-8 space-y-6">
             <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
               {!selectedWallet ? (
                 <div className="text-sm text-gray-500 dark:text-gray-400">Select a wallet from the left to view details.</div>
@@ -350,7 +453,7 @@ export default function WalletManagement() {
                     <div className="flex gap-2">
                       <button onClick={() => openLockModal(selectedWallet)} className={`px-4 py-2 rounded-md border transition-colors ${selectedWallet.locked ? "bg-yellow-50 border-yellow-300 text-yellow-800 dark:bg-yellow-900/20" : "bg-red-600 text-white border-red-600"}`}>{selectedWallet.locked ? "Unlock wallet" : "Lock wallet"}</button>
 
-                      <button onClick={() => alert("Open wallet top-up / payout flow (not implemented) ")} className="px-4 py-2 rounded-md border bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600">Actions</button>
+                      {/* <button onClick={() => alert("Open wallet top-up / payout flow (not implemented) ")} className="px-4 py-2 rounded-md border bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600">Actions</button> */}
                     </div>
                   </div>
                 </div>
@@ -401,15 +504,19 @@ export default function WalletManagement() {
               </div>
 
               <div className="mt-4 text-right text-xs text-gray-500 dark:text-gray-400">Showing {walletTxns.length} transactions</div>
-              <Pagination
-                currentPage={txnPage}
-                totalPages={txnTotalPages}
-                // keep same appearance: remove first/last etc in component props if needed
-                onPageChange={(p) => setTxnPage(p)}
-                compact={true}
-                siblingCount={1}
-                showFirstLast={false}
-              />
+              {txnTotalPages > 1 && (
+                <div className="mt-4 flex justify-center">
+                  <Pagination
+                    currentPage={txnPage}
+                    totalPages={txnTotalPages}
+                    onPageChange={(p) => {
+                      if (!Number.isFinite(p) || p < 1) return;
+                      setTxnPage(p);
+                    }}
+                    compact
+                  />
+                </div>
+              )}
             </section>
 
             <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -445,11 +552,17 @@ export default function WalletManagement() {
 
             <div className="flex items-center justify-end gap-2">
               <button onClick={() => { setShowLockModal(false); setModalTargetWallet(null); }} className="px-3 py-2 rounded-md border bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600">Cancel</button>
-              <button onClick={() => toggleLockWallet(modalTargetWallet)} className={`px-3 py-2 rounded-md ${modalTargetWallet.locked ? "bg-green-600 text-white" : "bg-red-600 text-white"}`}>{modalTargetWallet.locked ? "Unlock" : "Lock"}</button>
+              <button onClick={() => toggleLockWallet(modalTargetWallet)} className={`px-3 py-2 rounded-md ${modalTargetWallet.locked ? "bg-yellow-50 border border-yellow-300 text-yellow-800 dark:bg-yellow-900/20" : "bg-red-600 text-white"}`}>{modalTargetWallet.locked ? "Unlock" : "Lock"}</button>
             </div>
           </div>
         </div>
       )}
+      <CustomSnackbar
+        message={snackbarMsg}
+        severity={snackbarSeverity}
+        open={snackbarOpen}
+        onClose={closeSnackbar}
+      />
     </div>
   );
 }

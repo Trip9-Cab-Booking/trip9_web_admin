@@ -179,29 +179,78 @@ export default function PaymentManagementPage() {
     };
   }
 
+  function buildTransactionParams(page: number, limit: number) {
+    const params: Record<string, any> = {
+      page,
+      limit,
+    };
+
+    if (q.trim()) params.search = q.trim();
+    if (selectedStatus) params.status = selectedStatus;
+
+    if (selectedTypes.length) {
+      params.transactionType = selectedTypes.join(",");
+    }
+
+    if (selectedMode && selectedMode !== "all") {
+      params.paymentMode = selectedMode;
+    }
+
+    if (dateFrom) params.fromDate = dateFrom;
+    if (dateTo) params.toDate = dateTo;
+
+    return params;
+  }
+
   async function fetchTransactions(page = txPage, limit = txLimit) {
     setTxLoading(true);
-    try {
-      const res = await axiosInstance.get("/api/admin/getAlltransactions", {
-        params: { page, limit },
-      });
 
-      const payload = res?.data ?? {};
+    try {
+      const params = buildTransactionParams(
+        Number(page) || 1,
+        Number(limit) || 10
+      );
+
+      const res = await axiosInstance.get(
+        "/api/admin/getAlltransactions",
+        { params }
+      );
+
+      const payload = res.data ?? {};
       const rows = payload.data ?? payload.items ?? [];
 
-      const mapped: Transaction[] = (rows || []).map(mapApiRowToTransaction);
+      const mapped: Transaction[] = rows.map(mapApiRowToTransaction);
 
       setTransactions(mapped);
       setTxPage(payload.page ?? page);
       setTxLimit(payload.limit ?? limit);
-      setTxTotal(payload.total ?? mapped.length);
-      setTxTotalPages(payload.totalPages ?? Math.max(1, Math.ceil((payload.total ?? mapped.length) / (payload.limit ?? limit))));
-    } catch (err) {
-      console.error("Failed to fetch transactions", err);
+      setTxTotal(payload.total ?? 0);
+      setTxTotalPages(
+        payload.totalPages ??
+        Math.max(1, Math.ceil((payload.total ?? 0) / limit))
+      );
+    } catch (err: any) {
+      if (err.response) {
+        console.error("API Error:", err.response.data);
+      } else {
+        console.error("Request Error:", err);
+      }
     } finally {
       setTxLoading(false);
     }
   }
+
+  useEffect(() => {
+    setTxPage(1); // reset pagination on filter change
+    fetchTransactions(1, txLimit);
+  }, [
+    q,
+    selectedStatus,
+    selectedMode,
+    selectedTypes,
+    dateFrom,
+    dateTo,
+  ]);
 
   useEffect(() => {
     fetchTransactions(txPage, txLimit);
@@ -312,12 +361,6 @@ export default function PaymentManagementPage() {
                   currentPage={txPage}
                   totalPages={txTotalPages}
                   onPageChange={(page) => setTxPage(page)}
-                  pageSize={txLimit}
-                  pageSizeOptions={[10, 25, 50]}
-                  onPageSizeChange={(size) => {
-                    setTxLimit(size);
-                    setTxPage(1);
-                  }}
                 />
               </div>
 
