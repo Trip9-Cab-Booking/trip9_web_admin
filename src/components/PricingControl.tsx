@@ -1,8 +1,11 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import PriceInput from "./ui/price-input/PriceInput";
+import { axiosInstance } from "@/utils/axiosInstance";
+import FarePreview from "./FarePreview";
 
-type VehicleCategory = "bike" | "auto" | "car_economic" | "car_premium";
+type VehicleCategory = "bike" | "auto" | "car_economy" | "car_premium";
 
 type CategoryPricing = Record<VehicleCategory, {
   baseFare: number;
@@ -35,34 +38,151 @@ type Promo = {
   totalUsageLimit?: number;
 };
 
+type PricingScope =
+  | { type: "global" }
+  | { type: "category"; category: VehicleCategory };
+
+type Mode = "view" | "edit" | "create";
+
+type PriceConfig = {
+  baseFare: number | "";
+  perKm: number | "";
+  perMin: number | "";
+  minimumFare: number | "";
+};
+
+
+export const fetchPricingList = async () => {
+  const res = await axiosInstance.get(
+    "/api/admin/pricing/list"
+  );
+  return res.data;
+};
+
+export const updatePricing = async (payload: any) => {
+  return axiosInstance.put("/api/admin/pricing/update", payload);
+};
+
 export default function PricingControl() {
-  const [activeTab, setActiveTab] = useState<"settings" | "categories" | "promo">("settings");
+
+  const [loading, setLoading] = useState(false);
+  const [pricingRaw, setPricingRaw] = useState<any[]>([]);
+  const [pricingIds, setPricingIds] = useState<{
+    global?: string;
+    bike?: string;
+    auto?: string;
+    car_economy?: string;
+    car_premium?: string;
+  }>({});
+  const [snackbar, setSnackbar] = React.useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info";
+  }>({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+
+
+
+  const [activeScope, setActiveScope] = useState<PricingScope>({
+    type: "global",
+  });
+
+  const [mode, setMode] = useState<Mode>("view");
+
+  /* -------- Global Pricing -------- */
+  const [shared, setShared] = useState<PriceConfig>({
+    baseFare: 50,
+    perKm: 10,
+    perMin: 1,
+    minimumFare: 60,
+  });
+
+  const EMPTY_SHARED: PriceConfig = {
+    baseFare: "",
+    perKm: "",
+    perMin: "",
+    minimumFare: "",
+  };
+
+  const EMPTY_CATEGORIES: Record<VehicleCategory, PriceConfig> = {
+    bike: { baseFare: "", perKm: "", perMin: "", minimumFare: "" },
+    auto: { baseFare: "", perKm: "", perMin: "", minimumFare: "" },
+    car_economy: { baseFare: "", perKm: "", perMin: "", minimumFare: "" },
+    car_premium: { baseFare: "", perKm: "", perMin: "", minimumFare: "" },
+  };
+
+
+  const [sharedSnapshot, setSharedSnapshot] =
+    useState<PriceConfig>(shared);
+
+  /* -------- Category Pricing -------- */
+  const [categories, setCategories] = useState<
+    Record<VehicleCategory, PriceConfig>
+  >({
+    bike: { baseFare: 30, perKm: 8, perMin: 1, minimumFare: 40 },
+    auto: { baseFare: 40, perKm: 9, perMin: 1, minimumFare: 50 },
+    car_economy: { baseFare: 60, perKm: 12, perMin: 2, minimumFare: 80 },
+    car_premium: { baseFare: 80, perKm: 15, perMin: 3, minimumFare: 120 },
+  });
+
+  const [categorySnapshot, setCategorySnapshot] =
+    useState(categories);
+
+  /* -------------------- Handlers -------------------- */
+
+  const startEdit = () => {
+    setSharedSnapshot(shared);
+    setCategorySnapshot(categories);
+    setMode("edit");
+  };
+
+  const cancelEdit = () => {
+    setShared(sharedSnapshot);
+    setCategories(categorySnapshot);
+    setMode("view");
+  };
+
+  const handleCategoryChange = (
+    cat: VehicleCategory,
+    field: keyof PriceConfig,
+    value: number | ""
+  ) => {
+    setCategories((prev) => ({
+      ...prev,
+      [cat]: { ...prev[cat], [field]: value },
+    }));
+  };
+
+  const [activeTab, setActiveTab] = useState<"settings" | "promo">("settings");
 
   // Global settings
   const [nightCharge, setNightCharge] = useState<NightCharge>({ enabled: false, start: "22:00", end: "05:00", type: "percentage", value: 20 });
   const [surge, setSurge] = useState<Surge>({ enabled: false, mode: "manual", multiplier: 1.0 });
 
-  // Shared default settings (shown as fallback)
-  const [shared, setShared] = useState({ baseFare: 25, perKm: 8, perMin: 1.5, minimumFare: 50 });
-
-  // Categories
-  const [categories, setCategories] = useState<CategoryPricing>({
-    bike: { baseFare: 10, perKm: 4, perMin: 0.5, minimumFare: 30 },
-    auto: { baseFare: 20, perKm: 6, perMin: 1, minimumFare: 40 },
-    car_economic: { baseFare: 25, perKm: 8, perMin: 1.5, minimumFare: 50 },
-    car_premium: { baseFare: 50, perKm: 15, perMin: 2.5, minimumFare: 120 },
-  });
-
-  // Promo list (local only)
+  // Promo list 
   const [promos, setPromos] = useState<Promo[]>([]);
   const [newPromo, setNewPromo] = useState<Promo>({ code: "", type: "percentage", value: 10, validFrom: undefined, validTo: undefined, maxDiscountPerRide: 100, totalUsageLimit: 1000 });
 
   // Fare preview inputs
-  const [preview, setPreview] = useState({ distanceKm: 12, durationMin: 20, category: "car_economic" as VehicleCategory, applyPromoCode: "" });
+  const [preview, setPreview] = useState({ distanceKm: 12, durationMin: 20, category: "car_economy" as VehicleCategory, applyPromoCode: "" });
 
-  const handleCategoryChange = (cat: VehicleCategory, field: keyof CategoryPricing[VehicleCategory], value: number) => {
-    setCategories(prev => ({ ...prev, [cat]: { ...prev[cat], [field]: value } }));
+  const [hasPricing, setHasPricing] = useState(true);
+
+  const [globalActive, setGlobalActive] = useState<boolean>(false);
+  const [categoryActive, setCategoryActive] = useState<boolean>(false);
+
+
+
+  const showSnackbar = (
+    message: string,
+    severity: "success" | "error" | "info" = "info"
+  ) => {
+    setSnackbar({ open: true, message, severity });
   };
+
 
   const addPromo = () => {
     if (!newPromo.code.trim()) return alert("Promo code required");
@@ -77,11 +197,13 @@ export default function PricingControl() {
     const distance = Math.max(0, preview.distanceKm);
     const duration = Math.max(0, preview.durationMin);
 
-    let fare = cat.baseFare + cat.perKm * distance + cat.perMin * duration;
+    const baseFare = Number(cat.baseFare || 0);
+    const perKm = Number(cat.perKm || 0);
+    const perMin = Number(cat.perMin || 0);
+    const minFare = Number(cat.minimumFare || 0);
 
-    // apply minimum
-    fare = Math.max(fare, cat.minimumFare);
-
+    let fare = baseFare + perKm * distance + perMin * duration;
+    fare = Math.max(fare, minFare);
     // night charge (simple check: if enabled and current preview time would fall into range - for demo we'll assume night applies if start > end or some simple rule)
     if (nightCharge.enabled) {
       if (nightCharge.type === "percentage") fare += (fare * (nightCharge.value / 100));
@@ -108,6 +230,247 @@ export default function PricingControl() {
     };
   }, [preview, categories, nightCharge, surge, promos]);
 
+  useEffect(() => {
+    const loadPricing = async () => {
+      try {
+        setLoading(true);
+
+        const res = await axiosInstance.get("/api/admin/pricing/list");
+        const list = res.data?.data ?? [];
+
+        setPricingRaw(list);
+
+        // ✅ EMPTY STATE CHECK
+        if (list.length === 0) {
+          setHasPricing(false);
+          return;
+        }
+
+        setHasPricing(true);
+
+        // ---------- GLOBAL PRICING ----------
+        const globalModel = list.find((item: any) => item.isGlobalPriceModel);
+
+        if (globalModel?.pricing?.length) {
+          const g = globalModel.pricing[0];
+
+          setShared({
+            baseFare: g.baseFare,
+            perKm: g.perKmRate,
+            perMin: g.perMinRate,
+            minimumFare: g.minimumFare,
+          });
+
+          setPricingIds((prev) => ({
+            ...prev,
+            global: g.pricingId,
+          }));
+
+          setGlobalActive(!!globalModel.isActive);
+        }
+
+        // ---------- CATEGORY PRICING ----------
+        const categoryModel = list.find(
+          (item: any) => !item.isGlobalPriceModel
+        );
+
+        if (categoryModel?.pricing?.length) {
+          setCategoryActive(!!categoryModel.isActive);
+          const updated = { ...categories };
+
+          categoryModel.pricing.forEach((p: any) => {
+            if (p.vehicleType === "bike") {
+              updated.bike = {
+                baseFare: p.baseFare,
+                perKm: p.perKmRate,
+                perMin: p.perMinRate,
+                minimumFare: p.minimumFare,
+              };
+              setPricingIds((prev) => ({ ...prev, bike: p.pricingId }));
+            }
+
+            if (p.vehicleType === "auto") {
+              updated.auto = {
+                baseFare: p.baseFare,
+                perKm: p.perKmRate,
+                perMin: p.perMinRate,
+                minimumFare: p.minimumFare,
+              };
+              setPricingIds((prev) => ({ ...prev, auto: p.pricingId }));
+            }
+
+            if (p.vehicleType === "car" && p.vehicleCategory === "economy") {
+              updated.car_economy = {
+                baseFare: p.baseFare,
+                perKm: p.perKmRate,
+                perMin: p.perMinRate,
+                minimumFare: p.minimumFare,
+              };
+              setPricingIds((prev) => ({ ...prev, car_economy: p.pricingId }));
+            }
+
+            if (p.vehicleType === "car" && p.vehicleCategory === "premium") {
+              updated.car_premium = {
+                baseFare: p.baseFare,
+                perKm: p.perKmRate,
+                perMin: p.perMinRate,
+                minimumFare: p.minimumFare,
+              };
+              setPricingIds((prev) => ({ ...prev, car_premium: p.pricingId }));
+            }
+          });
+
+          setCategories(updated);
+        }
+      } catch (err) {
+        console.error("Failed to fetch pricing", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPricing();
+  }, []);
+
+  const saveSettings = async () => {
+    try {
+      const isCreate = mode === "create";
+      let payload: any;
+
+      /* =========================================================
+         GLOBAL PRICING
+         ========================================================= */
+      if (activeScope.type === "global") {
+        if (isCreate) {
+          // ---------- GLOBAL CREATE ----------
+          payload = {
+            isGlobalPriceModel: true,
+            isActive: globalActive,
+            pricing: [
+              {
+                vehicleType: "all",
+                vehicleCategory: "all",
+                baseFare: shared.baseFare,
+                perKmRate: shared.perKm,
+                perMinRate: shared.perMin,
+                minimumFare: shared.minimumFare,
+              },
+            ],
+          };
+        } else {
+          // ---------- GLOBAL UPDATE ----------
+          payload = {
+            isGlobalPriceModel: true,
+            isActive: globalActive,
+            pricingIds: [
+              {
+                pricingId: pricingIds.global,
+                baseFare: shared.baseFare,
+                perKmRate: shared.perKm,
+                perMinRate: shared.perMin,
+                minimumFare: shared.minimumFare,
+              },
+            ],
+          };
+        }
+      }
+
+      /* =========================================================
+         CATEGORY PRICING
+         ========================================================= */
+      if (activeScope.type === "category") {
+        if (isCreate) {
+          // ---------- CATEGORY CREATE ----------
+          payload = {
+            isGlobalPriceModel: false,
+            isActive: categoryActive,
+            pricing: [
+              {
+                vehicleType: "bike",
+                baseFare: categories.bike.baseFare,
+                perKmRate: categories.bike.perKm,
+                perMinRate: categories.bike.perMin,
+                minimumFare: categories.bike.minimumFare,
+              },
+              {
+                vehicleType: "auto",
+                baseFare: categories.auto.baseFare,
+                perKmRate: categories.auto.perKm,
+                perMinRate: categories.auto.perMin,
+                minimumFare: categories.auto.minimumFare,
+              },
+              {
+                vehicleType: "car",
+                vehicleCategory: "economy",
+                baseFare: categories.car_economy.baseFare,
+                perKmRate: categories.car_economy.perKm,
+                perMinRate: categories.car_economy.perMin,
+                minimumFare: categories.car_economy.minimumFare,
+              },
+              {
+                vehicleType: "car",
+                vehicleCategory: "premium",
+                baseFare: categories.car_premium.baseFare,
+                perKmRate: categories.car_premium.perKm,
+                perMinRate: categories.car_premium.perMin,
+                minimumFare: categories.car_premium.minimumFare,
+              },
+            ],
+          };
+        } else {
+          // ---------- CATEGORY UPDATE ----------
+          payload = {
+            isGlobalPriceModel: false,
+            isActive: categoryActive,
+            pricingIds: [
+              {
+                pricingId: pricingIds.bike,
+                baseFare: categories.bike.baseFare,
+                perKmRate: categories.bike.perKm,
+                perMinRate: categories.bike.perMin,
+                minimumFare: categories.bike.minimumFare,
+              },
+              {
+                pricingId: pricingIds.auto,
+                baseFare: categories.auto.baseFare,
+                perKmRate: categories.auto.perKm,
+                perMinRate: categories.auto.perMin,
+                minimumFare: categories.auto.minimumFare,
+              },
+              {
+                pricingId: pricingIds.car_economy,
+                baseFare: categories.car_economy.baseFare,
+                perKmRate: categories.car_economy.perKm,
+                perMinRate: categories.car_economy.perMin,
+                minimumFare: categories.car_economy.minimumFare,
+              },
+              {
+                pricingId: pricingIds.car_premium,
+                baseFare: categories.car_premium.baseFare,
+                perKmRate: categories.car_premium.perKm,
+                perMinRate: categories.car_premium.perMin,
+                minimumFare: categories.car_premium.minimumFare,
+              },
+            ],
+          };
+        }
+      }
+
+      if (isCreate) {
+        await axiosInstance.post("/api/admin/pricing/create", payload);
+      } else {
+        await axiosInstance.put("/api/admin/pricing/update", payload);
+      }
+
+      setMode("view");
+      console.log("Pricing saved successfully");
+    } catch (error) {
+      console.error("Pricing save failed", error);
+    }
+  };
+
+
+
   return (
     <div className="max-w-7xl mx-auto p-6">
       <h2 className="text-2xl font-semibold mb-4">Pricing Control</h2>
@@ -115,113 +478,244 @@ export default function PricingControl() {
         <aside className="md:col-span-1 bg-white rounded-lg shadow p-4">
           <nav className="space-y-2">
             <button onClick={() => setActiveTab("settings")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "settings" ? "bg-indigo-600 text-white" : "hover:bg-gray-50"}`}>Pricing Settings</button>
-            <button onClick={() => setActiveTab("categories")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "categories" ? "bg-indigo-600 text-white" : "hover:bg-gray-50"}`}>Vehicle Categories</button>
             <button onClick={() => setActiveTab("promo")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "promo" ? "bg-indigo-600 text-white" : "hover:bg-gray-50"}`}>Promo & Discounts</button>
           </nav>
-
-          <div className="mt-4">
-            <h3 className="text-sm font-medium text-gray-600">Quick actions</h3>
-            <div className="flex gap-2 mt-2">
-              <button className="px-3 py-2 rounded bg-indigo-600 text-white text-sm">Save settings</button>
-              <button className="px-3 py-2 rounded bg-gray-200 text-sm">Reset</button>
-            </div>
-          </div>
         </aside>
 
         <main className="md:col-span-2 bg-white rounded-lg shadow p-6">
-          {activeTab === "settings" && (
-            <section>
-              <h3 className="text-lg font-medium mb-3">Global Pricing Settings</h3>
+          {!loading && !hasPricing && (
+            <div className="border border-dashed rounded-lg p-8 text-center">
+              <h3 className="text-lg font-medium mb-2">No pricing plans found</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Create a pricing plan to start configuring fares.
+              </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium">Default Base Fare</label>
-                  <input type="number" value={shared.baseFare} onChange={e => setShared(s => ({ ...s, baseFare: Number(e.target.value) }))} className="mt-1 block w-full rounded border p-2" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">Per km rate</label>
-                  <input type="number" value={shared.perKm} onChange={e => setShared(s => ({ ...s, perKm: Number(e.target.value) }))} className="mt-1 block w-full rounded border p-2" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">Per minute rate</label>
-                  <input type="number" value={shared.perMin} onChange={e => setShared(s => ({ ...s, perMin: Number(e.target.value) }))} className="mt-1 block w-full rounded border p-2" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">Minimum fare</label>
-                  <input type="number" value={shared.minimumFare} onChange={e => setShared(s => ({ ...s, minimumFare: Number(e.target.value) }))} className="mt-1 block w-full rounded border p-2" />
-                </div>
-              </div>
+              <button
+                onClick={() => {
+                  setMode("create");
+                  setActiveScope({ type: "global" });
+                  setShared(EMPTY_SHARED);
+                  setCategories(EMPTY_CATEGORIES);
+                  setGlobalActive(true);
+                  setCategoryActive(true);
+                  setPricingIds({
+                    global: undefined,
+                    bike: undefined,
+                    auto: undefined,
+                    car_economy: undefined,
+                    car_premium: undefined,
+                  });
+                }}
+                className="px-4 py-2 bg-indigo-600 text-white rounded text-sm"
+              >
+                Create New Plan
+              </button>
 
-              <div className="mt-6 border-t pt-4">
-                <h4 className="font-medium mb-2">Night charges</h4>
-                <div className="flex items-center gap-3">
-                  <input type="checkbox" checked={nightCharge.enabled} onChange={e => setNightCharge(n => ({ ...n, enabled: e.target.checked }))} />
-                  <div className="flex-1 grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-xs">Start</label>
-                      <input type="time" value={nightCharge.start} onChange={e => setNightCharge(n => ({ ...n, start: e.target.value }))} className="mt-1 block w-full rounded border p-1" />
-                    </div>
-                    <div>
-                      <label className="block text-xs">End</label>
-                      <input type="time" value={nightCharge.end} onChange={e => setNightCharge(n => ({ ...n, end: e.target.value }))} className="mt-1 block w-full rounded border p-1" />
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-3 flex gap-2">
-                  <select value={nightCharge.type} onChange={e => setNightCharge(n => ({ ...n, type: e.target.value as any }))} className="rounded border p-2">
-                    <option value="percentage">Percentage</option>
-                    <option value="flat">Flat extra</option>
-                  </select>
-                  <input type="number" value={nightCharge.value} onChange={e => setNightCharge(n => ({ ...n, value: Number(e.target.value) }))} className="rounded border p-2" />
-                </div>
-              </div>
-
-              <div className="mt-6 border-t pt-4">
-                <h4 className="font-medium mb-2">Surge</h4>
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" checked={surge.enabled} onChange={e => setSurge(s => ({ ...s, enabled: e.target.checked }))} />
-                  <label className="text-sm">Enable surge</label>
-                </div>
-                <div className="mt-3 flex gap-2 items-center">
-                  <select value={surge.mode} onChange={e => setSurge(s => ({ ...s, mode: e.target.value as any }))} className="rounded border p-2">
-                    <option value="manual">Manual</option>
-                    <option value="rule_based">Rule-based</option>
-                  </select>
-                  <input type="number" step="0.1" value={surge.multiplier} onChange={e => setSurge(s => ({ ...s, multiplier: Number(e.target.value) }))} className="rounded border p-2" />
-                </div>
-              </div>
-            </section>
+            </div>
           )}
 
-          {activeTab === "categories" && (
-            <section>
-              <h3 className="text-lg font-medium mb-3">Vehicle Category Pricing</h3>
-              <div className="space-y-4">
-                {(["bike", "auto", "car_economic", "car_premium"] as VehicleCategory[]).map(cat => (
-                  <div key={cat} className="p-3 border rounded flex flex-col sm:flex-row gap-3 items-center">
-                    <div className="w-full sm:w-40 font-medium capitalize">{cat.replace("car_", "Car - ").replace("_", " ")}</div>
-                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      <label className="block">
-                        <div className="text-xs">Base</div>
-                        <input type="number" value={categories[cat].baseFare} onChange={e => handleCategoryChange(cat, "baseFare", Number(e.target.value))} className="mt-1 block w-full rounded border p-2" />
-                      </label>
-                      <label className="block">
-                        <div className="text-xs">Per km</div>
-                        <input type="number" value={categories[cat].perKm} onChange={e => handleCategoryChange(cat, "perKm", Number(e.target.value))} className="mt-1 block w-full rounded border p-2" />
-                      </label>
-                      <label className="block">
-                        <div className="text-xs">Per min</div>
-                        <input type="number" value={categories[cat].perMin} onChange={e => handleCategoryChange(cat, "perMin", Number(e.target.value))} className="mt-1 block w-full rounded border p-2" />
-                      </label>
-                      <label className="block">
-                        <div className="text-xs">Minimum</div>
-                        <input type="number" value={categories[cat].minimumFare} onChange={e => handleCategoryChange(cat, "minimumFare", Number(e.target.value))} className="mt-1 block w-full rounded border p-2" />
-                      </label>
-                    </div>
+          {(hasPricing || mode === "create") && (
+            <>
+              {activeTab === "settings" && (
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex gap-4 mb-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={activeScope.type === "global"}
+                        disabled={mode === "edit"}
+                        onChange={() => setActiveScope({ type: "global" })}
+                      />
+                      <span className="font-medium">Global Pricing</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={activeScope.type === "category"}
+                        disabled={mode === "edit"}
+                        onChange={() =>
+                          setActiveScope({ type: "category", category: "bike" })
+                        }
+                      />
+                      <span className="font-medium">Vehicle Category Pricing</span>
+                    </label>
                   </div>
-                ))}
-              </div>
-            </section>
+                  {activeScope.type === "global" && (
+                    <section className="border rounded-lg p-4">
+                      <div className="flex justify-between mb-3">
+                        <h3 className="text-lg font-medium">Global Pricing</h3>
+                        {mode === "view" ? (
+                          <button onClick={startEdit} className="px-3 py-1.5 bg-indigo-600 text-white rounded text-sm">
+                            Edit
+                          </button>
+                        ) : (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={saveSettings}
+                              className="px-3 py-1.5 bg-indigo-600 text-white rounded text-sm"
+                            >
+                              {mode === "create" ? "Create" : "Save"}
+                            </button>
+
+                            <button
+                              onClick={cancelEdit}
+                              className="px-3 py-1.5 bg-gray-200 rounded text-sm"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+
+                      </div>
+
+
+
+                      <div
+                        className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${mode === "view" ? "pointer-events-none opacity-60" : ""
+                          }`}
+                      >
+                        <PriceInput
+                          label="Base Fare"
+                          value={shared.baseFare}
+                          onChange={(v) =>
+                            setShared((s) => ({ ...s, baseFare: v }))
+                          }
+                        />
+                        <PriceInput
+                          label="Per Km"
+                          value={shared.perKm}
+                          onChange={(v) =>
+                            setShared((s) => ({ ...s, perKm: v }))
+                          }
+                        />
+                        <PriceInput
+                          label="Per Minute"
+                          value={shared.perMin}
+                          onChange={(v) =>
+                            setShared((s) => ({ ...s, perMin: v }))
+                          }
+                        />
+                        <PriceInput
+                          label="Minimum Fare"
+                          value={shared.minimumFare}
+                          onChange={(v) =>
+                            setShared((s) => ({ ...s, minimumFare: v }))
+                          }
+                        />
+                      </div>
+
+                      {/* ✅ ACTIVE CHECKBOX — GLOBAL */}
+                      {(mode === "create" || mode === "edit" || mode === "view") && (
+                        <div className="mt-4 flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={globalActive}
+                            disabled={mode === "view"}
+                            onChange={(e) => setGlobalActive(e.target.checked)}
+                          />
+                          <span className="text-sm font-medium">
+                            Set Global Pricing as Active
+                          </span>
+                        </div>
+                      )}
+                    </section>
+                  )}
+                  {activeScope.type === "category" && (
+                    <section className="space-y-3">
+                      <div className="flex justify-between">
+                        <h3 className="text-lg font-medium">Vehicle Category Pricing</h3>
+
+                        {mode === "view" ? (
+                          <button
+                            onClick={startEdit}
+                            className="px-3 py-1.5 bg-indigo-600 text-white rounded text-sm"
+                          >
+                            Edit
+                          </button>
+                        ) : (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={saveSettings}
+                              className="px-3 py-1.5 bg-indigo-600 text-white rounded text-sm"
+                            >
+                              {mode === "create" ? "Create" : "Save"}
+                            </button>
+                            <button
+                              onClick={cancelEdit}
+                              className="px-3 py-1.5 bg-gray-200 rounded text-sm"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {(Object.keys(categories) as VehicleCategory[]).map((cat) => (
+                        <div
+                          key={cat}
+                          className="border rounded-lg p-4 transition"
+                        >
+                          <div className="mb-3 font-medium capitalize">
+                            {cat.replace("car_", "Car - ").replace("_", " ")}
+                          </div>
+
+                          <div
+                            className={`grid grid-cols-2 sm:grid-cols-4 gap-3 ${mode === "view" ? "pointer-events-none opacity-60" : ""
+                              }`}
+                          >
+                            <PriceInput
+                              label="Base"
+                              value={categories[cat].baseFare}
+                              onChange={(v) =>
+                                handleCategoryChange(cat, "baseFare", v)
+                              }
+                            />
+                            <PriceInput
+                              label="Per Km"
+                              value={categories[cat].perKm}
+                              onChange={(v) =>
+                                handleCategoryChange(cat, "perKm", v)
+                              }
+                            />
+                            <PriceInput
+                              label="Per Min"
+                              value={categories[cat].perMin}
+                              onChange={(v) =>
+                                handleCategoryChange(cat, "perMin", v)
+                              }
+                            />
+                            <PriceInput
+                              label="Minimum"
+                              value={categories[cat].minimumFare}
+                              onChange={(v) =>
+                                handleCategoryChange(cat, "minimumFare", v)
+                              }
+                            />
+                          </div>
+                        </div>
+                      ))}
+
+                      {(mode === "create" || mode === "edit" || mode === "view") && (
+                        <div className="mb-3 flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={categoryActive}
+                            disabled={mode === "view"}
+                            onChange={(e) => setCategoryActive(e.target.checked)}
+                          />
+                          <span className="text-sm font-medium">
+                            Set Category Pricing as Active
+                          </span>
+                        </div>
+                      )}
+
+                    </section>
+                  )}
+                </div>
+              )}
+
+            </>
           )}
 
           {activeTab === "promo" && (
@@ -282,34 +776,7 @@ export default function PricingControl() {
             </section>
           )}
         </main>
-
-        <aside className="md:col-span-1 bg-white rounded-lg shadow p-6">
-          <h4 className="font-medium mb-2">Fare Preview</h4>
-          <div className="space-y-2">
-            <label className="text-xs">Category</label>
-            <select value={preview.category} onChange={e => setPreview(p => ({ ...p, category: e.target.value as VehicleCategory }))} className="w-full rounded border p-2">
-              <option value="bike">Bike</option>
-              <option value="auto">Auto</option>
-              <option value="car_economic">Car - Economic</option>
-              <option value="car_premium">Car - Premium</option>
-            </select>
-
-            <label className="text-xs">Distance (km)</label>
-            <input type="number" value={preview.distanceKm} onChange={e => setPreview(p => ({ ...p, distanceKm: Number(e.target.value) }))} className="w-full rounded border p-2" />
-
-            <label className="text-xs">Duration (min)</label>
-            <input type="number" value={preview.durationMin} onChange={e => setPreview(p => ({ ...p, durationMin: Number(e.target.value) }))} className="w-full rounded border p-2" />
-
-            <label className="text-xs">Apply promo code</label>
-            <input value={preview.applyPromoCode} onChange={e => setPreview(p => ({ ...p, applyPromoCode: e.target.value }))} className="w-full rounded border p-2" />
-
-            <div className="mt-3 border-t pt-3">
-              <div className="flex justify-between text-sm text-gray-600"><span>Calculated fare</span><span>₹{estimatedFare.baseCalc}</span></div>
-              <div className="flex justify-between text-sm text-gray-600"><span>Discount</span><span>-₹{estimatedFare.discount}</span></div>
-              <div className="flex justify-between font-medium text-lg mt-2"><span>Final fare</span><span>₹{estimatedFare.final}</span></div>
-            </div>
-          </div>
-        </aside>
+        <FarePreview />
       </div>
 
       {/* <p className="text-xs text-gray-500 mt-4">This is a front-end UI prototype. Hook state updates to your backend APIs to persist pricing, apply rule-based surge, and validate promo usages.</p> */}
