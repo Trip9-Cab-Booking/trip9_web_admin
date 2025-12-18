@@ -102,10 +102,7 @@ export default function CompactFilters({
         <div className="mt-3 flex flex-wrap gap-2">
           {[
             ["topup", "Topup"],
-            ["driver_subscription", "Subscription"],
-            // ["penalty", "Penalty"],
-            // ["refund", "Refund"],
-            // ["adjustment", "Adjust"],
+            ["subscription", "Subscription"],
           ].map(([val, label]) => {
             const active = selectedTypes.includes(String(val));
             return (

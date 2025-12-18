@@ -1,23 +1,52 @@
-import Exceljs from "exceljs"
-import {saveAs} from "file-saver";
-import { DownloadData } from "@/types/common";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+import {
+  UserExportData,
+  DriverExportData,
+  TransactionExportData,
+} from "@/types/common";
 
+type ExportContext = "users" | "drivers" | "getAlltransactions";
 
-export const exportToExcel = async (data: DownloadData[], context: string) => {
-    const workBook = new Exceljs.Workbook();
-    const workSheet = workBook.addWorksheet('Data');
+export const exportToExcel = async (
+  data: UserExportData[] | DriverExportData[] | TransactionExportData[],
+  context: ExportContext
+) => {
+  if (!data || data.length === 0) {
+    console.warn("No data available to export");
+    return;
+  }
 
-    //* Add headers
-    workSheet.columns = Object.keys(data[0]).map((key) => ({ header: key, key}));
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Data");
 
-    //*Add rows
-    data.forEach(item => workSheet.addRow(item));
+  // 🔹 Generate headers safely
+  const headers = Object.keys(data[0]).map((key) => ({
+    header: key,
+    key,
+  }));
 
-    const buffer = await workBook.xlsx.writeBuffer();
+  worksheet.columns = headers;
 
-    const file = new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  // 🔹 Add rows
+  data.forEach((item) => {
+    worksheet.addRow(item as Record<string, unknown>);
+  });
+
+  // 🔹 Auto-size columns
+  worksheet.columns.forEach((column) => {
+    let maxLength = 10;
+    column.eachCell?.({ includeEmpty: true }, (cell) => {
+      maxLength = Math.max(maxLength, String(cell.value ?? "").length);
     });
+    column.width = maxLength + 2;
+  });
 
-    saveAs(file, `${context}.xlsx`);
-}
+  const buffer = await workbook.xlsx.writeBuffer();
+
+  const file = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+
+  saveAs(file, `${context}.xlsx`);
+};

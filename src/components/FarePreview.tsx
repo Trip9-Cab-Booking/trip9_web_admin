@@ -157,27 +157,41 @@ const FarePreview: React.FC = () => {
 
                 <label className="text-xs">Distance (km)</label>
                 <input
-                    type="number"
-                    value={preview.distanceKm}
-                    onChange={(e) =>
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={preview.distanceKm === 0 ? "" : preview.distanceKm}
+                    onChange={(e) => {
+                        const value = e.target.value;
+
+                        // allow only digits & max 4 characters
+                        if (!/^\d*$/.test(value) || value.length > 4) return;
+
                         setPreview((p) => ({
                             ...p,
-                            distanceKm: Number(e.target.value),
-                        }))
-                    }
+                            distanceKm: value === "" ? 0 : Number(value),
+                        }));
+                    }}
                     className="w-full rounded border p-2"
                 />
 
+
                 <label className="text-xs">Duration (min)</label>
                 <input
-                    type="number"
-                    value={preview.durationMin}
-                    onChange={(e) =>
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={preview.durationMin === 0 ? "" : preview.durationMin}
+                    onChange={(e) => {
+                        const value = e.target.value;
+
+                        if (!/^\d*$/.test(value) || value.length > 4) return;
+
                         setPreview((p) => ({
                             ...p,
-                            durationMin: Number(e.target.value),
-                        }))
-                    }
+                            durationMin: value === "" ? 0 : Number(value),
+                        }));
+                    }}
                     className="w-full rounded border p-2"
                 />
 

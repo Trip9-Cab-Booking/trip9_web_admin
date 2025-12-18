@@ -237,14 +237,8 @@ export default function RefundManagementComponent() {
             currentPage={page}
             totalPages={totalPages}
             onPageChange={(newPage) => setPage(newPage)}
-            pageSize={pageSize}
-            pageSizeOptions={[5, 10, 25, 50]}
-            onPageSizeChange={(size) => {
-              setPageSize(size);
-              setPage(1);
-            }}
             siblingCount={1}
-            showFirstLast={true}
+          // showFirstLast={true}
           />
         </div>
       </div>

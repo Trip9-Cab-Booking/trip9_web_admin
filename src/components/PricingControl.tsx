@@ -4,45 +4,18 @@ import React, { useEffect, useMemo, useState } from "react";
 import PriceInput from "./ui/price-input/PriceInput";
 import { axiosInstance } from "@/utils/axiosInstance";
 import FarePreview from "./FarePreview";
+import PromoDiscountControl from "./PromoDiscountControl";
+import { Promo } from "@/types/promo";
+
+type Mode = "view" | "edit" | "create";
 
 type VehicleCategory = "bike" | "auto" | "car_economy" | "car_premium";
 
-type CategoryPricing = Record<VehicleCategory, {
-  baseFare: number;
-  perKm: number;
-  perMin: number;
-  minimumFare: number;
-}>;
-
-type NightCharge = {
-  enabled: boolean;
-  start: string;
-  end: string;
-  type: "percentage" | "flat";
-  value: number;
-};
-
-type Surge = {
-  enabled: boolean;
-  mode: "manual" | "rule_based";
-  multiplier: number;
-};
-
-type Promo = {
-  code: string;
-  type: "flat" | "percentage";
-  value: number;
-  validFrom?: string;
-  validTo?: string;
-  maxDiscountPerRide?: number;
-  totalUsageLimit?: number;
-};
+// Pricing Control
 
 type PricingScope =
   | { type: "global" }
   | { type: "category"; category: VehicleCategory };
-
-type Mode = "view" | "edit" | "create";
 
 type PriceConfig = {
   baseFare: number | "";
@@ -74,6 +47,8 @@ export default function PricingControl() {
     car_economy?: string;
     car_premium?: string;
   }>({});
+  const [globalModelId, setGlobalModelId] = useState<string | null>(null);
+  const [categoryModelId, setCategoryModelId] = useState<string | null>(null);
   const [snackbar, setSnackbar] = React.useState<{
     open: boolean;
     message: string;
@@ -83,13 +58,19 @@ export default function PricingControl() {
     message: "",
     severity: "info",
   });
-
-
-
+  const [activeTab, setActiveTab] = useState<"settings" | "promo">("settings");
+  // Promo list 
+  const [promos, setPromos] = useState<Promo[]>([]);
+  const [newPromo, setNewPromo] = useState<Promo>({ code: "", type: "percentage", value: 10, validFrom: undefined, validTo: undefined, maxDiscountPerRide: 100, totalUsageLimit: 1000 });
+  // Fare preview inputs
+  const [preview, setPreview] = useState({ distanceKm: 12, durationMin: 20, category: "car_economy" as VehicleCategory, applyPromoCode: "" });
+  const [hasPricing, setHasPricing] = useState(true);
+  // Pricing active states
+  const [globalActive, setGlobalActive] = useState<boolean>(false);
+  const [categoryActive, setCategoryActive] = useState<boolean>(false);
   const [activeScope, setActiveScope] = useState<PricingScope>({
     type: "global",
   });
-
   const [mode, setMode] = useState<Mode>("view");
 
   /* -------- Global Pricing -------- */
@@ -113,11 +94,8 @@ export default function PricingControl() {
     car_economy: { baseFare: "", perKm: "", perMin: "", minimumFare: "" },
     car_premium: { baseFare: "", perKm: "", perMin: "", minimumFare: "" },
   };
-
-
   const [sharedSnapshot, setSharedSnapshot] =
     useState<PriceConfig>(shared);
-
   /* -------- Category Pricing -------- */
   const [categories, setCategories] = useState<
     Record<VehicleCategory, PriceConfig>
@@ -130,21 +108,17 @@ export default function PricingControl() {
 
   const [categorySnapshot, setCategorySnapshot] =
     useState(categories);
-
   /* -------------------- Handlers -------------------- */
-
   const startEdit = () => {
     setSharedSnapshot(shared);
     setCategorySnapshot(categories);
     setMode("edit");
   };
-
   const cancelEdit = () => {
     setShared(sharedSnapshot);
     setCategories(categorySnapshot);
     setMode("view");
   };
-
   const handleCategoryChange = (
     cat: VehicleCategory,
     field: keyof PriceConfig,
@@ -155,41 +129,17 @@ export default function PricingControl() {
       [cat]: { ...prev[cat], [field]: value },
     }));
   };
-
-  const [activeTab, setActiveTab] = useState<"settings" | "promo">("settings");
-
-  // Global settings
-  const [nightCharge, setNightCharge] = useState<NightCharge>({ enabled: false, start: "22:00", end: "05:00", type: "percentage", value: 20 });
-  const [surge, setSurge] = useState<Surge>({ enabled: false, mode: "manual", multiplier: 1.0 });
-
-  // Promo list 
-  const [promos, setPromos] = useState<Promo[]>([]);
-  const [newPromo, setNewPromo] = useState<Promo>({ code: "", type: "percentage", value: 10, validFrom: undefined, validTo: undefined, maxDiscountPerRide: 100, totalUsageLimit: 1000 });
-
-  // Fare preview inputs
-  const [preview, setPreview] = useState({ distanceKm: 12, durationMin: 20, category: "car_economy" as VehicleCategory, applyPromoCode: "" });
-
-  const [hasPricing, setHasPricing] = useState(true);
-
-  const [globalActive, setGlobalActive] = useState<boolean>(false);
-  const [categoryActive, setCategoryActive] = useState<boolean>(false);
-
-
-
   const showSnackbar = (
     message: string,
     severity: "success" | "error" | "info" = "info"
   ) => {
     setSnackbar({ open: true, message, severity });
   };
-
-
   const addPromo = () => {
     if (!newPromo.code.trim()) return alert("Promo code required");
     setPromos(p => [newPromo, ...p]);
     setNewPromo({ code: "", type: "percentage", value: 10, validFrom: undefined, validTo: undefined, maxDiscountPerRide: 100, totalUsageLimit: 1000 });
   };
-
   const removePromo = (code: string) => setPromos(p => p.filter(x => x.code !== code));
 
   const estimatedFare = useMemo(() => {
@@ -204,14 +154,6 @@ export default function PricingControl() {
 
     let fare = baseFare + perKm * distance + perMin * duration;
     fare = Math.max(fare, minFare);
-    // night charge (simple check: if enabled and current preview time would fall into range - for demo we'll assume night applies if start > end or some simple rule)
-    if (nightCharge.enabled) {
-      if (nightCharge.type === "percentage") fare += (fare * (nightCharge.value / 100));
-      else fare += nightCharge.value;
-    }
-
-    // surge
-    if (surge.enabled) fare *= surge.multiplier;
 
     // promo
     const promo = promos.find(p => p.code === preview.applyPromoCode.trim().toUpperCase());
@@ -228,8 +170,9 @@ export default function PricingControl() {
       discount: discount.toFixed(2),
       final: final.toFixed(2),
     };
-  }, [preview, categories, nightCharge, surge, promos]);
+  }, [preview, categories, promos]);
 
+  // GET PRICING LIST ON MOUNT
   useEffect(() => {
     const loadPricing = async () => {
       try {
@@ -239,16 +182,12 @@ export default function PricingControl() {
         const list = res.data?.data ?? [];
 
         setPricingRaw(list);
-
-        // ✅ EMPTY STATE CHECK
         if (list.length === 0) {
           setHasPricing(false);
           return;
         }
 
         setHasPricing(true);
-
-        // ---------- GLOBAL PRICING ----------
         const globalModel = list.find((item: any) => item.isGlobalPriceModel);
 
         if (globalModel?.pricing?.length) {
@@ -265,16 +204,15 @@ export default function PricingControl() {
             ...prev,
             global: g.pricingId,
           }));
-
+          setGlobalModelId(globalModel._id);
           setGlobalActive(!!globalModel.isActive);
         }
-
-        // ---------- CATEGORY PRICING ----------
         const categoryModel = list.find(
           (item: any) => !item.isGlobalPriceModel
         );
 
         if (categoryModel?.pricing?.length) {
+          setCategoryModelId(categoryModel._id);
           setCategoryActive(!!categoryModel.isActive);
           const updated = { ...categories };
 
@@ -332,20 +270,16 @@ export default function PricingControl() {
     loadPricing();
   }, []);
 
+  // SAVE PRICING SETTINGS
   const saveSettings = async () => {
     try {
       const isCreate = mode === "create";
       let payload: any;
-
-      /* =========================================================
-         GLOBAL PRICING
-         ========================================================= */
       if (activeScope.type === "global") {
         if (isCreate) {
-          // ---------- GLOBAL CREATE ----------
           payload = {
             isGlobalPriceModel: true,
-            isActive: globalActive,
+            // isActive: globalActive,
             pricing: [
               {
                 vehicleType: "all",
@@ -358,10 +292,9 @@ export default function PricingControl() {
             ],
           };
         } else {
-          // ---------- GLOBAL UPDATE ----------
           payload = {
             isGlobalPriceModel: true,
-            isActive: globalActive,
+            // isActive: globalActive,
             pricingIds: [
               {
                 pricingId: pricingIds.global,
@@ -374,16 +307,11 @@ export default function PricingControl() {
           };
         }
       }
-
-      /* =========================================================
-         CATEGORY PRICING
-         ========================================================= */
       if (activeScope.type === "category") {
         if (isCreate) {
-          // ---------- CATEGORY CREATE ----------
           payload = {
             isGlobalPriceModel: false,
-            isActive: categoryActive,
+            // isActive: categoryActive,
             pricing: [
               {
                 vehicleType: "bike",
@@ -418,10 +346,9 @@ export default function PricingControl() {
             ],
           };
         } else {
-          // ---------- CATEGORY UPDATE ----------
           payload = {
             isGlobalPriceModel: false,
-            isActive: categoryActive,
+            // isActive: categoryActive,
             pricingIds: [
               {
                 pricingId: pricingIds.bike,
@@ -466,6 +393,52 @@ export default function PricingControl() {
       console.log("Pricing saved successfully");
     } catch (error) {
       console.error("Pricing save failed", error);
+    }
+  };
+
+  const updateGlobalStatus = async (checked: boolean) => {
+    if (!globalModelId) return;
+
+    try {
+      setGlobalActive(checked);
+
+      await axiosInstance.put(
+        `/api/admin/pricing/updateStatus/${globalModelId}`,
+        { isActive: checked }
+      );
+
+      showSnackbar(
+        `Global pricing ${checked ? "activated" : "deactivated"}`,
+        "success"
+      );
+    } catch (error) {
+      setGlobalActive((prev) => !prev);
+      showSnackbar("Failed to update global pricing status", "error");
+      console.error(error);
+    }
+  };
+
+
+  // UPDATE CATEGORY PRICING STATUS
+  const updateCategoryStatus = async (checked: boolean) => {
+    if (!categoryModelId) return;
+
+    try {
+      setCategoryActive(checked);
+
+      await axiosInstance.put(
+        `/api/admin/pricing/updateStatus/${categoryModelId}`,
+        { isActive: checked }
+      );
+
+      showSnackbar(
+        `Category pricing ${checked ? "activated" : "deactivated"}`,
+        "success"
+      );
+    } catch (error) {
+      setCategoryActive((prev) => !prev);
+      showSnackbar("Failed to update category pricing status", "error");
+      console.error(error);
     }
   };
 
@@ -568,9 +541,6 @@ export default function PricingControl() {
                         )}
 
                       </div>
-
-
-
                       <div
                         className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${mode === "view" ? "pointer-events-none opacity-60" : ""
                           }`}
@@ -605,15 +575,16 @@ export default function PricingControl() {
                         />
                       </div>
 
-                      {/* ✅ ACTIVE CHECKBOX — GLOBAL */}
+                      {/* ACTIVE CHECKBOX — GLOBAL */}
                       {(mode === "create" || mode === "edit" || mode === "view") && (
                         <div className="mt-4 flex items-center gap-2">
                           <input
                             type="checkbox"
                             checked={globalActive}
                             disabled={mode === "view"}
-                            onChange={(e) => setGlobalActive(e.target.checked)}
+                            onChange={(e) => updateGlobalStatus(e.target.checked)}
                           />
+
                           <span className="text-sm font-medium">
                             Set Global Pricing as Active
                           </span>
@@ -702,7 +673,7 @@ export default function PricingControl() {
                             type="checkbox"
                             checked={categoryActive}
                             disabled={mode === "view"}
-                            onChange={(e) => setCategoryActive(e.target.checked)}
+                            onChange={(e) => updateCategoryStatus(e.target.checked)}
                           />
                           <span className="text-sm font-medium">
                             Set Category Pricing as Active
@@ -719,67 +690,17 @@ export default function PricingControl() {
           )}
 
           {activeTab === "promo" && (
-            <section>
-              <h3 className="text-lg font-medium mb-3">Promo & Discount Control</h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-3 border rounded">
-                  <h4 className="font-medium mb-2">Create Promo</h4>
-                  <label className="text-xs">Code</label>
-                  <input value={newPromo.code} onChange={e => setNewPromo(p => ({ ...p, code: e.target.value.toUpperCase() }))} className="mt-1 block w-full rounded border p-2" />
-
-                  <label className="text-xs mt-2">Type</label>
-                  <select value={newPromo.type} onChange={e => setNewPromo(p => ({ ...p, type: e.target.value as any }))} className="block w-full mt-1 rounded border p-2">
-                    <option value="percentage">Percentage</option>
-                    <option value="flat">Flat</option>
-                  </select>
-
-                  <label className="text-xs mt-2">Value</label>
-                  <input type="number" value={newPromo.value} onChange={e => setNewPromo(p => ({ ...p, value: Number(e.target.value) }))} className="mt-1 block w-full rounded border p-2" />
-
-                  <label className="text-xs mt-2">Validity from</label>
-                  <input type="datetime-local" value={newPromo.validFrom ?? ""} onChange={e => setNewPromo(p => ({ ...p, validFrom: e.target.value }))} className="mt-1 block w-full rounded border p-2" />
-
-                  <label className="text-xs mt-2">Validity to</label>
-                  <input type="datetime-local" value={newPromo.validTo ?? ""} onChange={e => setNewPromo(p => ({ ...p, validTo: e.target.value }))} className="mt-1 block w-full rounded border p-2" />
-
-                  <label className="text-xs mt-2">Max discount per ride</label>
-                  <input type="number" value={newPromo.maxDiscountPerRide} onChange={e => setNewPromo(p => ({ ...p, maxDiscountPerRide: Number(e.target.value) }))} className="mt-1 block w-full rounded border p-2" />
-
-                  <label className="text-xs mt-2">Total usage limit</label>
-                  <input type="number" value={newPromo.totalUsageLimit} onChange={e => setNewPromo(p => ({ ...p, totalUsageLimit: Number(e.target.value) }))} className="mt-1 block w-full rounded border p-2" />
-
-                  <div className="mt-3 flex gap-2">
-                    <button onClick={addPromo} className="px-3 py-2 rounded bg-indigo-600 text-white">Create</button>
-                    <button onClick={() => setNewPromo({ code: "", type: "percentage", value: 10, validFrom: undefined, validTo: undefined, maxDiscountPerRide: 100, totalUsageLimit: 1000 })} className="px-3 py-2 rounded bg-gray-200">Clear</button>
-                  </div>
-                </div>
-
-                <div className="p-3 border rounded">
-                  <h4 className="font-medium mb-2">Active Promos</h4>
-                  <div className="space-y-2 max-h-64 overflow-auto">
-                    {promos.length === 0 && <div className="text-sm text-gray-500">No promos yet</div>}
-                    {promos.map(p => (
-                      <div key={p.code} className="flex items-center justify-between border p-2 rounded">
-                        <div>
-                          <div className="font-medium">{p.code}</div>
-                          <div className="text-xs text-gray-500">{p.type} • {p.value}{p.type === "percentage" ? "%" : ""}</div>
-                        </div>
-                        <div className="flex gap-2">
-                          <button onClick={() => removePromo(p.code)} className="px-2 py-1 rounded bg-red-500 text-white text-sm">Delete</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </section>
+            <PromoDiscountControl
+              newPromo={newPromo}
+              promos={promos}
+              setNewPromo={setNewPromo}
+              addPromo={addPromo}
+              removePromo={removePromo}
+            />
           )}
         </main>
         <FarePreview />
       </div>
-
-      {/* <p className="text-xs text-gray-500 mt-4">This is a front-end UI prototype. Hook state updates to your backend APIs to persist pricing, apply rule-based surge, and validate promo usages.</p> */}
     </div>
   );
 }

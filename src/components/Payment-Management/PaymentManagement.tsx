@@ -4,10 +4,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import CompactFilters from "../ui/filters";
 import { axiosInstance } from "@/utils/axiosInstance";
 import Pagination from "../ui/pagination";
+import { DownloadIcon } from "lucide-react";
+import { Menu, MenuItem, MenuProps, styled } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { downloadData } from "@/utils/downloadData";
 
 export type Transaction = {
   id: string;
-  type: "ride" | "driver_subscription" | "penalty" | "refund" | "adjustment";
+  type: "ride" | "subscription" | "penalty" | "refund" | "adjustment";
   userName: string;
   driverName?: string;
   amount: number;
@@ -33,7 +37,7 @@ const MOCK_TRANSACTIONS: Transaction[] = [
   },
   {
     id: "TXN002",
-    type: "driver_subscription",
+    type: "subscription",
     userName: "Driver: Suresh",
     amount: 999,
     currency: "INR",
@@ -91,6 +95,8 @@ export default function PaymentManagementPage() {
   const [txLimit, setTxLimit] = useState(5);
   const [txTotal, setTxTotal] = useState(0);
   const [txTotalPages, setTxTotalPages] = useState(1);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
 
   // Filters
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
@@ -136,7 +142,7 @@ export default function PaymentManagementPage() {
     let uiType: Transaction["type"] = "ride";
     switch (row.transactionType) {
       case "subscription":
-        uiType = "driver_subscription";
+        uiType = "subscription";
         break;
       case "penalty":
         uiType = "penalty";
@@ -162,8 +168,6 @@ export default function PaymentManagementPage() {
     // status
     const status = (row.status ?? "pending").toString().toLowerCase() as Transaction["status"];
     const uiStatus: Transaction["status"] = status === "success" ? "success" : status === "failed" ? "failed" : "pending";
-
-
 
 
     return {
@@ -210,7 +214,7 @@ export default function PaymentManagementPage() {
         Number(page) || 1,
         Number(limit) || 10
       );
-
+      console.log("REQUEST PARAMS SENT →", params);
       const res = await axiosInstance.get(
         "/api/admin/getAlltransactions",
         { params }
@@ -241,7 +245,7 @@ export default function PaymentManagementPage() {
   }
 
   useEffect(() => {
-    setTxPage(1); // reset pagination on filter change
+    setTxPage(1);
     fetchTransactions(1, txLimit);
   }, [
     q,
@@ -271,6 +275,57 @@ export default function PaymentManagementPage() {
   //   return { received, fees, byMode };
   // }, [filtered]);
 
+  const StyledMenu = styled((props: MenuProps) => (
+    <Menu
+      elevation={0}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'right',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+      {...props}
+    />
+  ))(({ theme }) => ({
+    '& .MuiPaper-root': {
+      borderRadius: 6,
+      marginTop: theme.spacing(1),
+      minWidth: 180,
+      color: 'rgb(55, 65, 81)',
+      boxShadow:
+        'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
+      '& .MuiMenu-list': {
+        padding: '4px 0',
+      },
+      '& .MuiMenuItem-root': {
+        '& .MuiSvgIcon-root': {
+          fontSize: 18,
+          color: theme.palette.text.secondary,
+          marginRight: theme.spacing(1.5),
+        },
+        '&:active': {
+          backgroundColor: alpha(
+            theme.palette.primary.main,
+            theme.palette.action.selectedOpacity,
+          ),
+        },
+      },
+      ...theme.applyStyles('dark', {
+        color: theme.palette.grey[300],
+      }),
+    },
+  }));
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
   return (
     <div className="min-h-screen p-6 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <div className="max-w-7xl mx-auto">
@@ -278,8 +333,32 @@ export default function PaymentManagementPage() {
           <div>
             <h1 className="text-2xl font-semibold">Payment Management</h1>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm">Export CSV</button>
+          <div className="relative">
+            <button
+              onClick={handleClick}
+              aria-controls={open ? 'export-menu' : undefined}
+              aria-haspopup="true"
+              aria-expanded={open ? 'true' : undefined}
+              className="inline-flex gap-2 items-center px-3 py-2 bg-blue-600 text-white rounded-md text-sm"
+            >
+              Export
+              <DownloadIcon />
+            </button>
+
+            <StyledMenu
+              id="export-menu"
+              aria-labelledby="demo-customized-button"
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+            >
+              <MenuItem onClick={() => downloadData({ context: 'getAlltransactions', format: 'pdf' })} disableRipple>
+                PDF
+              </MenuItem>
+              <MenuItem onClick={() => downloadData({ context: 'getAlltransactions', format: 'csv' })} disableRipple>
+                Excel
+              </MenuItem>
+            </StyledMenu>
           </div>
         </div>
 

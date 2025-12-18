@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -12,7 +12,7 @@ import {
   UserCircleIcon
 } from "../icons/index";
 import SidebarWidget from "./SidebarFooter";
-import { Ambulance, Award, BadgeIndianRupee } from "lucide-react";
+import { Ambulance, Award, BadgeIndianRupee, MessageCircle } from "lucide-react";
 
 type NavItem = {
   name: string;
@@ -29,11 +29,12 @@ const navItems: NavItem[] = [
   {
     icon: <BadgeIndianRupee />, name: "Payment Management", path: "/payment-management", subItems: [
       { name: "Wallet Management", path: "/payment-management/wallet-management" },
-      // { name: "Refund Management", path: "/payment-management/refund-management" },
       { name: "Subscription Management", path: "/payment-management/subscription-management" },
     ]
   },
   { icon: <Award />, name: "Pricing Control", path: "/pricing-control" },
+  { icon: <MessageCircle />, name: "Help & Support", path: "/help-support" },
+  // { name: "Refund Management", path: "/payment-management/refund-management" },
   // { icon: <FolderGit2 />, name: "Analytics & Reports", path: "/AnalyticsReports" },
   // { icon: <MessageCircle />, name: "Chatbot", path: "/Socket" },
 ];
@@ -69,20 +70,24 @@ const AppSidebar: React.FC = () => {
               <>
                 <div
                   className={`menu-item group w-full flex items-center gap-3 py-2 px-3 rounded-md transition-colors duration-150
-                ${submenuOpen ? "menu-item-active" : "menu-item-inactive"}
+                ${isParentActive(nav) || submenuOpen
+                      ? "menu-item-active"
+                      : "menu-item-inactive"}
                 ${!isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-start"}`}
-                  // keep keyboard accessibility but avoid nested interactive elements
                   role="group"
                 >
                   <span
-                    className={`flex-shrink-0 ${submenuOpen ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}
+                    className={`flex-shrink-0 ${isParentActive(nav) || submenuOpen
+                      ? "menu-item-icon-active"
+                      : "menu-item-icon-inactive"}
+`}
                     aria-hidden
                   >
                     {nav.icon}
                   </span>
 
                   {/* NAV LABEL: use Link so clicking label navigates */}
-                  {(isExpanded || isHovered || isMobileOpen) ? (
+                  {(isExpanded || isHovered || isMobileOpen) && (
                     <Link
                       href={nav.path ?? "#"}
                       onClick={() => setOpenSubmenu(null)}
@@ -90,12 +95,7 @@ const AppSidebar: React.FC = () => {
                     >
                       {nav.name}
                     </Link>
-                  ) : (
-                    // collapsed state: still show tooltip or accessible label
-                    <span className="menu-item-text text-sm md:text-base font-medium">{nav.name}</span>
                   )}
-
-                  {/* Chevron: toggles submenu only (stop propagation) */}
                   {(isExpanded || isHovered || isMobileOpen) && (
                     <button
                       type="button"
@@ -166,6 +166,28 @@ const AppSidebar: React.FC = () => {
       })}
     </ul>
   );
+  const isParentActive = (nav: NavItem) => {
+    if (!nav.path) return false;
+    if (pathname === nav.path) return true;
+    if (nav.subItems) {
+      return nav.subItems.some(sub =>
+        pathname.startsWith(sub.path)
+      );
+    }
+
+    return false;
+  };
+
+  useEffect(() => {
+    navItems.forEach((nav, index) => {
+      if (
+        nav.subItems &&
+        nav.subItems.some(sub => pathname.startsWith(sub.path))
+      ) {
+        setOpenSubmenu({ type: "main", index });
+      }
+    });
+  }, [pathname]);
 
   return (
     <aside
