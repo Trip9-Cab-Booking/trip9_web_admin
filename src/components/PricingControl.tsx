@@ -5,7 +5,9 @@ import PriceInput from "./ui/price-input/PriceInput";
 import { axiosInstance } from "@/utils/axiosInstance";
 import FarePreview from "./FarePreview";
 import PromoDiscountControl from "./PromoDiscountControl";
-import { Promo } from "@/types/promo";
+import { Promo, PromoForm } from "@/types/promo";
+import CustomSnackbar from "./CustomSnackbar";
+import Pagination from "./ui/pagination";
 
 type Mode = "view" | "edit" | "create";
 
@@ -40,6 +42,7 @@ export default function PricingControl() {
 
   const [loading, setLoading] = useState(false);
   const [pricingRaw, setPricingRaw] = useState<any[]>([]);
+  const [couponIds, setCouponIds] = useState<string[]>([]);
   const [pricingIds, setPricingIds] = useState<{
     global?: string;
     bike?: string;
@@ -60,8 +63,20 @@ export default function PricingControl() {
   });
   const [activeTab, setActiveTab] = useState<"settings" | "promo">("settings");
   // Promo list 
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
   const [promos, setPromos] = useState<Promo[]>([]);
-  const [newPromo, setNewPromo] = useState<Promo>({ code: "", type: "percentage", value: 10, validFrom: undefined, validTo: undefined, maxDiscountPerRide: 100, totalUsageLimit: 1000 });
+  const [newPromo, setNewPromo] = useState<PromoForm>({
+    code: "",
+    type: "PERCENTAGE",
+    value: 10,
+    validFrom: "",
+    validTo: "",
+    maxDiscountPerRide: 100,
+    totalUsageLimit: 1000,
+  });
+  const [loadingPromos, setLoadingPromos] = useState(false);
   // Fare preview inputs
   const [preview, setPreview] = useState({ distanceKm: 12, durationMin: 20, category: "car_economy" as VehicleCategory, applyPromoCode: "" });
   const [hasPricing, setHasPricing] = useState(true);
@@ -135,12 +150,171 @@ export default function PricingControl() {
   ) => {
     setSnackbar({ open: true, message, severity });
   };
-  const addPromo = () => {
-    if (!newPromo.code.trim()) return alert("Promo code required");
-    setPromos(p => [newPromo, ...p]);
-    setNewPromo({ code: "", type: "percentage", value: 10, validFrom: undefined, validTo: undefined, maxDiscountPerRide: 100, totalUsageLimit: 1000 });
+
+  const closeSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
   };
-  const removePromo = (code: string) => setPromos(p => p.filter(x => x.code !== code));
+
+  const fetchCoupons = async (page = 1, limit = 3) => {
+    const response = await axiosInstance.get(
+      "/api/admin/coupon/coupons",
+      { params: { page, limit } }
+    );
+
+    setPromos(response.data.data.list);
+    setTotalPages(response.data.data.pagination.totalPages);
+  };
+
+  useEffect(() => {
+    const loadCoupons = async () => {
+      try {
+        setLoadingPromos(true);
+        await fetchCoupons(page);
+      } catch (error) {
+        console.error("Failed to fetch coupons", error);
+      } finally {
+        setLoadingPromos(false);
+      }
+    };
+
+    loadCoupons();
+  }, [page]);
+
+
+  const handlePageChange = (p: number) => {
+    if (p < 1 || p > totalPages) return;
+    setPage(p);
+  };
+
+  // const addPromo = async () => {
+  //   try {
+  //     const payload = {
+  //       couponCode: newPromo.code.trim().toUpperCase(),
+  //       type: newPromo.type.toUpperCase(),
+  //       value: newPromo.value,
+  //       validFrom: new Date(newPromo.validFrom!).toISOString(),
+  //       validTo: new Date(newPromo.validTo!).toISOString(),
+  //       maxDiscountPerRide: newPromo.maxDiscountPerRide,
+  //       totalUsageLimit: newPromo.totalUsageLimit,
+  //     };
+
+  //     await axiosInstance.post("/api/admin/coupon/create", payload);
+
+  //     setSnackbar({
+  //       open: true,
+  //       message: "Coupon created successfully",
+  //       severity: "success",
+  //     });
+
+  //     // 🔄 REFRESH LIST
+  //     await fetchCoupons(1);
+  //     setPage(1);
+
+  //     // optional: reset form
+  //     setNewPromo({
+  //       code: "",
+  //       type: "PERCENTAGE",
+  //       value: 10,
+  //       validFrom: "",
+  //       validTo: "",
+  //       maxDiscountPerRide: 100,
+  //       totalUsageLimit: 1000,
+  //     });
+  //   } catch (error: any) {
+  //     setSnackbar({
+  //       open: true,
+  //       message:
+  //         error.response?.data?.message || "Failed to create coupon",
+  //       severity: "error",
+  //     });
+  //   }
+  // };
+
+  const savePromo = async () => {
+    try {
+      const payload = {
+        couponCode: newPromo.code.trim().toUpperCase(),
+        type: newPromo.type,
+        value: newPromo.value,
+        validFrom: new Date(newPromo.validFrom!).toISOString(),
+        validTo: new Date(newPromo.validTo!).toISOString(),
+        maxDiscountPerRide: newPromo.maxDiscountPerRide,
+        totalUsageLimit: newPromo.totalUsageLimit,
+      };
+
+      if (newPromo.couponId) {
+        // 🔁 UPDATE
+        await axiosInstance.put(
+          `/api/admin/coupon/update/${newPromo.couponId}`,
+          payload
+        );
+
+        setSnackbar({
+          open: true,
+          message: "Coupon updated successfully",
+          severity: "success",
+        });
+      } else {
+        // ➕ CREATE
+        await axiosInstance.post(
+          "/api/admin/coupon/create",
+          payload
+        );
+
+        setSnackbar({
+          open: true,
+          message: "Coupon created successfully",
+          severity: "success",
+        });
+      }
+
+      // 🔄 Refresh list & reset form
+      await fetchCoupons(1);
+      setPage(1);
+
+      setNewPromo({
+        code: "",
+        type: "PERCENTAGE",
+        value: 10,
+        validFrom: "",
+        validTo: "",
+        maxDiscountPerRide: 100,
+        totalUsageLimit: 1000,
+      });
+    } catch (error: any) {
+      setSnackbar({
+        open: true,
+        message:
+          error.response?.data?.message || "Failed to save coupon",
+        severity: "error",
+      });
+    }
+  };
+
+
+  const removePromo = async (couponId: string) => {
+    try {
+      await axiosInstance.delete(
+        `/api/admin/coupon/delete/${couponId}`
+      );
+
+      // Refresh list after delete
+      await fetchCoupons(page);
+
+      setSnackbar({
+        open: true,
+        message: "Coupon deleted successfully",
+        severity: "success",
+      });
+    } catch (error: any) {
+      setSnackbar({
+        open: true,
+        message:
+          error.response?.data?.message || "Failed to delete coupon",
+        severity: "error",
+      });
+    }
+  };
 
   const estimatedFare = useMemo(() => {
     const cat = categories[preview.category];
@@ -156,13 +330,24 @@ export default function PricingControl() {
     fare = Math.max(fare, minFare);
 
     // promo
-    const promo = promos.find(p => p.code === preview.applyPromoCode.trim().toUpperCase());
+    const promo = promos.find(
+      (p) => p.couponCode === preview.applyPromoCode.trim().toUpperCase()
+    );
+
     let discount = 0;
+
     if (promo) {
-      if (promo.type === "percentage") discount = (fare * (promo.value / 100));
-      else discount = promo.value;
-      if (promo.maxDiscountPerRide) discount = Math.min(discount, promo.maxDiscountPerRide);
+      if (promo.type === "PERCENTAGE") {
+        discount = fare * (promo.value / 100);
+      } else {
+        discount = promo.value;
+      }
+
+      if (promo.maxDiscountPerRide) {
+        discount = Math.min(discount, promo.maxDiscountPerRide);
+      }
     }
+
 
     const final = Math.max(0, fare - discount);
     return {
@@ -418,7 +603,6 @@ export default function PricingControl() {
     }
   };
 
-
   // UPDATE CATEGORY PRICING STATUS
   const updateCategoryStatus = async (checked: boolean) => {
     if (!categoryModelId) return;
@@ -451,7 +635,7 @@ export default function PricingControl() {
         <aside className="md:col-span-1 bg-white rounded-lg shadow p-4">
           <nav className="space-y-2">
             <button onClick={() => setActiveTab("settings")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "settings" ? "bg-indigo-600 text-white" : "hover:bg-gray-50"}`}>Pricing Settings</button>
-            <button onClick={() => setActiveTab("promo")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "promo" ? "bg-indigo-600 text-white" : "hover:bg-gray-50"}`}>Promo & Discounts</button>
+            <button onClick={() => setActiveTab("promo")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "promo" ? "bg-indigo-600 text-white" : "hover:bg-gray-50"}`}>Coupons</button>
           </nav>
         </aside>
 
@@ -690,16 +874,35 @@ export default function PricingControl() {
           )}
 
           {activeTab === "promo" && (
-            <PromoDiscountControl
-              newPromo={newPromo}
-              promos={promos}
-              setNewPromo={setNewPromo}
-              addPromo={addPromo}
-              removePromo={removePromo}
-            />
+            <>
+              <PromoDiscountControl
+                newPromo={newPromo}
+                promos={promos}
+                setNewPromo={setNewPromo}
+                savePromo={savePromo}
+                removePromo={removePromo}
+              />
+
+              <div className="mt-4">
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            </>
           )}
+
         </main>
         <FarePreview />
+
+        <CustomSnackbar
+          open={snackbar.open}
+          message={snackbar.message}
+          severity={snackbar.severity}
+          onClose={closeSnackbar}
+        />
+
       </div>
     </div>
   );

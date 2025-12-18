@@ -1,11 +1,25 @@
-export type PromoType = "percentage" | "flat";
+export type PromoType = "PERCENTAGE" | "FLAT";
 
-export type Promo = {
+export interface Promo {
+  id: string;
+  couponId: string;
+  code: string;
+  couponCode: string;
+  type: PromoType;
+  value: number;
+  validFrom: string;
+  validTo: string;
+  maxDiscountPerRide: number;
+  totalUsageLimit: number;
+}
+
+export interface PromoForm {
   code: string;
   type: PromoType;
   value: number;
   validFrom?: string;
   validTo?: string;
-  maxDiscountPerRide?: number;
-  totalUsageLimit?: number;
-};
+  maxDiscountPerRide: number;
+  totalUsageLimit: number;
+  couponId?: string;
+}

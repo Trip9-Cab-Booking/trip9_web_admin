@@ -1,13 +1,13 @@
 "use client";
 
 import React from "react";
-import { Promo, PromoType } from "@/types/promo";
+import { Promo, PromoForm, PromoType } from "@/types/promo";
 
 type Props = {
-    newPromo: Promo;
+    newPromo: PromoForm;
     promos: Promo[];
-    setNewPromo: React.Dispatch<React.SetStateAction<Promo>>;
-    addPromo: () => void;
+    setNewPromo: React.Dispatch<React.SetStateAction<PromoForm>>;
+    savePromo: () => void;
     removePromo: (code: string) => void;
 };
 
@@ -15,17 +15,33 @@ const PromoDiscountControl: React.FC<Props> = ({
     newPromo,
     promos,
     setNewPromo,
-    addPromo,
+    savePromo,
     removePromo,
 }) => {
+
+    const selectPromo = (promo: Promo) => {
+        setNewPromo({
+            code: promo.couponCode,
+            type: promo.type,
+            value: promo.value,
+            validFrom: promo.validFrom.slice(0, 16),
+            validTo: promo.validTo.slice(0, 16),
+            maxDiscountPerRide: promo.maxDiscountPerRide,
+            totalUsageLimit: promo.totalUsageLimit,
+            couponId: promo.couponId,
+        });
+    };
+
     return (
         <section>
-            <h3 className="text-lg font-medium mb-3">Promo & Discount Control</h3>
+            <h3 className="text-lg font-medium mb-3">Coupon</h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* CREATE PROMO */}
+                {/* CREATE / EDIT PROMO */}
                 <div className="p-3 border rounded">
-                    <h4 className="font-medium mb-2">Create Promo</h4>
+                    <h4 className="font-medium mb-2">
+                        {newPromo.code ? "Edit Coupon" : "Create Coupon"}
+                    </h4>
 
                     <label className="text-xs">Code</label>
                     <input
@@ -50,8 +66,8 @@ const PromoDiscountControl: React.FC<Props> = ({
                         }
                         className="block w-full mt-1 rounded border p-2"
                     >
-                        <option value="percentage">Percentage</option>
-                        <option value="flat">Flat</option>
+                        <option value="PERCENTAGE">Percentage</option>
+                        <option value="FLAT">Flat</option>
                     </select>
 
                     <label className="text-xs mt-2">Value</label>
@@ -70,7 +86,7 @@ const PromoDiscountControl: React.FC<Props> = ({
                     <label className="text-xs mt-2">Validity from</label>
                     <input
                         type="datetime-local"
-                        value={newPromo.validFrom ?? ""}
+                        value={newPromo.validFrom || ""}
                         onChange={(e) =>
                             setNewPromo((p) => ({
                                 ...p,
@@ -83,7 +99,7 @@ const PromoDiscountControl: React.FC<Props> = ({
                     <label className="text-xs mt-2">Validity to</label>
                     <input
                         type="datetime-local"
-                        value={newPromo.validTo ?? ""}
+                        value={newPromo.validTo || ""}
                         onChange={(e) =>
                             setNewPromo((p) => ({
                                 ...p,
@@ -121,19 +137,20 @@ const PromoDiscountControl: React.FC<Props> = ({
 
                     <div className="mt-3 flex gap-2">
                         <button
-                            onClick={addPromo}
+                            onClick={savePromo}
                             className="px-3 py-2 rounded bg-indigo-600 text-white"
                         >
-                            Create
+                            {newPromo.code ? "Update" : "Create"}
                         </button>
+
                         <button
                             onClick={() =>
                                 setNewPromo({
                                     code: "",
-                                    type: "percentage",
+                                    type: "PERCENTAGE",
                                     value: 10,
-                                    validFrom: undefined,
-                                    validTo: undefined,
+                                    validFrom: "",
+                                    validTo: "",
                                     maxDiscountPerRide: 100,
                                     totalUsageLimit: 1000,
                                 })
@@ -147,27 +164,32 @@ const PromoDiscountControl: React.FC<Props> = ({
 
                 {/* ACTIVE PROMOS */}
                 <div className="p-3 border rounded">
-                    <h4 className="font-medium mb-2">Active Promos</h4>
+                    <h4 className="font-medium mb-2">Active Coupons</h4>
 
                     <div className="space-y-2 max-h-64 overflow-auto">
                         {promos.length === 0 && (
-                            <div className="text-sm text-gray-500">No promos yet</div>
+                            <div className="text-sm text-gray-500">No coupons yet</div>
                         )}
 
                         {promos.map((p) => (
                             <div
-                                key={p.code}
-                                className="flex items-center justify-between border p-2 rounded"
+                                key={p.id}
+                                onClick={() => selectPromo(p)}
+                                className="flex items-center justify-between border p-2 rounded cursor-pointer hover:bg-gray-50"
                             >
                                 <div>
-                                    <div className="font-medium">{p.code}</div>
+                                    <div className="font-medium">{p.couponCode}</div>
                                     <div className="text-xs text-gray-500">
                                         {p.type} • {p.value}
-                                        {p.type === "percentage" ? "%" : ""}
+                                        {p.type === "PERCENTAGE" ? "%" : ""}
                                     </div>
                                 </div>
+
                                 <button
-                                    onClick={() => removePromo(p.code)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        removePromo(p.couponId);
+                                    }}
                                     className="px-2 py-1 rounded bg-red-500 text-white text-sm"
                                 >
                                     Delete
