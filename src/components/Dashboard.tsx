@@ -18,6 +18,47 @@ import {
 import CompactPlanUsageRecharts from "./CompactPlanUsageRecharts";
 import CompactPlanUsageBarChart from "./CompactPlanUsageRecharts";
 import RidesPerUserBarChart from "./RidesPerUserBarChart";
+import ChurnedUsersModal from "./ChurnedUsersModal";
+
+type Range = "daily" | "weekly" | "monthly";
+
+type RevenuePoint = {
+  label: string;
+  revenue: number;
+};
+
+const revenueDataMap: Record<"daily" | "weekly" | "monthly", RevenuePoint[]> = {
+  daily: [
+    { label: "Mon", revenue: 12000 },
+    { label: "Tue", revenue: 15000 },
+    { label: "Wed", revenue: 9000 },
+    { label: "Thu", revenue: 18000 },
+    { label: "Fri", revenue: 22000 },
+    { label: "Sat", revenue: 17000 },
+    { label: "Sun", revenue: 14000 },
+  ],
+  weekly: [
+    { label: "Week 1", revenue: 82000 },
+    { label: "Week 2", revenue: 94000 },
+    { label: "Week 3", revenue: 88000 },
+    { label: "Week 4", revenue: 102000 },
+  ],
+  monthly: [
+    { label: "Jan", revenue: 320000 },
+    { label: "Feb", revenue: 280000 },
+    { label: "Mar", revenue: 360000 },
+    { label: "Apr", revenue: 410000 },
+    { label: "May", revenue: 390000 },
+    { label: "Jun", revenue: 420000 },
+    { label: "Jul", revenue: 480000 },
+    { label: "Aug", revenue: 390000 },
+    { label: "Sep", revenue: 150000 },
+    { label: "Oct", revenue: 220000 },
+    { label: "Nov", revenue: 118000 },
+    { label: "Dec", revenue: 330000 },
+  ],
+};
+
 
 const COLORS = ["#6366F1", "#06B6D4", "#10B981", "#F59E0B", "#EF4444"];
 
@@ -98,7 +139,9 @@ function Tabs({ tabs, active, onChange }: TabsProps) {
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("Ride Analytics");
-
+  const [showChurnedModal, setShowChurnedModal] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [range, setRange] = useState<Range>("daily");
   const totalRides = mock.ridesPerDay.reduce((s, r) => s + r.rides, 0);
   const avgDistance = 6.2;
   const avgDuration = 18;
@@ -118,6 +161,24 @@ export default function Dashboard() {
     { range: "21–30", users: 20 },
     { range: "30+", users: 8 },
   ];
+
+  const revenueData = [
+    { name: "Mon", revenue: 12000 },
+    { name: "Tue", revenue: 15000 },
+    { name: "Wed", revenue: 9000 },
+    { name: "Thu", revenue: 18000 },
+    { name: "Fri", revenue: 22000 },
+    { name: "Sat", revenue: 17000 },
+    { name: "Sun", revenue: 14000 },
+  ];
+
+  const discountImpactData = [
+    { name: "Week 1", baseline: 40000, discounted: 52000 },
+    { name: "Week 2", baseline: 45000, discounted: 61000 },
+    { name: "Week 3", baseline: 42000, discounted: 58000 },
+    { name: "Week 4", baseline: 48000, discounted: 65000 },
+  ];
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
@@ -308,42 +369,186 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3">Churned users</h3>
-                <div className="text-sm text-gray-600">{mock.users.churned} users with no rides in the last X days</div>
+              <div className="bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-800">
+                      Churned Users
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      Inactive for last X days
+                    </p>
+                  </div>
+
+                  <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-red-50 text-red-600">
+                    High Risk
+                  </span>
+                </div>
+
+                {/* Metric */}
+                <div className="flex items-end gap-2 mb-3">
+                  <span className="text-4xl font-bold text-gray-900">
+                    {mock.users.churned}
+                  </span>
+                  <span className="text-sm text-gray-500 mb-1">users</span>
+                </div>
+
+                {/* Insight */}
+                <p className="text-sm text-gray-600">
+                  These users have not completed any rides recently.
+                </p>
+
+                {/* Action */}
+                {/* <div className="mt-5 pt-4 border-t flex items-center justify-between">
+                  <span className="text-xs text-gray-400">
+                    Updated today
+                  </span>
+                  <button
+                    onClick={() => {
+                      console.log("Open Churned Users Modal");
+                      setShowChurnedModal(true);
+                    }}
+                    className="text-sm font-medium text-blue-600 hover:underline"
+                  >
+                    View users
+                  </button>
+
+                  {showChurnedModal && (
+                    <ChurnedUsersModal
+                      open={showChurnedModal}
+                      onClose={() => setShowChurnedModal(false)}
+                    />
+                  )}
+                </div> */}
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl shadow-sm border">
-              <h3 className="text-lg font-medium mb-3">Rides per user distribution</h3>
-              {/* <div className="text-sm text-gray-600">Histogram or CDF to show heavy users vs casual users (placeholder)</div> */}
-              <RidesPerUserBarChart data={rideBuckets} />
-            </div>
+            <RidesPerUserBarChart data={rideBuckets} />
           </section>
         )}
 
         {activeTab === "Revenue & Finance" && (
           <section className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3">Subscription revenue</h3>
-                <div className="text-sm text-gray-600">Daily/weekly/monthly revenue chart (time series placeholder)</div>
+            {/* Subscription Revenue */}
+            <div className="bg-white rounded-2xl border p-5 shadow-sm">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-800">
+                    Subscription Revenue
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    {range === "daily"
+                      ? "Daily revenue performance"
+                      : range === "weekly"
+                        ? "Weekly revenue summary"
+                        : "Monthly revenue overview"}
+                  </p>
+                </div>
+
+                {/* Toggle */}
+                <div className="flex gap-1 bg-gray-100 rounded-full p-1">
+                  {(["daily", "weekly", "monthly"] as Range[]).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setRange(r)}
+                      className={`px-3 py-1 text-xs rounded-full transition
+                ${range === r
+                          ? "bg-white shadow text-gray-900"
+                          : "text-gray-500 hover:text-gray-700"
+                        }`}
+                    >
+                      {r.charAt(0).toUpperCase() + r.slice(1)}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3">Refunds & penalties</h3>
-                <div className="text-sm text-gray-600">Refunds: {mock.revenue.refunds} • Penalties: {mock.revenue.penalties}</div>
+              {/* Chart */}
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={revenueDataMap[range]}
+                    barCategoryGap="35%"
+                  >
+                    <CartesianGrid
+                      vertical={false}
+                      strokeDasharray="3 3"
+                      stroke="#e5e7eb"
+                    />
+                    <XAxis
+                      dataKey="label"
+                      tickLine={false}
+                      axisLine={false}
+                      fontSize={12}
+                    />
+                    <YAxis
+                      tickLine={false}
+                      axisLine={false}
+                      fontSize={12}
+                    />
+                    <Tooltip
+                      cursor={{ fill: "rgba(0,0,0,0.04)" }}
+                      formatter={(value: number) => [`₹${value.toLocaleString()}`, "Revenue"]}
+                    />
+                    <Bar
+                      dataKey="revenue"
+                      fill="#2563eb"
+                      radius={[6, 6, 0, 0]}
+                      barSize={24}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl shadow-sm border">
-              <h3 className="text-lg font-medium mb-3">Discounts impact</h3>
-              <div className="text-sm text-gray-600">Show discount-driven lift vs baseline revenue (placeholder)</div>
-            </div>
+            {/* Discounts Impact */}
+            {/* <div className="bg-white rounded-2xl border p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-800">
+                    Discounts Impact
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Revenue with vs without discounts
+                  </p>
+                </div>
+
+                <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">
+                  Analysis
+                </span>
+              </div>
+
+              <div className="h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={discountImpactData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar
+                      dataKey="baseline"
+                      name="Without Discount"
+                      fill="#9ca3af"
+                      radius={[6, 6, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="discounted"
+                      name="With Discount"
+                      fill="#16a34a"
+                      radius={[6, 6, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div> */}
           </section>
+
         )}
       </div>
-    </div>
+    </div >
   );
 }
 

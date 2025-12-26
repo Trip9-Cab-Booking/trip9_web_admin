@@ -56,7 +56,6 @@ const Profile: React.FC = () => {
   });
 
 
-  // Fetch profile from server on component mount
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -122,8 +121,6 @@ const Profile: React.FC = () => {
       });
 
       setIsEditing(false);
-
-      // Update UI immediately
       setProfile((prev) => ({
         ...prev,
         avatar: prev.avatarPreview || prev.avatar,
