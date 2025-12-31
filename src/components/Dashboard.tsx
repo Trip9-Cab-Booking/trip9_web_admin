@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   LineChart,
   Line,
@@ -19,6 +19,8 @@ import CompactPlanUsageRecharts from "./CompactPlanUsageRecharts";
 import CompactPlanUsageBarChart from "./CompactPlanUsageRecharts";
 import RidesPerUserBarChart from "./RidesPerUserBarChart";
 import ChurnedUsersModal from "./ChurnedUsersModal";
+import { axiosInstance } from "@/utils/axiosInstance";
+import Pagination from "./ui/pagination";
 
 type Range = "daily" | "weekly" | "monthly";
 
@@ -26,6 +28,60 @@ type RevenuePoint = {
   label: string;
   revenue: number;
 };
+
+type DashboardStats = {
+  totalRides: number;
+  avgPerDay: number;
+  completionRate: string;
+  avgDistance: string;
+  avgDuration: string;
+};
+
+type RideTimeSeries = {
+  date: string;
+  rides: number;
+};
+
+type CategoryBreakdown = {
+  name: string;
+  value: number;
+};
+
+type PeakHour = {
+  hour: string;
+  rides: number;
+};
+
+type FunnelStep = {
+  step: string;
+  count: number;
+  percentage: number;
+};
+
+type CancellationReason = {
+  reason: string;
+  cancelledBy: "user" | "driver" | "system";
+  count: number;
+  share: number;
+};
+
+type Driver = {
+  driverId: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  totalRequests: number;
+  rating: number;
+  acceptancePercentage: number;
+  cancellationPercentage: number;
+  onlineHours: string;
+};
+
+type PaginationInfo = {
+  currentPage: number;
+  totalPages: number;
+};
+
 
 const revenueDataMap: Record<"daily" | "weekly" | "monthly", RevenuePoint[]> = {
   daily: [
@@ -58,7 +114,6 @@ const revenueDataMap: Record<"daily" | "weekly" | "monthly", RevenuePoint[]> = {
     { label: "Dec", revenue: 330000 },
   ],
 };
-
 
 const COLORS = ["#6366F1", "#06B6D4", "#10B981", "#F59E0B", "#EF4444"];
 
@@ -139,6 +194,26 @@ function Tabs({ tabs, active, onChange }: TabsProps) {
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("Ride Analytics");
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [rideSeries, setRideSeries] = useState<RideTimeSeries[]>([]);
+  const [seriesLoading, setSeriesLoading] = useState(true);
+  const [categoryData, setCategoryData] = useState<CategoryBreakdown[]>([]);
+  const [categoryLoading, setCategoryLoading] = useState(true);
+  const [peakHours, setPeakHours] = useState<PeakHour[]>([]);
+  const [peakLoading, setPeakLoading] = useState(true);
+  const [funnelData, setFunnelData] = useState<FunnelStep[]>([]);
+  const [funnelLoading, setFunnelLoading] = useState(true);
+  const [cancellations, setCancellations] = useState<CancellationReason[]>([]);
+  const [cancelLoading, setCancelLoading] = useState(true);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    currentPage: 1,
+    totalPages: 1
+  });
+  const [driversLoading, setDriversLoading] = useState(true);
   const [showChurnedModal, setShowChurnedModal] = useState(false);
   const [open, setOpen] = useState(false);
   const [range, setRange] = useState<Range>("daily");
@@ -179,6 +254,189 @@ export default function Dashboard() {
     { name: "Week 4", baseline: 48000, discounted: 65000 },
   ];
 
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        const res = await axiosInstance.get("/api/admin/dashboard/view");
+        if (res.data?.success) {
+          setStats(res.data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardStats();
+  }, []);
+
+  useEffect(() => {
+    if (activeTab !== "Ride Analytics") return;
+
+    const fetchRideTimeSeries = async () => {
+      try {
+        const res = await axiosInstance.get(
+          "/api/admin/dashboard/ride-time-series",
+          {
+            params: { type: "daily" }
+          }
+        );
+
+        if (res.data?.success) {
+          setRideSeries(res.data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch ride time series", error);
+      } finally {
+        setSeriesLoading(false);
+      }
+    };
+
+    fetchRideTimeSeries();
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== "Ride Analytics") return;
+
+    const fetchCategoryBreakdown = async () => {
+      try {
+        const res = await axiosInstance.get(
+          "/api/admin/dashboard/category-breakdown"
+        );
+
+        if (res.data?.success) {
+          const normalized = res.data.data.map(
+            (item: { vehicleType: string; rides: number }) => ({
+              name: item.vehicleType.toUpperCase(),
+              value: item.rides
+            })
+          );
+
+          setCategoryData(normalized);
+        }
+      } catch (error) {
+        console.error("Failed to fetch category breakdown", error);
+      } finally {
+        setCategoryLoading(false);
+      }
+    };
+
+    fetchCategoryBreakdown();
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== "Ride Analytics") return;
+
+    const fetchPeakHours = async () => {
+      try {
+        const res = await axiosInstance.get(
+          "/api/admin/dashboard/peak-hours",
+          {
+            params: { status: "cancelled" }
+          }
+        );
+
+        if (res.data?.success) {
+          setPeakHours(res.data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch peak hours", error);
+      } finally {
+        setPeakLoading(false);
+      }
+    };
+
+    fetchPeakHours();
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== "Ride Analytics") return;
+
+    const fetchConversionFunnel = async () => {
+      try {
+        const res = await axiosInstance.get(
+          "/api/admin/dashboard/conversion-funnel",
+          {
+            params: { status: "completed" }
+          }
+        );
+
+        if (res.data?.success) {
+          const d = res.data.data;
+
+          const normalized: FunnelStep[] = [
+            { step: "Requests", count: d.requests.count, percentage: d.requests.percentage },
+            { step: "Accepted", count: d.accepted.count, percentage: d.accepted.percentage },
+            { step: "Completed", count: d.completed.count, percentage: d.completed.percentage },
+            { step: "Cancelled", count: d.cancelled.count, percentage: d.cancelled.percentage }
+          ];
+
+          setFunnelData(normalized);
+        }
+      } catch (error) {
+        console.error("Failed to fetch conversion funnel", error);
+      } finally {
+        setFunnelLoading(false);
+      }
+    };
+
+    fetchConversionFunnel();
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== "Ride Analytics") return;
+
+    const fetchCancellations = async () => {
+      try {
+        const res = await axiosInstance.get(
+          "/api/admin/dashboard/cancellation"
+        );
+
+        if (res.data?.success) {
+          setCancellations(res.data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch cancellation reasons", error);
+      } finally {
+        setCancelLoading(false);
+      }
+    };
+
+    fetchCancellations();
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== "Driver Performance") return;
+    const fetchTopDrivers = async () => {
+      setDriversLoading(true);
+      try {
+        const res = await axiosInstance.get(
+          "/api/admin/dashboard/TopDriverList",
+          {
+            params: {
+              limit: 2,
+              page: currentPage
+            }
+          }
+        );
+
+        if (res.data?.success) {
+          setDrivers(res.data.data.drivers);
+
+          const { totalDrivers } = res.data.data.pagination;
+          setTotalPages(Math.ceil(totalDrivers / 2));
+        }
+      } catch (error) {
+        console.error("Failed to fetch top drivers", error);
+      } finally {
+        setDriversLoading(false);
+      }
+    };
+
+    fetchTopDrivers();
+  }, [activeTab, currentPage]);
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
@@ -194,12 +452,36 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <KPICard label="Total rides" value={totalRides.toLocaleString()} hint={`Avg/day ${Math.round(totalRides / mock.ridesPerDay.length)}`} />
-        <KPICard label="Completion rate" value={`${completionRate}%`} hint={`Requests → Completed`} />
-        <KPICard label="Avg distance" value={`${avgDistance} km`} hint="Average ride distance" />
-        <KPICard label="Avg duration" value={`${avgDuration} min`} hint="Average ride time" />
-      </div>
+      {loading ? (
+        <div className="text-sm text-gray-500">Loading dashboard stats…</div>
+      ) : stats ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <KPICard
+            label="Total rides"
+            value={stats.totalRides.toLocaleString()}
+            hint={`Avg/day ${stats.avgPerDay}`}
+          />
+
+          <KPICard
+            label="Completion rate"
+            value={stats.completionRate}
+            hint="Requests → Completed"
+          />
+
+          <KPICard
+            label="Avg distance"
+            value={stats.avgDistance}
+            hint="Average ride distance"
+          />
+
+          <KPICard
+            label="Avg duration"
+            value={stats.avgDuration}
+            hint="Average ride time"
+          />
+        </div>
+      ) : null}
+
 
       <div>
         {activeTab === "Ride Analytics" && (
@@ -211,31 +493,60 @@ export default function Dashboard() {
                   <div className="text-sm text-gray-500">Last 7 days</div>
                 </div>
                 <div style={{ height: 260 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={mock.ridesPerDay}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip />
-                      <Line type="monotone" dataKey="rides" stroke={COLORS[0]} strokeWidth={3} dot={{ r: 4 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  {seriesLoading ? (
+                    <div className="h-full flex items-center justify-center text-sm text-gray-400">
+                      Loading ride analytics…
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={rideSeries}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip />
+                        <Line
+                          type="monotone"
+                          dataKey="rides"
+                          stroke={COLORS[0]}
+                          strokeWidth={3}
+                          dot={{ r: 4 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </div>
 
               <div className="bg-white p-4 rounded-2xl shadow-sm border">
                 <h3 className="text-lg font-medium mb-2">Category breakdown</h3>
                 <div style={{ height: 260 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={mock.categoryBreakdown} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={4}>
-                        {mock.categoryBreakdown.map((entry, idx) => (
-                          <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  {categoryLoading ? (
+                    <div className="h-full flex items-center justify-center text-sm text-gray-400">
+                      Loading category data…
+                    </div>
+                  ) : categoryData.length === 0 ? (
+                    <div className="h-full flex items-center justify-center text-sm text-gray-400">
+                      No category data available
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={categoryData}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={4}
+                        >
+                          {categoryData.map((_, idx) => (
+                            <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </div>
             </div>
@@ -244,31 +555,51 @@ export default function Dashboard() {
               <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border">
                 <h3 className="text-lg font-medium mb-3">Peak hours</h3>
                 <div style={{ height: 220 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={mock.peakHours}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="hour" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="rides" fill={COLORS[1]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {peakLoading ? (
+                    <div className="h-full flex items-center justify-center text-sm text-gray-400">
+                      Loading peak hours…
+                    </div>
+                  ) : peakHours.length === 0 ? (
+                    <div className="h-full flex items-center justify-center text-sm text-gray-400">
+                      No peak hour data available
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={peakHours}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="hour" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="rides" fill={COLORS[1]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </div>
 
               <div className="bg-white p-4 rounded-2xl shadow-sm border">
                 <h3 className="text-lg font-medium mb-3">Conversion funnel</h3>
-                <div className="space-y-2">
-                  {mock.funnel.map((f) => (
-                    <div key={f.step} className="flex items-center justify-between">
-                      <div>
-                        <div className="text-sm">{f.step}</div>
-                        <div className="text-xs text-gray-400">{Math.round((f.count / mock.funnel[0].count) * 100)}% of requests</div>
+                {funnelLoading ? (
+                  <div className="text-sm text-gray-400">Loading funnel data…</div>
+                ) : funnelData.length === 0 ? (
+                  <div className="text-sm text-gray-400">No funnel data available</div>
+                ) : (
+                  <div className="space-y-2">
+                    {funnelData.map((f) => (
+                      <div key={f.step} className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm">{f.step}</div>
+                          <div className="text-xs text-gray-400">
+                            {f.percentage}% of requests
+                          </div>
+                        </div>
+                        <div className="text-lg font-semibold">
+                          {f.count.toLocaleString()}
+                        </div>
                       </div>
-                      <div className="text-lg font-semibold">{f.count.toLocaleString()}</div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -285,14 +616,28 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {[{ reason: "Driver no-show", by: "Driver", count: 420 }, { reason: "Rider changed mind", by: "User", count: 320 }, { reason: "System timeout", by: "System", count: 150 }].map((r) => (
-                      <tr key={r.reason} className="border-t">
-                        <td className="px-3 py-2">{r.reason}</td>
-                        <td className="px-3 py-2">{r.by}</td>
-                        <td className="px-3 py-2">{r.count.toLocaleString()}</td>
-                        <td className="px-3 py-2">{Math.round((r.count / 890) * 100)}%</td>
+                    {cancelLoading ? (
+                      <tr>
+                        <td colSpan={4} className="px-3 py-4 text-center text-sm text-gray-400">
+                          Loading cancellation data…
+                        </td>
                       </tr>
-                    ))}
+                    ) : cancellations.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-3 py-4 text-center text-sm text-gray-400">
+                          No cancellation data available
+                        </td>
+                      </tr>
+                    ) : (
+                      cancellations.map((r, idx) => (
+                        <tr key={idx} className="border-t">
+                          <td className="px-3 py-2">{r.reason}</td>
+                          <td className="px-3 py-2 capitalize">{r.cancelledBy}</td>
+                          <td className="px-3 py-2">{r.count.toLocaleString()}</td>
+                          <td className="px-3 py-2">{r.share}%</td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -305,31 +650,84 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border">
                 <h3 className="text-lg font-medium mb-3">Top drivers (by rides)</h3>
-                <div className="space-y-3">
-                  {mock.drivers.map((d) => (
-                    <div key={d.id} className="flex items-center justify-between border rounded-md p-3">
-                      <div>
-                        <div className="font-medium">{d.name} <span className="text-xs text-gray-400">{d.id}</span></div>
-                        <div className="text-xs text-gray-500">Rides: {d.rides} • Rating: {d.rating}</div>
-                        <div className="text-xs text-gray-400">Acceptance: {d.acceptance}% • Cancels: {d.cancelRate}%</div>
-                      </div>
-                      <div className="text-sm">Online hrs: {d.onlineHours}</div>
+
+                {driversLoading ? (
+                  <div className="text-sm text-gray-400">Loading drivers…</div>
+                ) : drivers.length === 0 ? (
+                  <div className="text-sm text-gray-400">No drivers found</div>
+                ) : (
+                  <>
+                    <div className="space-y-3">
+                      {drivers.map((d) => {
+                        const name =
+                          d.firstName || d.lastName
+                            ? `${d.firstName ?? ""} ${d.lastName ?? ""}`.trim()
+                            : d.phone ?? "Unknown driver";
+
+                        return (
+                          <div
+                            key={d.driverId}
+                            className="flex items-center justify-between border rounded-md p-3"
+                          >
+                            <div>
+                              <div className="font-medium">
+                                {name}
+                                <span className="ml-2 text-xs text-gray-400">
+                                  {d.driverId.slice(-6)}
+                                </span>
+                              </div>
+
+                              <div className="text-xs text-gray-500">
+                                Rides: {d.totalRequests} • Rating: {d.rating}
+                              </div>
+
+                              <div className="text-xs text-gray-400">
+                                Acceptance: {d.acceptancePercentage}% • Cancels:{" "}
+                                {d.cancellationPercentage}%
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
+
+                    <div className="mt-4">
+                      <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={(page) => {
+                          console.log("PAGE CLICKED:", page);
+                          setCurrentPage(page);
+                        }}
+                        compact
+                      />
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="bg-white p-4 rounded-2xl shadow-sm border">
                 <h3 className="text-lg font-medium mb-3">Acceptance / Cancellation</h3>
                 <div style={{ height: 220 }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={mock.drivers}>
+                    <BarChart data={drivers}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
+                      <XAxis
+                        dataKey="driverId"
+                        tickFormatter={(id) => id.slice(-4)}
+                      />
                       <YAxis />
                       <Tooltip />
-                      <Bar dataKey="acceptance" name="Acceptance %" />
-                      <Bar dataKey="cancelRate" name="Cancel %" />
+                      <Bar
+                        dataKey="acceptancePercentage"
+                        name="Acceptance %"
+                        fill={COLORS[2]}
+                      />
+                      <Bar
+                        dataKey="cancellationPercentage"
+                        name="Cancel %"
+                        fill={COLORS[3]}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
