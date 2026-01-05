@@ -12,8 +12,8 @@ import {
 } from "recharts";
 
 type Bucket = {
-    range: string;   // e.g. "1–5", "6–10"
-    users: number;   // count of users in this bucket
+    range: string;
+    users: number;
     color?: string;
 };
 
@@ -24,7 +24,21 @@ type Props = {
     height?: number;
 };
 
-const COLORS = ["#6366F1", "#10B981", "#F59E0B", "#EC4899", "#3B82F6", "#8B5CF6"];
+const DEFAULT_BUCKETS: Bucket[] = [
+    { range: "0-5", users: 0 },
+    { range: "6-10", users: 0 },
+    { range: "11-20", users: 0 },
+    { range: "21+", users: 0 },
+];
+
+const COLORS = [
+    "#6366F1",
+    "#10B981",
+    "#F59E0B",
+    "#EC4899",
+    "#3B82F6",
+    "#8B5CF6",
+];
 
 export default function RidesPerUserBarChart({
     title = "Rides per user distribution",
@@ -32,34 +46,51 @@ export default function RidesPerUserBarChart({
     data,
     height = 260,
 }: Props) {
-    const totalUsers = data.reduce((s, b) => s + b.users, 0);
+    const normalizedData: Bucket[] = DEFAULT_BUCKETS.map((bucket) => {
+        const apiBucket = data.find((b) => b.range === bucket.range);
+        return {
+            ...bucket,
+            users: apiBucket?.users ?? 0,
+        };
+    });
+
+    const totalUsers = normalizedData.reduce(
+        (sum, b) => sum + b.users,
+        0
+    );
 
     return (
         <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">
                 {title}
             </h3>
+
             <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                 {subtitle}
             </div>
 
             <div style={{ width: "100%", height }}>
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data} barSize={26}>
+                    <BarChart data={normalizedData} barSize={26}>
                         <XAxis
                             dataKey="range"
-                            tick={{ fontSize: 12, fill: "#6b7280" }}
                             axisLine={false}
                             tickLine={false}
+                            tick={{ fontSize: 12, fill: "#6b7280" }}
                         />
+
                         <YAxis
-                            tick={{ fontSize: 12, fill: "#6b7280" }}
                             axisLine={false}
                             tickLine={false}
-                            width={35}
+                            tick={{ fontSize: 12, fill: "#6b7280" }}
+                            allowDecimals={false}
                         />
+
                         <Tooltip
-                            formatter={(v: number) => [`${v} users`, "Users"]}
+                            formatter={(value: number) => [
+                                `${value} users`,
+                                "Users",
+                            ]}
                             contentStyle={{
                                 background: "white",
                                 borderRadius: "8px",
@@ -67,11 +98,16 @@ export default function RidesPerUserBarChart({
                             }}
                         />
 
-                        <Bar dataKey="users" radius={[6, 6, 0, 0]}>
-                            {data.map((entry, i) => (
+                        <Bar
+                            dataKey="users"
+                            radius={[6, 6, 0, 0]}
+                            minPointSize={4}   // ⭐ THIS IS THE KEY
+                        >
+                            {normalizedData.map((entry, index) => (
                                 <Cell
-                                    key={i}
-                                    fill={entry.color ?? COLORS[i % COLORS.length]}
+                                    key={entry.range}
+                                    fill={COLORS[index % COLORS.length]}
+                                    opacity={entry.users === 0 ? 0.35 : 1}
                                 />
                             ))}
                         </Bar>

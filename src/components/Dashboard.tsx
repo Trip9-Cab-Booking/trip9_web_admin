@@ -22,6 +22,7 @@ import ChurnedUsersModal from "./ChurnedUsersModal";
 import { axiosInstance } from "@/utils/axiosInstance";
 import Pagination from "./ui/pagination";
 
+
 type Range = "daily" | "weekly" | "monthly";
 
 type RevenuePoint = {
@@ -82,6 +83,16 @@ type PaginationInfo = {
   totalPages: number;
 };
 
+type RideBucket = {
+  range: string;
+  users: number;
+};
+
+type PieItem = {
+  name: string;
+  value: number;
+  renderValue: number;
+};
 
 const revenueDataMap: Record<"daily" | "weekly" | "monthly", RevenuePoint[]> = {
   daily: [
@@ -116,6 +127,7 @@ const revenueDataMap: Record<"daily" | "weekly" | "monthly", RevenuePoint[]> = {
 };
 
 const COLORS = ["#6366F1", "#06B6D4", "#10B981", "#F59E0B", "#EF4444"];
+const ZERO_COLOR = "#E5E7EB";
 
 const mock = {
   ridesPerDay: [
@@ -214,8 +226,12 @@ export default function Dashboard() {
     totalPages: 1
   });
   const [driversLoading, setDriversLoading] = useState(true);
+  const [rideBuckets, setRideBuckets] = useState<RideBucket[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [showChurnedModal, setShowChurnedModal] = useState(false);
+  const [churnedUsers, setChurnedUsers] = useState<number>(0);
   const [open, setOpen] = useState(false);
+  const [data, setData] = useState<PieItem[]>([]);
   const [range, setRange] = useState<Range>("daily");
   const totalRides = mock.ridesPerDay.reduce((s, r) => s + r.rides, 0);
   const avgDistance = 6.2;
@@ -227,14 +243,6 @@ export default function Dashboard() {
     { name: "Weekly", value: 30 },
     { name: "Monthly", value: 15 },
     { name: "Unlimited", value: 12 },
-  ];
-
-  const rideBuckets = [
-    { range: "1–5", users: 120 },
-    { range: "6–10", users: 75 },
-    { range: "11–20", users: 40 },
-    { range: "21–30", users: 20 },
-    { range: "30+", users: 8 },
   ];
 
   const revenueData = [
@@ -436,6 +444,102 @@ export default function Dashboard() {
 
     fetchTopDrivers();
   }, [activeTab, currentPage]);
+
+  useEffect(() => {
+    const fetchRideDistribution = async () => {
+      try {
+        setLoading(true);
+
+        const response = await axiosInstance.get(
+          "/api/admin/dashboard/user-ride-distribution"
+        );
+
+        setRideBuckets(response.data.data.buckets);
+      } catch (err) {
+        console.error("Failed to fetch user ride distribution", err);
+        setError("Unable to load ride distribution data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRideDistribution();
+  }, []);
+
+  useEffect(() => {
+    const fetchNonRiders = async () => {
+      try {
+        setLoading(true);
+
+        const res = await axiosInstance.get(
+          "/api/admin/dashboard/user-NonRiders"
+        );
+
+        setChurnedUsers(res.data.data.noCompletedRideUsers ?? 0);
+      } catch (err) {
+        console.error("Failed to fetch churned users", err);
+        setError("Failed to fetch churned users");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNonRiders();
+  }, []);
+
+  useEffect(() => {
+    const fetchNewVsReturning = async () => {
+      try {
+        setLoading(true);
+
+        const res = await axiosInstance.get(
+          "/api/admin/dashboard/user-new-vs-returning"
+        );
+
+        const {
+          newUsers,
+          returningUsers,
+        } = res.data.data;
+
+        const rawData = [
+          { name: "New", value: newUsers },
+          { name: "Returning", value: returningUsers },
+        ];
+        const isAllZero = rawData.every((d) => d.value === 0);
+
+        const chartData: PieItem[] = rawData.map((item) => ({
+          ...item,
+          renderValue: isAllZero ? 1 : item.value,
+        }));
+
+        setData(chartData);
+        setError(null);
+      } catch (err) {
+        console.error("Failed to fetch new vs returning users", err);
+        setError("Failed to load user distribution");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNewVsReturning();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="bg-white p-4 rounded-2xl text-sm text-gray-500">
+        Loading ride distribution…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white p-4 rounded-2xl text-sm text-red-500">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -752,19 +856,56 @@ export default function Dashboard() {
         {activeTab === "User Behaviour" && (
           <section className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
               <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3">New vs Returning</h3>
-                <div style={{ height: 260 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={[{ name: "New", value: mock.users.new }, { name: "Returning", value: mock.users.returning }]} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80}>
-                        <Cell fill={COLORS[0]} />
-                        <Cell fill={COLORS[2]} />
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                <h3 className="text-lg font-medium mb-3">
+                  New vs Returning
+                </h3>
+
+                {loading ? (
+                  <div className="h-[260px] flex items-center justify-center text-sm text-gray-400">
+                    Loading chart…
+                  </div>
+                ) : error ? (
+                  <div className="h-[260px] flex items-center justify-center text-sm text-red-500">
+                    {error}
+                  </div>
+                ) : (
+                  <div style={{ height: 260 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={data}
+                          dataKey="renderValue"
+                          nameKey="name"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={2}
+                          minAngle={2}
+                        >
+                          {data.map((_, index) => (
+                            <Cell
+                              key={index}
+                              fill={
+                                data[index].value === 0
+                                  ? ZERO_COLOR
+                                  : COLORS[index]
+                              }
+                              opacity={data[index].value === 0 ? 0.6 : 1}
+                            />
+                          ))}
+                        </Pie>
+
+                        <Tooltip
+                          formatter={(_, __, props) => [
+                            `${props.payload.value} users`,
+                            props.payload.name,
+                          ]}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
 
               <div className="bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition">
@@ -774,9 +915,6 @@ export default function Dashboard() {
                     <h3 className="text-sm font-semibold text-gray-800">
                       Churned Users
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      Inactive for last X days
-                    </p>
                   </div>
 
                   <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-red-50 text-red-600">
@@ -787,42 +925,21 @@ export default function Dashboard() {
                 {/* Metric */}
                 <div className="flex items-end gap-2 mb-3">
                   <span className="text-4xl font-bold text-gray-900">
-                    {mock.users.churned}
+                    {loading ? "—" : error ? "0" : churnedUsers}
                   </span>
                   <span className="text-sm text-gray-500 mb-1">users</span>
                 </div>
 
                 {/* Insight */}
                 <p className="text-sm text-gray-600">
-                  These users have not completed any rides recently.
+                  These users have not completed any rides.
                 </p>
-
-                {/* Action */}
-                {/* <div className="mt-5 pt-4 border-t flex items-center justify-between">
-                  <span className="text-xs text-gray-400">
-                    Updated today
-                  </span>
-                  <button
-                    onClick={() => {
-                      console.log("Open Churned Users Modal");
-                      setShowChurnedModal(true);
-                    }}
-                    className="text-sm font-medium text-blue-600 hover:underline"
-                  >
-                    View users
-                  </button>
-
-                  {showChurnedModal && (
-                    <ChurnedUsersModal
-                      open={showChurnedModal}
-                      onClose={() => setShowChurnedModal(false)}
-                    />
-                  )}
-                </div> */}
               </div>
+              
             </div>
 
             <RidesPerUserBarChart data={rideBuckets} />
+
           </section>
         )}
 
