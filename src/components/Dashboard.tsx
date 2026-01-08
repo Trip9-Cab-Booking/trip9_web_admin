@@ -22,6 +22,15 @@ import ChurnedUsersModal from "./ChurnedUsersModal";
 import { axiosInstance } from "@/utils/axiosInstance";
 import Pagination from "./ui/pagination";
 
+type UIRange = "daily" | "weekly" | "monthly";
+type APIRange = "weekly" | "monthly" | "yearly";
+
+const RANGE_API_MAP: Record<UIRange, APIRange> = {
+  daily: "weekly",
+  weekly: "monthly",
+  monthly: "yearly",
+};
+
 
 type Range = "daily" | "weekly" | "monthly";
 
@@ -92,6 +101,11 @@ type PieItem = {
   name: string;
   value: number;
   renderValue: number;
+};
+
+type RevenueItem = {
+  label: string;
+  revenue: number;
 };
 
 const revenueDataMap: Record<"daily" | "weekly" | "monthly", RevenuePoint[]> = {
@@ -181,7 +195,6 @@ function KPICard({ label, value, hint }: KPICardProps) {
     </div>
   );
 }
-
 interface TabsProps {
   tabs: string[];
   active: string;
@@ -233,6 +246,13 @@ export default function Dashboard() {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<PieItem[]>([]);
   const [range, setRange] = useState<Range>("daily");
+  const [revenueDataMap, setRevenueDataMap] = useState<
+    Record<Range, RevenueItem[]>
+  >({
+    daily: [],
+    weekly: [],
+    monthly: [],
+  });
   const totalRides = mock.ridesPerDay.reduce((s, r) => s + r.rides, 0);
   const avgDistance = 6.2;
   const avgDuration = 18;
@@ -524,6 +544,40 @@ export default function Dashboard() {
 
     fetchNewVsReturning();
   }, []);
+
+  useEffect(() => {
+    const fetchRevenue = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const apiPeriod = RANGE_API_MAP[range];
+
+        const response = await axiosInstance.get(
+          "/api/admin/dashboard/subscription-revenue",
+          {
+            params: {
+              period: apiPeriod,
+            },
+          }
+        );
+
+        const revenueData = response.data?.data ?? [];
+
+        setRevenueDataMap((prev) => ({
+          ...prev,
+          [range]: revenueData,
+        }));
+      } catch (err: any) {
+        setError(err?.message || "Failed to fetch revenue");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRevenue();
+  }, [range]);
+
 
   if (loading) {
     return (
@@ -935,7 +989,7 @@ export default function Dashboard() {
                   These users have not completed any rides.
                 </p>
               </div>
-              
+
             </div>
 
             <RidesPerUserBarChart data={rideBuckets} />
