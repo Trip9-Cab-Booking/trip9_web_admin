@@ -32,7 +32,7 @@ const RANGE_API_MAP: Record<UIRange, APIRange> = {
 };
 
 
-type Range = "daily" | "weekly" | "monthly";
+type Range = "weekly" | "monthly" | "yearly";
 
 type RevenuePoint = {
   label: string;
@@ -103,42 +103,37 @@ type PieItem = {
   renderValue: number;
 };
 
-type RevenueItem = {
-  label: string;
-  revenue: number;
-};
-
-const revenueDataMap: Record<"daily" | "weekly" | "monthly", RevenuePoint[]> = {
-  daily: [
-    { label: "Mon", revenue: 12000 },
-    { label: "Tue", revenue: 15000 },
-    { label: "Wed", revenue: 9000 },
-    { label: "Thu", revenue: 18000 },
-    { label: "Fri", revenue: 22000 },
-    { label: "Sat", revenue: 17000 },
-    { label: "Sun", revenue: 14000 },
-  ],
-  weekly: [
-    { label: "Week 1", revenue: 82000 },
-    { label: "Week 2", revenue: 94000 },
-    { label: "Week 3", revenue: 88000 },
-    { label: "Week 4", revenue: 102000 },
-  ],
-  monthly: [
-    { label: "Jan", revenue: 320000 },
-    { label: "Feb", revenue: 280000 },
-    { label: "Mar", revenue: 360000 },
-    { label: "Apr", revenue: 410000 },
-    { label: "May", revenue: 390000 },
-    { label: "Jun", revenue: 420000 },
-    { label: "Jul", revenue: 480000 },
-    { label: "Aug", revenue: 390000 },
-    { label: "Sep", revenue: 150000 },
-    { label: "Oct", revenue: 220000 },
-    { label: "Nov", revenue: 118000 },
-    { label: "Dec", revenue: 330000 },
-  ],
-};
+// const revenueDataMap: Record<"daily" | "weekly" | "monthly", RevenuePoint[]> = {
+//   daily: [
+//     { label: "Mon", revenue: 12000 },
+//     { label: "Tue", revenue: 15000 },
+//     { label: "Wed", revenue: 9000 },
+//     { label: "Thu", revenue: 18000 },
+//     { label: "Fri", revenue: 22000 },
+//     { label: "Sat", revenue: 17000 },
+//     { label: "Sun", revenue: 14000 },
+//   ],
+//   weekly: [
+//     { label: "Week 1", revenue: 82000 },
+//     { label: "Week 2", revenue: 94000 },
+//     { label: "Week 3", revenue: 88000 },
+//     { label: "Week 4", revenue: 102000 },
+//   ],
+//   monthly: [
+//     { label: "Jan", revenue: 320000 },
+//     { label: "Feb", revenue: 280000 },
+//     { label: "Mar", revenue: 360000 },
+//     { label: "Apr", revenue: 410000 },
+//     { label: "May", revenue: 390000 },
+//     { label: "Jun", revenue: 420000 },
+//     { label: "Jul", revenue: 480000 },
+//     { label: "Aug", revenue: 390000 },
+//     { label: "Sep", revenue: 150000 },
+//     { label: "Oct", revenue: 220000 },
+//     { label: "Nov", revenue: 118000 },
+//     { label: "Dec", revenue: 330000 },
+//   ],
+// };
 
 const COLORS = ["#6366F1", "#06B6D4", "#10B981", "#F59E0B", "#EF4444"];
 const ZERO_COLOR = "#E5E7EB";
@@ -245,18 +240,14 @@ export default function Dashboard() {
   const [churnedUsers, setChurnedUsers] = useState<number>(0);
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<PieItem[]>([]);
-  const [range, setRange] = useState<Range>("daily");
-  const [revenueDataMap, setRevenueDataMap] = useState<
-    Record<Range, RevenueItem[]>
-  >({
-    daily: [],
-    weekly: [],
-    monthly: [],
-  });
+  const [range, setRange] = useState<Range>("weekly");
   const totalRides = mock.ridesPerDay.reduce((s, r) => s + r.rides, 0);
   const avgDistance = 6.2;
   const avgDuration = 18;
   const completionRate = Math.round((mock.funnel.find((s) => s.step === "Completed")?.count || 0) / (mock.funnel[0].count || 1) * 100);
+
+  const [currentRevenueData, setCurrentRevenueData] = useState<RevenuePoint[]>([]);
+  const [revenueLoading, setRevenueLoading] = useState(false);
 
   const planUsageData = [
     { name: "Daily", value: 42 },
@@ -546,37 +537,33 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    const fetchRevenue = async () => {
-      setLoading(true);
-      setError(null);
+    if (activeTab !== "Revenue & Finance") {
+      setCurrentRevenueData([]);
+      return;
+    }
 
+    const fetchRevenueData = async () => {
+      setRevenueLoading(true);
       try {
-        const apiPeriod = RANGE_API_MAP[range];
+        const res = await axiosInstance.get("/api/admin/dashboard/subscription-revenue", {
+          params: { period: range }
+        });
 
-        const response = await axiosInstance.get(
-          "/api/admin/dashboard/subscription-revenue",
-          {
-            params: {
-              period: apiPeriod,
-            },
-          }
-        );
+        if (res.data?.success === true && Array.isArray(res.data.data)) {
+          setCurrentRevenueData(res.data.data);
 
-        const revenueData = response.data?.data ?? [];
-
-        setRevenueDataMap((prev) => ({
-          ...prev,
-          [range]: revenueData,
-        }));
-      } catch (err: any) {
-        setError(err?.message || "Failed to fetch revenue");
+        } else {
+          setCurrentRevenueData([]);
+        }
+      } catch (error) {
+        setCurrentRevenueData([]);
       } finally {
-        setLoading(false);
+        setRevenueLoading(false);
       }
     };
 
-    fetchRevenue();
-  }, [range]);
+    fetchRevenueData();
+  }, [activeTab, range]);
 
 
   if (loading) {
@@ -1008,9 +995,9 @@ export default function Dashboard() {
                     Subscription Revenue
                   </h3>
                   <p className="text-xs text-gray-500">
-                    {range === "daily"
+                    {range === "weekly"
                       ? "Daily revenue performance"
-                      : range === "weekly"
+                      : range === "monthly"
                         ? "Weekly revenue summary"
                         : "Monthly revenue overview"}
                   </p>
@@ -1018,7 +1005,7 @@ export default function Dashboard() {
 
                 {/* Toggle */}
                 <div className="flex gap-1 bg-gray-100 rounded-full p-1">
-                  {(["daily", "weekly", "monthly"] as Range[]).map((r) => (
+                  {(["weekly", "monthly", "yearly"] as Range[]).map((r) => (
                     <button
                       key={r}
                       onClick={() => setRange(r)}
@@ -1036,39 +1023,36 @@ export default function Dashboard() {
 
               {/* Chart */}
               <div className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={revenueDataMap[range]}
-                    barCategoryGap="35%"
-                  >
-                    <CartesianGrid
-                      vertical={false}
-                      strokeDasharray="3 3"
-                      stroke="#e5e7eb"
-                    />
-                    <XAxis
-                      dataKey="label"
-                      tickLine={false}
-                      axisLine={false}
-                      fontSize={12}
-                    />
-                    <YAxis
-                      tickLine={false}
-                      axisLine={false}
-                      fontSize={12}
-                    />
-                    <Tooltip
-                      cursor={{ fill: "rgba(0,0,0,0.04)" }}
-                      formatter={(value: number) => [`₹${value.toLocaleString()}`, "Revenue"]}
-                    />
-                    <Bar
-                      dataKey="revenue"
-                      fill="#2563eb"
-                      radius={[6, 6, 0, 0]}
-                      barSize={24}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+                {revenueLoading ? (
+                  <div className="flex items-center justify-center h-full bg-gray-50 rounded-xl p-8">
+                    <div className="text-sm text-gray-500 animate-pulse">Loading revenue...</div>
+                  </div>
+                ) : currentRevenueData.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full bg-gray-50 rounded-xl p-8 text-gray-400">
+                    <div className="text-4xl mb-4">📊</div>
+                    <p className="text-sm text-center font-medium">No revenue data for {range}</p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={currentRevenueData} barCategoryGap="35%">
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
+                      <YAxis tickLine={false} axisLine={false} fontSize={12} />
+                      <Tooltip
+                        cursor={{ fill: "rgba(0,0,0,0.04)" }}
+                        formatter={(value: number | undefined) =>
+                          value !== undefined ? [`₹${value.toLocaleString()}`, 'Revenue'] : ['₹0', 'Revenue']
+                        }
+                      />
+                      <Bar
+                        dataKey="revenue"
+                        fill="#2563eb"
+                        radius={[6, 6, 0, 0]}
+                        barSize={24}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
 
