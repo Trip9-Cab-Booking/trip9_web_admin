@@ -185,7 +185,7 @@ function KPICard({ label, value, hint }: KPICardProps) {
   return (
     <div className="bg-white p-4 rounded-2xl shadow-sm border">
       <div className="text-sm text-gray-500">{label}</div>
-      <div className="mt-2 text-2xl font-semibold">{value}</div>
+      <div className="mt-2 text-2xl font-semibold dark:text-black">{value}</div>
       {hint && <div className="text-xs text-gray-400 mt-1">{hint}</div>}
     </div>
   );
@@ -663,7 +663,7 @@ export default function Dashboard() {
               </div>
 
               <div className="bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-2">Category breakdown</h3>
+                <h3 className="text-lg font-medium mb-2 dark:text-black">Category breakdown</h3>
                 <div style={{ height: 260 }}>
                   {categoryLoading ? (
                     <div className="h-full flex items-center justify-center text-sm text-gray-400">
@@ -698,7 +698,7 @@ export default function Dashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3">Peak hours</h3>
+                <h3 className="text-lg font-medium mb-3 dark:text-black">Peak hours</h3>
                 <div style={{ height: 220 }}>
                   {peakLoading ? (
                     <div className="h-full flex items-center justify-center text-sm text-gray-400">
@@ -723,7 +723,7 @@ export default function Dashboard() {
               </div>
 
               <div className="bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3">Conversion funnel</h3>
+                <h3 className="text-lg font-medium mb-3 dark:text-black">Conversion funnel</h3>
                 {funnelLoading ? (
                   <div className="text-sm text-gray-400">Loading funnel data…</div>
                 ) : funnelData.length === 0 ? (
@@ -733,7 +733,7 @@ export default function Dashboard() {
                     {funnelData.map((f) => (
                       <div key={f.step} className="flex items-center justify-between">
                         <div>
-                          <div className="text-sm">{f.step}</div>
+                          <div className="text-sm dark:text-black">{f.step}</div>
                           <div className="text-xs text-gray-400">
                             {f.percentage}% of requests
                           </div>
@@ -749,7 +749,7 @@ export default function Dashboard() {
             </div>
 
             <div className="bg-white p-4 rounded-2xl shadow-sm border">
-              <h3 className="text-lg font-medium mb-3">Cancellation reasons (split)</h3>
+              <h3 className="text-lg font-medium mb-3 dark:text-black">Cancellation reasons (split)</h3>
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead>
@@ -775,7 +775,7 @@ export default function Dashboard() {
                       </tr>
                     ) : (
                       cancellations.map((r, idx) => (
-                        <tr key={idx} className="border-t">
+                        <tr key={idx} className="border-t dark:text-black">
                           <td className="px-3 py-2">{r.reason}</td>
                           <td className="px-3 py-2 capitalize">{r.cancelledBy}</td>
                           <td className="px-3 py-2">{r.count.toLocaleString()}</td>
@@ -794,7 +794,7 @@ export default function Dashboard() {
           <section className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3">Top drivers (by rides)</h3>
+                <h3 className="text-lg font-medium mb-3 dark:text-black">Top drivers (by rides)</h3>
 
                 {driversLoading ? (
                   <div className="text-sm text-gray-400">Loading drivers…</div>
@@ -815,9 +815,9 @@ export default function Dashboard() {
                             className="flex items-center justify-between border rounded-md p-3"
                           >
                             <div>
-                              <div className="font-medium">
+                              <div className="font-medium dark:text-black">
                                 {name}
-                                <span className="ml-2 text-xs text-gray-400">
+                                <span className="ml-2 text-xs text-gray-400 ">
                                   {d.driverId.slice(-6)}
                                 </span>
                               </div>
@@ -836,7 +836,7 @@ export default function Dashboard() {
                       })}
                     </div>
 
-                    <div className="mt-4">
+                    <div className="mt-4 dark:text-black">
                       <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
@@ -852,7 +852,7 @@ export default function Dashboard() {
               </div>
 
               <div className="bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3">Acceptance / Cancellation</h3>
+                <h3 className="text-lg font-medium mb-3 dark:text-black">Acceptance / Cancellation</h3>
                 <div style={{ height: 220 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={drivers}>
@@ -880,7 +880,7 @@ export default function Dashboard() {
             </div>
 
             <div className="bg-white p-4 rounded-2xl shadow-sm border">
-              <h3 className="text-lg font-medium mb-3">Subscription plan usage</h3>
+              <h3 className="text-lg font-medium mb-3 dark:text-black">Subscription plan usage</h3>
               <CompactPlanUsageBarChart
                 title="Subscription Plan Usage"
                 subtitle="Active drivers by plan"
@@ -899,16 +899,16 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
               <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3">
+                <h3 className="text-lg font-medium mb-3 dark:text-black">
                   New vs Returning
                 </h3>
 
                 {loading ? (
-                  <div className="h-[260px] flex items-center justify-center text-sm text-gray-400">
+                  <div className="h-65 flex items-center justify-center text-sm text-gray-400">
                     Loading chart…
                   </div>
                 ) : error ? (
-                  <div className="h-[260px] flex items-center justify-center text-sm text-red-500">
+                  <div className="h-65 flex items-center justify-center text-sm text-red-500">
                     {error}
                   </div>
                 ) : (
@@ -1022,7 +1022,7 @@ export default function Dashboard() {
               </div>
 
               {/* Chart */}
-              <div className="h-[280px]">
+              <div className="h-70">
                 {revenueLoading ? (
                   <div className="flex items-center justify-center h-full bg-gray-50 rounded-xl p-8">
                     <div className="text-sm text-gray-500 animate-pulse">Loading revenue...</div>

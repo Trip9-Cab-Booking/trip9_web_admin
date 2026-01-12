@@ -57,7 +57,8 @@ export default function RideListPage() {
   const [dateTo, setDateTo] = useState<string | null>(null);
 
   // payment & status
-  const paymentOptions = ['Cash', 'UPI', 'Card', 'Wallet', 'NetBanking'];
+  //removed card and NetBanking
+  const paymentOptions = ['Cash', 'UPI', 'Wallet'];
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
 
@@ -198,7 +199,7 @@ export default function RideListPage() {
           {/* Left group: search + date range */}
           <div className="flex flex-col items-center gap-2 flex-1 min-w-0">
             <div className='flex gap-4 w-full'>
-              <div className="relative flex-[2] w-1/2">
+              <div className="relative flex-2 w-1/2">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 100-15 7.5 7.5 0 000 15z" /></svg>
                 </span>
@@ -313,57 +314,77 @@ export default function RideListPage() {
         </div>
       ) : (
         <>
-          <div className="bg-white dark:bg-gray-900 shadow-md rounded-lg overflow-auto max-h-[60vh]">
-            <table className="min-w-full w-full table-fixed text-sm divide-y divide-gray-200">
-              <thead className="bg-gray-200">
+          <div className="bg-white dark:bg-gray-900 shadow-md rounded-lg overflow-auto max-h-[55vh] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-400/50 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600/50 scrollbar-thin">
+            <table className="min-w-full w-full text-sm table-fixed divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Vehicle</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Pickup</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Drop</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Fare</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">User Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">Driver Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Cancellation</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Rating</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Action</th>
+                  <th className="px-3 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Vehicle</th>
+                  <th className="px-3 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Pickup</th>
+                  <th className="px-3 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Drop</th>
+                  <th className="px-3 py-4 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Fare</th>
+                  <th className="px-3 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">User Name</th>
+                  <th className="px-3 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Driver Name</th>
+                  <th className="px-3 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                  <th className="px-3 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                  <th className="px-3 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Cancellation</th>
+                  <th className="px-3 py-4 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Rating</th>
+                  <th className="px-3 py-4 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                 {rides.length === 0 ? (
                   <tr>
-                    <td colSpan={totalTableColumns} className="text-center py-4 text-gray-500">
+                    <td colSpan={11} className="text-center py-8 text-gray-500 dark:text-gray-400">
                       No ride data found matching your criteria.
                     </td>
                   </tr>
                 ) : (
                   rides.map((ride) => (
-                    <tr key={ride._id} className="hover:bg-gray-50">
-                      {/* <td className="px-4 py-3">{ride._id}</td> */}
-                      <td className="px-4 py-3">{ride.rideDetails.vehicleType} ({ride.rideDetails.vehicleCategory})</td>
-                      <td className="px-4 py-3">{ride.rideDetails.pickupLocation.address}</td>
-                      <td className="px-4 py-3">{ride.rideDetails.dropLocation.address}</td>
-                      <td className="px-4 py-3">₹{ride.rideDetails.estimatedFare}</td>
-                      <td className="px-4 py-3">{ride.userDetails.firstName} {ride.userDetails.lastName}</td>
-                      <td className="px-4 py-3">{ride.driverDetails.firstName} {ride.driverDetails.lastName}</td>
-                      <td className="px-4 py-3 capitalize"><StatusBadge status={ride.rideDetails.status} /></td>
-                      <td className="px-4 py-3">{new Date(ride.rideDetails.createdAt).toLocaleString()}</td>
-                      <td className="px-4 py-3">
+                    <tr key={ride._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                      <td className="w-20 px-3 py-4 truncate max-w-20 font-medium text-gray-900 dark:text-gray-100">
+                        {ride.rideDetails.vehicleType} ({ride.rideDetails.vehicleCategory})
+                      </td>
+                      <td className="w-36 px-3 py-4 max-w-36 truncate text-gray-900 dark:text-gray-100">
+                        {ride.rideDetails.pickupLocation.address}
+                      </td>
+                      <td className="w-36 px-3 py-4 max-w-36 truncate text-gray-900 dark:text-gray-100">
+                        {ride.rideDetails.dropLocation.address}
+                      </td>
+                      <td className="w-16 px-3 py-4 text-right font-semibold text-gray-900 dark:text-gray-100">
+                        ₹{ride.rideDetails.estimatedFare}
+                      </td>
+                      <td className="w-28 px-3 py-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                        {ride.userDetails.firstName} {ride.userDetails.lastName}
+                      </td>
+                      <td className="w-28 px-3 py-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                        {ride.driverDetails.firstName} {ride.driverDetails.lastName}
+                      </td>
+                      <td className="capitalize">
+                        <StatusBadge status={ride.rideDetails.status} />
+                      </td>
+                      <td className="px-3 py-4 text-sm">
+                        <span className="text-gray-900 dark:text-gray-100 font-medium text-xs">
+                          {new Date(ride.rideDetails.createdAt).toLocaleDateString()}
+                        </span>
+                      </td>
+
+                      <td className="px-3 py-4">
                         {ride.rideDetails.status === 'cancelled'
-                          ? `${ride.rideDetails.cancelledBy ?? 'N/A'} - ${ride.rideDetails.cancellationReason ?? 'No reason'}`
-                          : '—'}
+                          ? <span className="text-sm text-gray-700 dark:text-gray-300 block truncate">{`${ride.rideDetails.cancelledBy ?? 'N/A'} - ${ride.rideDetails.cancellationReason ?? 'No reason'}`}</span>
+                          : <span className="text-gray-400 dark:text-gray-500">—</span>
+                        }
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="w-20 px-3 py-4 text-center">
                         {ride.driverDetails.ratingStats
-                          ? `${ride.driverDetails.ratingStats.average.toFixed(1)} ⭐ (${ride.driverDetails.ratingStats.totalRidesRated})`
-                          : 'N/A'}
+                          ? <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">{`${ride.driverDetails.ratingStats.average.toFixed(1)} ⭐ (${ride.driverDetails.ratingStats.totalRidesRated})`}</span>
+                          : <span className="text-gray-400 dark:text-gray-500">N/A</span>
+                        }
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="w-20 px-3 py-4 text-center">
                         <Link
                           href={`/ride-management/${ride._id}`}
                           aria-label={`View ride ${ride._id}`}
-                          className="inline-block px-3 py-1 text-sm font-medium border rounded-md hover:bg-gray-100"
+                          className="inline-block px-3 py-1 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-600 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/50 hover:border-blue-400 dark:hover:border-blue-400 transition-colors"
                         >
                           View
                         </Link>

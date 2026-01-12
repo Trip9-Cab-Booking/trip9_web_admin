@@ -55,7 +55,6 @@ export default function CreateUserModal({
     fullName: initialData?.fullName ?? '',
     phoneNumber: initialData?.phoneNumber ?? "",
     panNumber: initialData?.panNumber ?? '',
-
   });
 
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
@@ -64,6 +63,24 @@ export default function CreateUserModal({
   const [submitting, setSubmitting] = React.useState(false);
   const [isDragging, setIsDragging] = React.useState(false);
   const isEditMode = Boolean(initialData && (initialData.userId || initialData.email || initialData.firstName));
+
+  const [errors, setErrors] = React.useState<{
+    firstName: string;
+    lastName: string;
+    mobileNumber: string;
+    email: string;
+    phoneNumber: string;
+    panNumber: string;
+    fullName: string;
+  }>({
+    firstName: '',
+    lastName: '',
+    mobileNumber: '',
+    email: '',
+    phoneNumber: '',
+    panNumber: '',
+    fullName: ''
+  });
 
   React.useEffect(() => {
     if (!initialData) return;
@@ -77,7 +94,7 @@ export default function CreateUserModal({
       accountNumber: initialData.accountNumber ?? prev.accountNumber,
       bankName: initialData.bankName ?? prev.bankName,
       panNumber: initialData.panNumber ?? prev.panNumber,
-      image: null, // don't set File from a remote URL
+      image: null,
       imageUrl: initialData.imageUrl ?? initialData.profilePic ?? null,
     }));
   }, [initialData]);
@@ -93,16 +110,25 @@ export default function CreateUserModal({
     // otherwise use remote URL if available
     if (formData.imageUrl) {
       setImagePreview(formData.imageUrl);
-      return; // nothing to cleanup
+      return;
     }
 
     setImagePreview(null);
   }, [formData.image, formData.imageUrl]);
 
 
-  const handleChange = (field: keyof UserFormData, value: string | File | null) => {
-    setFormData((prev) => ({ ...prev, [field]: value as any }));
+  const handleChange = (field: keyof UserFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+
+    const errorField = field as keyof typeof errors;
+    const error = validateField(errorField, value);
+
+    setErrors(prev => ({
+      ...prev,
+      [errorField]: error
+    }));
   };
+
 
   const handleFileSelect = (file: File | null) => {
     setFormData(prev => ({ ...prev, image: file }));
@@ -114,42 +140,82 @@ export default function CreateUserModal({
     }
   };
 
-  const validate = () => {
-    const errors: Record<string, string> = {};
-    if (!formData.firstName.trim()) errors.firstName = 'First name is required';
-    if (!formData.lastName.trim()) errors.lastName = 'Last name is required';
-    if (!formData.mobileNumber.trim()) errors.mobileNumber = 'Mobile number is required';
-    if (!formData.email.trim()) errors.email = 'Email is required';
-    return errors;
+  const validateField = (field: keyof typeof errors, value: string): string => {
+    switch (field) {
+      case 'firstName':
+        if (!value.trim()) return 'First name is required';
+        if (!/^[a-zA-Z\s]+$/.test(value.trim())) return 'Only letters and spaces allowed';
+        if (value.trim().length < 2) return 'First name must be 2+ characters';
+        return '';
+      case 'lastName':
+        if (!value.trim()) return 'Last name is required';
+        if (!/^[a-zA-Z\s]+$/.test(value.trim())) return 'Only letters and spaces allowed';
+        if (value.trim().length < 2) return 'Last name is required (at least 2 character)';
+        return '';
+      case 'fullName':
+        if (value && !/^[a-zA-Z\s]*$/.test(value)) return 'Only letters and spaces allowed';
+        return '';
+
+      case 'mobileNumber':
+        if (value && !/^\d*$/.test(value)) return 'Numbers only';
+        if (value.length !== 10 && value.length > 0) return 'Exactly 10 digits required';
+        return '';
+
+      case 'phoneNumber':
+        if (value && !/^\d*$/.test(value)) return 'Numbers only';
+        if (value.length !== 10 && value.length > 0) return 'Exactly 10 digits required';
+        return '';
+
+      case 'email':
+        if (value && !value.includes('@')) return 'Must contain @';
+        if (value && !value.includes('.com')) return 'Must end with .com';
+        if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Invalid email format';
+        return '';
+
+      case 'panNumber':
+        if (value && !/^[A-Za-z0-9]*$/.test(value)) return 'Letters and numbers only';
+        return '';
+
+      default:
+        return '';
+    }
   };
 
-  const errors = validate();
-  const isValid = Object.keys(errors).length === 0;
+  const isValid =
+    formData.firstName.trim().length > 0 &&
+    formData.lastName.trim().length > 0 &&
+    formData.mobileNumber.length === 10 &&
+    formData.email.trim().length > 0 &&
+    Object.values(errors).every(error => error === '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setTouched({ firstName: true, lastName: true, mobileNumber: true, email: true });
-    if (!isValid) return;
+    setTouched({
+      firstName: true, lastName: true, mobileNumber: true, email: true
+    });
+
+    if (!formData.firstName.trim() || !formData.lastName.trim() ||
+      formData.mobileNumber.length !== 10 || !formData.email.trim() || !isValid) {
+      return;
+    }
+
     setSubmitting(true);
     try {
       await onSubmit(formData);
       onOpenChange(false);
+
       setFormData({
-        userId: '',
-        firstName: '',
-        lastName: '',
-        mobileNumber: '',
-        email: '',
-        image: null,
-        dob: '',
-        accountNumber: '',
-        bankName: '',
-        panNumber: '',
+        userId: '', firstName: '', lastName: '', mobileNumber: '', email: '',
+        image: null, dob: '', fullName: '', phoneNumber: '', panNumber: ''
       });
       setImagePreview(null);
       setTouched({});
+      setErrors({
+        firstName: '', lastName: '', mobileNumber: '', email: '',
+        phoneNumber: '', panNumber: '', fullName: ''
+      });
     } catch (err) {
-      console.error('Submit handler threw', err);
+      console.error('Submit failed:', err);
     } finally {
       setSubmitting(false);
     }
@@ -160,8 +226,6 @@ export default function CreateUserModal({
   };
 
   const initials = `${(formData.firstName || '').slice(0, 1)}${(formData.lastName || '').slice(0, 1)}`.toUpperCase();
-
-
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -246,7 +310,7 @@ export default function CreateUserModal({
                     }}
                     aria-label="Upload profile image; click or drop to upload"
                     className={cn(
-                      "w-full flex flex-col items-center justify-between p-3 rounded-lg border-2 transition-shadow transition-colors cursor-pointer",
+                      "w-full flex flex-col items-center justify-between p-3 rounded-lg border-2 transition-shadow  cursor-pointer",
                       // light/dark backgrounds + borders
                       "bg-white dark:bg-gray-700",
                       isDragging
@@ -324,7 +388,7 @@ export default function CreateUserModal({
                     onChange={(e) => handleChange("firstName", e.target.value)}
                     onBlur={() => setTouched((s) => ({ ...s, firstName: true }))}
                     placeholder="Enter first name"
-                    className="h-11 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600"
+                    className={`h-11 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600`}
                     aria-invalid={Boolean(touched.firstName && errors.firstName)}
                     aria-describedby={touched.firstName && errors.firstName ? "err-firstName" : undefined}
                   />
@@ -414,9 +478,9 @@ export default function CreateUserModal({
                   <Input
                     id="dob"
                     type="date"
-                    value={formData.dob}
+                    value={formData.dob || ''}
                     onChange={(e) => handleChange("dob", e.target.value)}
-                    className="w-full h-11 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600"
+                    className="w-full h-11 bg-white  text-gray-900 dark:bg-gray-700 dark:text-gray-100 border  dark:border-gray-600 border-gray-300"
                   />
                 </div>
 
@@ -431,6 +495,9 @@ export default function CreateUserModal({
                     placeholder="Enter full name"
                     className="h-11 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600"
                   />
+                  {errors.fullName && (
+                    <p className="text-xs text-red-600 mt-1 font-medium">{errors.fullName}</p>
+                  )}
                 </div>
 
                 <div>
@@ -439,11 +506,15 @@ export default function CreateUserModal({
                   </Label>
                   <Input
                     id="phoneNumber"
+                    type="tel"
                     value={formData.phoneNumber}
                     onChange={(e) => handleChange("phoneNumber", e.target.value)}
                     placeholder="Enter phone number"
                     className="h-11 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600"
                   />
+                  {errors.phoneNumber && (
+                    <p className="text-xs text-red-600 mt-1 font-medium">{errors.phoneNumber}</p>
+                  )}
                 </div>
 
                 <div>
@@ -457,6 +528,9 @@ export default function CreateUserModal({
                     placeholder="Enter PAN number"
                     className="h-11 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600"
                   />
+                  {errors.panNumber && (
+                    <p className="text-xs text-red-600 mt-1 font-medium">{errors.panNumber}</p>
+                  )}
                 </div>
               </div>
             </div>

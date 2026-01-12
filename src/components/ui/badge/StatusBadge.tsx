@@ -34,7 +34,7 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium capitalize ${style.bg} ${style.text}`}
+      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize ${style.bg} ${style.text}`}
     >
       {status}
     </span>
