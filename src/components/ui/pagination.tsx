@@ -27,14 +27,14 @@ export default function Pagination({
 
   return (
     <div
-      className={`flex items-center justify-center gap-1 ${compact ? "text-sm" : "text-base"
+      className={`flex items-center justify-center gap-2 ${compact ? "text-sm" : "text-base"
         }`}
     >
       {/* Prev */}
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="px-3 py-1 rounded-md border bg-white disabled:opacity-50"
+        className="px-3 py-1 rounded-md border bg-white disabled:opacity-50 dark:bg-gray-800 dark:text-white"
       >
         Prev
       </button>
@@ -47,7 +47,7 @@ export default function Pagination({
           aria-current={p === currentPage ? "page" : undefined}
           className={`px-3 py-1 rounded-md border transition-colors ${p === currentPage
             ? "bg-indigo-600 text-white border-indigo-600"
-            : "bg-white hover:bg-gray-50"
+            : "bg-white hover:bg-gray-50 dark:bg-gray-800 dark:text-white"
             }`}
         >
           {p}
@@ -58,7 +58,7 @@ export default function Pagination({
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="px-3 py-1 rounded-md border bg-white disabled:opacity-50"
+        className="px-3 py-1 rounded-md border bg-white disabled:opacity-50 dark:bg-gray-800 dark:text-white"
       >
         Next
       </button>

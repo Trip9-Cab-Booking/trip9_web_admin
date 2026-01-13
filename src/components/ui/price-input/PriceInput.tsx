@@ -13,7 +13,7 @@ export default function PriceInput({
 }: PriceInputProps) {
     return (
         <label className="block">
-            <div className="text-xs text-gray-600 mb-1">{label}</div>
+            <div className="text-xs text-gray-600 dark:text-white mb-1">{label}</div>
             <input
                 type="number"
                 disabled={disabled}

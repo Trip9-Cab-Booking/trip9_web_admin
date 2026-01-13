@@ -81,7 +81,7 @@ export default function QaList({
 
     return (
         <>
-            <div className="border-t p-5 space-y-4 bg-gray-50">
+            <div className="border-t p-5 space-y-4 bg-gray-50 dark:bg-gray-800">
                 {qas.length === 0 && editingQaId !== "NEW" && (
                     <p className="text-sm text-gray-500">
                         No questions added yet.
@@ -89,7 +89,7 @@ export default function QaList({
                 )}
 
                 {editingQaId === "NEW" && (
-                    <div className="bg-white border rounded-md p-4">
+                    <div className="bg-white border rounded-md p-4 ">
                         <EditQaForm
                             qa={{ id: "NEW", question: "", answer: "" }}
                             faqId={faq.id}
@@ -104,7 +104,7 @@ export default function QaList({
                 {qas.map((qa) => (
                     <div
                         key={qa.id}
-                        className="bg-white border rounded-md p-4"
+                        className="bg-white border rounded-md p-4 dark:bg-gray-800"
                     >
                         {editingQaId === qa.id ? (
                             <EditQaForm

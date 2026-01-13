@@ -32,7 +32,7 @@ const RANGE_API_MAP: Record<UIRange, APIRange> = {
 };
 
 
-type Range = "daily" | "weekly" | "monthly";
+type Range = "weekly" | "monthly" | "yearly";
 
 type RevenuePoint = {
   label: string;
@@ -103,42 +103,37 @@ type PieItem = {
   renderValue: number;
 };
 
-type RevenueItem = {
-  label: string;
-  revenue: number;
-};
-
-const revenueDataMap: Record<"daily" | "weekly" | "monthly", RevenuePoint[]> = {
-  daily: [
-    { label: "Mon", revenue: 12000 },
-    { label: "Tue", revenue: 15000 },
-    { label: "Wed", revenue: 9000 },
-    { label: "Thu", revenue: 18000 },
-    { label: "Fri", revenue: 22000 },
-    { label: "Sat", revenue: 17000 },
-    { label: "Sun", revenue: 14000 },
-  ],
-  weekly: [
-    { label: "Week 1", revenue: 82000 },
-    { label: "Week 2", revenue: 94000 },
-    { label: "Week 3", revenue: 88000 },
-    { label: "Week 4", revenue: 102000 },
-  ],
-  monthly: [
-    { label: "Jan", revenue: 320000 },
-    { label: "Feb", revenue: 280000 },
-    { label: "Mar", revenue: 360000 },
-    { label: "Apr", revenue: 410000 },
-    { label: "May", revenue: 390000 },
-    { label: "Jun", revenue: 420000 },
-    { label: "Jul", revenue: 480000 },
-    { label: "Aug", revenue: 390000 },
-    { label: "Sep", revenue: 150000 },
-    { label: "Oct", revenue: 220000 },
-    { label: "Nov", revenue: 118000 },
-    { label: "Dec", revenue: 330000 },
-  ],
-};
+// const revenueDataMap: Record<"daily" | "weekly" | "monthly", RevenuePoint[]> = {
+//   daily: [
+//     { label: "Mon", revenue: 12000 },
+//     { label: "Tue", revenue: 15000 },
+//     { label: "Wed", revenue: 9000 },
+//     { label: "Thu", revenue: 18000 },
+//     { label: "Fri", revenue: 22000 },
+//     { label: "Sat", revenue: 17000 },
+//     { label: "Sun", revenue: 14000 },
+//   ],
+//   weekly: [
+//     { label: "Week 1", revenue: 82000 },
+//     { label: "Week 2", revenue: 94000 },
+//     { label: "Week 3", revenue: 88000 },
+//     { label: "Week 4", revenue: 102000 },
+//   ],
+//   monthly: [
+//     { label: "Jan", revenue: 320000 },
+//     { label: "Feb", revenue: 280000 },
+//     { label: "Mar", revenue: 360000 },
+//     { label: "Apr", revenue: 410000 },
+//     { label: "May", revenue: 390000 },
+//     { label: "Jun", revenue: 420000 },
+//     { label: "Jul", revenue: 480000 },
+//     { label: "Aug", revenue: 390000 },
+//     { label: "Sep", revenue: 150000 },
+//     { label: "Oct", revenue: 220000 },
+//     { label: "Nov", revenue: 118000 },
+//     { label: "Dec", revenue: 330000 },
+//   ],
+// };
 
 const COLORS = ["#6366F1", "#06B6D4", "#10B981", "#F59E0B", "#EF4444"];
 const ZERO_COLOR = "#E5E7EB";
@@ -188,9 +183,9 @@ interface KPICardProps {
 }
 function KPICard({ label, value, hint }: KPICardProps) {
   return (
-    <div className="bg-white p-4 rounded-2xl shadow-sm border">
+    <div className="bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800 ">
       <div className="text-sm text-gray-500">{label}</div>
-      <div className="mt-2 text-2xl font-semibold">{value}</div>
+      <div className="mt-2 text-2xl font-semibold dark:text-white">{value}</div>
       {hint && <div className="text-xs text-gray-400 mt-1">{hint}</div>}
     </div>
   );
@@ -202,7 +197,7 @@ interface TabsProps {
 }
 function Tabs({ tabs, active, onChange }: TabsProps) {
   return (
-    <div className="flex gap-2 bg-white p-1 rounded-xl border">
+    <div className="flex gap-2 bg-white p-1 rounded-xl border dark:bg-gray-800">
       {tabs.map((t: string) => (
         <button
           key={t}
@@ -245,18 +240,14 @@ export default function Dashboard() {
   const [churnedUsers, setChurnedUsers] = useState<number>(0);
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<PieItem[]>([]);
-  const [range, setRange] = useState<Range>("daily");
-  const [revenueDataMap, setRevenueDataMap] = useState<
-    Record<Range, RevenueItem[]>
-  >({
-    daily: [],
-    weekly: [],
-    monthly: [],
-  });
+  const [range, setRange] = useState<Range>("weekly");
   const totalRides = mock.ridesPerDay.reduce((s, r) => s + r.rides, 0);
   const avgDistance = 6.2;
   const avgDuration = 18;
   const completionRate = Math.round((mock.funnel.find((s) => s.step === "Completed")?.count || 0) / (mock.funnel[0].count || 1) * 100);
+
+  const [currentRevenueData, setCurrentRevenueData] = useState<RevenuePoint[]>([]);
+  const [revenueLoading, setRevenueLoading] = useState(false);
 
   const planUsageData = [
     { name: "Daily", value: 42 },
@@ -546,37 +537,33 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    const fetchRevenue = async () => {
-      setLoading(true);
-      setError(null);
+    if (activeTab !== "Revenue & Finance") {
+      setCurrentRevenueData([]);
+      return;
+    }
 
+    const fetchRevenueData = async () => {
+      setRevenueLoading(true);
       try {
-        const apiPeriod = RANGE_API_MAP[range];
+        const res = await axiosInstance.get("/api/admin/dashboard/subscription-revenue", {
+          params: { period: range }
+        });
 
-        const response = await axiosInstance.get(
-          "/api/admin/dashboard/subscription-revenue",
-          {
-            params: {
-              period: apiPeriod,
-            },
-          }
-        );
+        if (res.data?.success === true && Array.isArray(res.data.data)) {
+          setCurrentRevenueData(res.data.data);
 
-        const revenueData = response.data?.data ?? [];
-
-        setRevenueDataMap((prev) => ({
-          ...prev,
-          [range]: revenueData,
-        }));
-      } catch (err: any) {
-        setError(err?.message || "Failed to fetch revenue");
+        } else {
+          setCurrentRevenueData([]);
+        }
+      } catch (error) {
+        setCurrentRevenueData([]);
       } finally {
-        setLoading(false);
+        setRevenueLoading(false);
       }
     };
 
-    fetchRevenue();
-  }, [range]);
+    fetchRevenueData();
+  }, [activeTab, range]);
 
 
   if (loading) {
@@ -645,7 +632,7 @@ export default function Dashboard() {
         {activeTab === "Ride Analytics" && (
           <section className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border">
+              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-medium">Total rides (time series)</h3>
                   <div className="text-sm text-gray-500">Last 7 days</div>
@@ -675,8 +662,8 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-2">Category breakdown</h3>
+              <div className="bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
+                <h3 className="text-lg font-medium mb-2 dark:text-white">Category breakdown</h3>
                 <div style={{ height: 260 }}>
                   {categoryLoading ? (
                     <div className="h-full flex items-center justify-center text-sm text-gray-400">
@@ -710,8 +697,8 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3">Peak hours</h3>
+              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
+                <h3 className="text-lg font-medium mb-3 dark:text-white">Peak hours</h3>
                 <div style={{ height: 220 }}>
                   {peakLoading ? (
                     <div className="h-full flex items-center justify-center text-sm text-gray-400">
@@ -735,7 +722,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-2xl shadow-sm border">
+              <div className="bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
                 <h3 className="text-lg font-medium mb-3">Conversion funnel</h3>
                 {funnelLoading ? (
                   <div className="text-sm text-gray-400">Loading funnel data…</div>
@@ -746,7 +733,7 @@ export default function Dashboard() {
                     {funnelData.map((f) => (
                       <div key={f.step} className="flex items-center justify-between">
                         <div>
-                          <div className="text-sm">{f.step}</div>
+                          <div className="text-sm dark:text-white">{f.step}</div>
                           <div className="text-xs text-gray-400">
                             {f.percentage}% of requests
                           </div>
@@ -761,8 +748,8 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl shadow-sm border">
-              <h3 className="text-lg font-medium mb-3">Cancellation reasons (split)</h3>
+            <div className="bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
+              <h3 className="text-lg font-medium mb-3 dark:text-white">Cancellation reasons (split)</h3>
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead>
@@ -788,7 +775,7 @@ export default function Dashboard() {
                       </tr>
                     ) : (
                       cancellations.map((r, idx) => (
-                        <tr key={idx} className="border-t">
+                        <tr key={idx} className="border-t dark:text-white">
                           <td className="px-3 py-2">{r.reason}</td>
                           <td className="px-3 py-2 capitalize">{r.cancelledBy}</td>
                           <td className="px-3 py-2">{r.count.toLocaleString()}</td>
@@ -806,8 +793,8 @@ export default function Dashboard() {
         {activeTab === "Driver Performance" && (
           <section className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3">Top drivers (by rides)</h3>
+              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
+                <h3 className="text-lg font-medium mb-3 dark:text-white">Top drivers (by rides)</h3>
 
                 {driversLoading ? (
                   <div className="text-sm text-gray-400">Loading drivers…</div>
@@ -828,9 +815,9 @@ export default function Dashboard() {
                             className="flex items-center justify-between border rounded-md p-3"
                           >
                             <div>
-                              <div className="font-medium">
+                              <div className="font-medium dark:text-white">
                                 {name}
-                                <span className="ml-2 text-xs text-gray-400">
+                                <span className="ml-2 text-xs text-gray-400 ">
                                   {d.driverId.slice(-6)}
                                 </span>
                               </div>
@@ -849,7 +836,7 @@ export default function Dashboard() {
                       })}
                     </div>
 
-                    <div className="mt-4">
+                    <div className="mt-4 dark:text-black">
                       <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
@@ -864,8 +851,8 @@ export default function Dashboard() {
                 )}
               </div>
 
-              <div className="bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3">Acceptance / Cancellation</h3>
+              <div className="bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
+                <h3 className="text-lg font-medium mb-3 dark:text-white">Acceptance / Cancellation</h3>
                 <div style={{ height: 220 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={drivers}>
@@ -892,8 +879,8 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl shadow-sm border">
-              <h3 className="text-lg font-medium mb-3">Subscription plan usage</h3>
+            <div className="bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
+              <h3 className="text-lg font-medium mb-3 dark:text-white">Subscription plan usage</h3>
               <CompactPlanUsageBarChart
                 title="Subscription Plan Usage"
                 subtitle="Active drivers by plan"
@@ -911,17 +898,17 @@ export default function Dashboard() {
           <section className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3">
+              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
+                <h3 className="text-lg font-medium mb-3 dark:text-white">
                   New vs Returning
                 </h3>
 
                 {loading ? (
-                  <div className="h-[260px] flex items-center justify-center text-sm text-gray-400">
+                  <div className="h-65 flex items-center justify-center text-sm text-gray-400">
                     Loading chart…
                   </div>
                 ) : error ? (
-                  <div className="h-[260px] flex items-center justify-center text-sm text-red-500">
+                  <div className="h-65 flex items-center justify-center text-sm text-red-500">
                     {error}
                   </div>
                 ) : (
@@ -962,11 +949,11 @@ export default function Dashboard() {
                 )}
               </div>
 
-              <div className="bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition">
+              <div className="bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition dark:bg-gray-800">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-800">
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-white">
                       Churned Users
                     </h3>
                   </div>
@@ -978,14 +965,14 @@ export default function Dashboard() {
 
                 {/* Metric */}
                 <div className="flex items-end gap-2 mb-3">
-                  <span className="text-4xl font-bold text-gray-900">
+                  <span className="text-4xl font-bold text-gray-900 dark:text-white">
                     {loading ? "—" : error ? "0" : churnedUsers}
                   </span>
-                  <span className="text-sm text-gray-500 mb-1">users</span>
+                  <span className="text-sm font-bold text-gray-500 mb-1">users</span>
                 </div>
 
                 {/* Insight */}
-                <p className="text-sm text-gray-600">
+                <p className="text-sm font-bold text-gray-600">
                   These users have not completed any rides.
                 </p>
               </div>
@@ -1000,17 +987,17 @@ export default function Dashboard() {
         {activeTab === "Revenue & Finance" && (
           <section className="space-y-6">
             {/* Subscription Revenue */}
-            <div className="bg-white rounded-2xl border p-5 shadow-sm">
+            <div className="bg-white rounded-2xl border p-5 shadow-sm dark:bg-gray-800">
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-800">
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-white">
                     Subscription Revenue
                   </h3>
                   <p className="text-xs text-gray-500">
-                    {range === "daily"
+                    {range === "weekly"
                       ? "Daily revenue performance"
-                      : range === "weekly"
+                      : range === "monthly"
                         ? "Weekly revenue summary"
                         : "Monthly revenue overview"}
                   </p>
@@ -1018,7 +1005,7 @@ export default function Dashboard() {
 
                 {/* Toggle */}
                 <div className="flex gap-1 bg-gray-100 rounded-full p-1">
-                  {(["daily", "weekly", "monthly"] as Range[]).map((r) => (
+                  {(["weekly", "monthly", "yearly"] as Range[]).map((r) => (
                     <button
                       key={r}
                       onClick={() => setRange(r)}
@@ -1035,40 +1022,37 @@ export default function Dashboard() {
               </div>
 
               {/* Chart */}
-              <div className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={revenueDataMap[range]}
-                    barCategoryGap="35%"
-                  >
-                    <CartesianGrid
-                      vertical={false}
-                      strokeDasharray="3 3"
-                      stroke="#e5e7eb"
-                    />
-                    <XAxis
-                      dataKey="label"
-                      tickLine={false}
-                      axisLine={false}
-                      fontSize={12}
-                    />
-                    <YAxis
-                      tickLine={false}
-                      axisLine={false}
-                      fontSize={12}
-                    />
-                    <Tooltip
-                      cursor={{ fill: "rgba(0,0,0,0.04)" }}
-                      formatter={(value: number) => [`₹${value.toLocaleString()}`, "Revenue"]}
-                    />
-                    <Bar
-                      dataKey="revenue"
-                      fill="#2563eb"
-                      radius={[6, 6, 0, 0]}
-                      barSize={24}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="h-70">
+                {revenueLoading ? (
+                  <div className="flex items-center justify-center h-full bg-gray-50 rounded-xl p-8">
+                    <div className="text-sm text-gray-500 animate-pulse">Loading revenue...</div>
+                  </div>
+                ) : currentRevenueData.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full bg-gray-50 rounded-xl p-8 text-gray-400">
+                    <div className="text-4xl mb-4">📊</div>
+                    <p className="text-sm text-center font-medium">No revenue data for {range}</p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={currentRevenueData} barCategoryGap="35%">
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
+                      <YAxis tickLine={false} axisLine={false} fontSize={12} />
+                      <Tooltip
+                        cursor={{ fill: "rgba(0,0,0,0.04)" }}
+                        formatter={(value: number | undefined) =>
+                          value !== undefined ? [`₹${value.toLocaleString()}`, 'Revenue'] : ['₹0', 'Revenue']
+                        }
+                      />
+                      <Bar
+                        dataKey="revenue"
+                        fill="#2563eb"
+                        radius={[6, 6, 0, 0]}
+                        barSize={24}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
 

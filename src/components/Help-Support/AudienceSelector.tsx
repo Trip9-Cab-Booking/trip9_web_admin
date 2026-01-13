@@ -14,7 +14,7 @@ export default function AudienceSelector({ value, onChange }: Props) {
             <select
                 value={value}
                 onChange={(e) => onChange(e.target.value as any)}
-                className="border rounded-md px-3 py-2 text-sm"
+                className="border rounded-md px-3 py-2 text-sm dark:bg-gray-800"
             >
                 <option value="user">User</option>
                 <option value="driver">Driver</option>

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 const AnalyticsReport = () => {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>Loading.....</div>}>
         <AnalyticsReports />
     </Suspense>
   )

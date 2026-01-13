@@ -286,17 +286,27 @@ const UserManagement = () => {
 
   const createUser = async (form: UserFormData) => {
     const fd = new FormData();
-    fd.append("firstName", form.firstName ?? "");
-    fd.append("lastName", form.lastName ?? "");
-    fd.append("phone", form.mobileNumber ?? "");
-    fd.append("email", form.email ?? "");
-    fd.append("bankDetails[pan]", form.panNumber ?? "");
-    fd.append(
-      "bankDetails[name]",
-      form.fullName ?? `${form.firstName ?? ""} ${form.lastName ?? ""}`.trim()
-    );
-    fd.append("bankDetails[dob]", form.dob ?? "");
-    fd.append("bankDetails[phone]", form.phoneNumber ?? "");
+
+    fd.append("firstName", form.firstName);
+    fd.append("lastName", form.lastName);
+    fd.append("phone", form.mobileNumber);
+    fd.append("email", form.email);
+
+    if (form.panNumber?.trim()) {
+      fd.append("bankDetails[pan]", form.panNumber.trim());
+    }
+
+    if (form.fullName?.trim()) {
+      fd.append("bankDetails[name]", form.fullName.trim());
+    }
+
+    if (form.dob?.trim()) {
+      fd.append("bankDetails[dob]", form.dob.trim());
+    }
+
+    if (form.phoneNumber?.trim()) {
+      fd.append("bankDetails[phone]", form.phoneNumber.trim());
+    }
 
     if (form.image instanceof File) {
       fd.append("profilePic", form.image);
@@ -315,7 +325,6 @@ const UserManagement = () => {
         const msg = res.data?.message ?? "User created successfully";
         showFeedback(msg, "success");
         await fetchUsers();
-
         return res.data;
       } else {
         const msg = res?.data?.message ?? "Failed to create user";
@@ -334,16 +343,27 @@ const UserManagement = () => {
 
   const handleEditUser = async (data: UserFormData) => {
     if (!editingUserId) return;
+
     try {
       const fd = new FormData();
-      fd.append('firstName', data.firstName ?? '');
-      fd.append('lastName', data.lastName ?? '');
-      fd.append('phone', data.mobileNumber ?? '');
-      fd.append('email', data.email ?? '');
-      fd.append('bankDetails[pan]', data.panNumber ?? '');
-      fd.append("bankDetails[name]", data.fullName ?? `${data.firstName ?? ""} ${data.lastName ?? ""}`.trim());
-      fd.append("bankDetails[dob]", data.dob ?? "");
-      fd.append("bankDetails[phone]", data.phoneNumber ?? "");
+
+      fd.append('firstName', data.firstName.trim());
+      fd.append('lastName', data.lastName.trim());
+      fd.append('phone', data.mobileNumber);
+      fd.append('email', data.email.trim());
+
+      if (data.dob?.trim()) {
+        fd.append('bankDetails[dob]', data.dob.trim());
+      }
+      if (data.fullName?.trim()) {
+        fd.append('bankDetails[name]', data.fullName.trim());
+      }
+      if (data.phoneNumber?.trim()) {
+        fd.append('bankDetails[phone]', data.phoneNumber.trim());
+      }
+      if (data.panNumber?.trim()) {
+        fd.append('bankDetails[pan]', data.panNumber.trim());
+      }
 
       if (data.image instanceof File) {
         fd.append('profilePic', data.image);
@@ -357,17 +377,19 @@ const UserManagement = () => {
         },
       });
 
-      showFeedback(res.data?.message || 'User updated', 'success');
+      showFeedback(res.data?.message || 'User updated successfully', 'success');
       fetchUsers();
     } catch (err: any) {
-      console.error('Update user failed', err);
-      showFeedback('Failed to update user', 'error');
+      console.error('Update user failed:', err);
+      const errMsg = err?.response?.data?.message ?? 'Failed to update user';
+      showFeedback(errMsg, 'error');
     } finally {
       setIsModalOpen(false);
       setEditingUserId(null);
       setIsEditing(false);
     }
   };
+
 
   const handleDelete = async (userId: string) => {
     // if (!confirm('Are you sure you want to delete this user?')) return;
@@ -485,7 +507,7 @@ const UserManagement = () => {
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-200">{row.id}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-200">{row.firstName}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-200">{row.lastName}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-200">{row.gender}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-200">{row.gender ?? '-'}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-200">{row.phone}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-200">{row.email}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">

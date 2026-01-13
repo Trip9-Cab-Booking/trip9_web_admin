@@ -632,14 +632,14 @@ export default function PricingControl() {
     <div className="max-w-7xl mx-auto p-6">
       <h2 className="text-2xl font-semibold mb-4">Pricing Control</h2>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <aside className="md:col-span-1 bg-white rounded-lg shadow p-4">
+        <aside className="md:col-span-1 bg-white rounded-lg shadow p-4 dark:bg-gray-800">
           <nav className="space-y-2">
-            <button onClick={() => setActiveTab("settings")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "settings" ? "bg-indigo-600 text-white" : "hover:bg-gray-50"}`}>Pricing Settings</button>
-            <button onClick={() => setActiveTab("promo")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "promo" ? "bg-indigo-600 text-white" : "hover:bg-gray-50"}`}>Coupons</button>
+            <button onClick={() => setActiveTab("settings")} className={`w-full text-left px-3 py-2  rounded ${activeTab === "settings" ? "bg-indigo-600 text-white" : "hover:bg-gray-50 dark:hover:bg-gray-700"}`}>Pricing Settings</button>
+            <button onClick={() => setActiveTab("promo")} className={`w-full text-left px-3 py-2 rounded ${activeTab === "promo" ? "bg-indigo-600 text-white" : "hover:bg-gray-50 dark:hover:bg-gray-700"}`}>Coupons</button>
           </nav>
         </aside>
 
-        <main className="md:col-span-2 bg-white rounded-lg shadow p-6">
+        <main className="md:col-span-2 bg-white rounded-lg shadow p-6 dark:bg-gray-800">
           {!loading && !hasPricing && (
             <div className="border border-dashed rounded-lg p-8 text-center">
               <h3 className="text-lg font-medium mb-2">No pricing plans found</h3>
@@ -674,7 +674,7 @@ export default function PricingControl() {
           {(hasPricing || mode === "create") && (
             <>
               {activeTab === "settings" && (
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
                   <div className="flex gap-4 mb-6">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input

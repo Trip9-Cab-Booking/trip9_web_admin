@@ -93,7 +93,7 @@ const PromoDiscountControl: React.FC<Props> = ({
                                 validFrom: e.target.value,
                             }))
                         }
-                        className="mt-1 block w-full rounded border p-2"
+                        className="mt-1 block w-full rounded border p-2 text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 dark:accent-white dark:scheme-dark"
                     />
 
                     <label className="text-xs mt-2">Validity to</label>
@@ -106,7 +106,7 @@ const PromoDiscountControl: React.FC<Props> = ({
                                 validTo: e.target.value,
                             }))
                         }
-                        className="mt-1 block w-full rounded border p-2"
+                        className="mt-1 block w-full rounded border p-2 text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 dark:accent-white dark:scheme-dark"
                     />
 
                     <label className="text-xs mt-2">Max discount per ride</label>
@@ -155,7 +155,7 @@ const PromoDiscountControl: React.FC<Props> = ({
                                     totalUsageLimit: 1000,
                                 })
                             }
-                            className="px-3 py-2 rounded bg-gray-200"
+                            className="px-3 py-2 rounded bg-red-500"
                         >
                             Clear
                         </button>
@@ -175,7 +175,7 @@ const PromoDiscountControl: React.FC<Props> = ({
                             <div
                                 key={p.id}
                                 onClick={() => selectPromo(p)}
-                                className="flex items-center justify-between border p-2 rounded cursor-pointer hover:bg-gray-50"
+                                className="flex items-center justify-between border p-2 rounded cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
                             >
                                 <div>
                                     <div className="font-medium">{p.couponCode}</div>

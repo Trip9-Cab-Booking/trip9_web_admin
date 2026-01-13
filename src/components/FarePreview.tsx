@@ -133,7 +133,7 @@ const FarePreview: React.FC = () => {
     ]);
 
     return (
-        <aside className="md:col-span-1 bg-white rounded-lg shadow p-6">
+        <aside className="md:col-span-1 bg-white rounded-lg shadow p-6 dark:bg-gray-800">
             <h4 className="font-medium mb-2">Fare Preview</h4>
 
             <div className="space-y-2">
@@ -146,7 +146,7 @@ const FarePreview: React.FC = () => {
                             category: e.target.value as VehicleCategory,
                         }))
                     }
-                    className="w-full rounded border p-2"
+                    className="w-full rounded border p-2 dark:bg-gray-800"
                 >
                     <option value="all">All</option>
                     <option value="bike">Bike</option>
@@ -216,15 +216,15 @@ const FarePreview: React.FC = () => {
 
                 {!errorMessage && (
                     <div className="mt-3 border-t pt-3">
-                        <div className="flex justify-between text-sm text-gray-600">
+                        <div className="flex justify-between text-sm text-gray-600 dark:text-white">
                             <span>Calculated fare</span>
                             <span>{loading ? "…" : `₹${estimatedFare.baseCalc}`}</span>
                         </div>
-                        <div className="flex justify-between text-sm text-gray-600">
+                        <div className="flex justify-between text-sm text-gray-600 dark:text-white">
                             <span>Discount</span>
                             <span>{loading ? "…" : `-₹${estimatedFare.discount}`}</span>
                         </div>
-                        <div className="flex justify-between font-medium text-lg mt-2">
+                        <div className="flex justify-between font-medium text-lg mt-2 ">
                             <span>Final fare</span>
                             <span>{loading ? "…" : `₹${estimatedFare.final}`}</span>
                         </div>
