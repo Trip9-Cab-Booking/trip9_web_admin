@@ -10,6 +10,7 @@ import {
     Tooltip,
     Cell,
 } from "recharts";
+import { ValueType } from "recharts/types/component/DefaultTooltipContent";
 
 type Bucket = {
     range: string;
@@ -87,9 +88,11 @@ export default function RidesPerUserBarChart({
                         />
 
                         <Tooltip
-                            formatter={(value: number | undefined) => {
-                                if (value === undefined) return ['0 users', 'Users'];
-                                return [`${value} users`, 'Users'];
+                            formatter={(value: ValueType) => {
+                                if (typeof value !== "number") {
+                                    return ["0 users", "Users"];
+                                }
+                                return [`${value} users`, "Users"];
                             }}
                             contentStyle={{
                                 background: "white",
@@ -98,6 +101,7 @@ export default function RidesPerUserBarChart({
                                 color: "#000000",
                             }}
                         />
+
 
                         <Bar
                             dataKey="users"
