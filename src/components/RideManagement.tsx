@@ -182,6 +182,19 @@ export default function RideListPage() {
     statusFilter,
   ]);
 
+  useEffect(() => {
+    const handleDropdownClick = (event: MouseEvent) => {
+      if (showPaymentDropdown) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.relative') && !target.closest('[data-dropdown="payment"]')) {
+          setShowPaymentDropdown(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleDropdownClick);
+    return () => document.removeEventListener('mousedown', handleDropdownClick);
+  }, [showPaymentDropdown]);
 
   const totalTableColumns = 10;
 
@@ -248,9 +261,9 @@ export default function RideListPage() {
                   </button>
 
                   {showPaymentDropdown && (
-                    <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-gray-900 border rounded-lg shadow-lg z-20 p-2">
+                    <div data-dropdown="payment" className="absolute right-0 mt-2 w-44 bg-white dark:bg-gray-900 border rounded-lg shadow-lg z-20 p-2">
                       {paymentOptions.map((opt) => (
-                        <label key={opt} className="flex items-center gap-2 px-2 py-1 text-sm hover:bg-gray-50 rounded">
+                        <label key={opt} className="flex items-center gap-2 px-2 py-1 text-sm hover:bg-gray-50 rounded cursor-pointer">
                           <input type="checkbox" checked={selectedPayments.includes(opt)} onChange={() => toggleMulti(selectedPayments, setSelectedPayments, opt)} />
                           <span className="ml-1">{opt}</span>
                         </label>

@@ -295,15 +295,15 @@ const UserManagement = () => {
     if (form.panNumber?.trim()) {
       fd.append("bankDetails[pan]", form.panNumber.trim());
     }
+
     if (form.fullName?.trim()) {
       fd.append("bankDetails[name]", form.fullName.trim());
     }
-    // else {
-    //   fd.append("bankDetails[name]", `${form.firstName} ${form.lastName}`.trim());
-    // }
+
     if (form.dob?.trim()) {
       fd.append("bankDetails[dob]", form.dob.trim());
     }
+
     if (form.phoneNumber?.trim()) {
       fd.append("bankDetails[phone]", form.phoneNumber.trim());
     }
@@ -368,8 +368,6 @@ const UserManagement = () => {
       if (data.image instanceof File) {
         fd.append('profilePic', data.image);
       }
-
-      console.log('📤 Edit FormData:', Array.from(fd.entries()));
 
       const res = await axios.put(`${BASE}/api/admin/user/update/${editingUserId}`, fd, {
         headers: {
@@ -509,7 +507,7 @@ const UserManagement = () => {
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-200">{row.id}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-200">{row.firstName}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-200">{row.lastName}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-200">{row.gender}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-200">{row.gender ?? '-'}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-200">{row.phone}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-200">{row.email}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">

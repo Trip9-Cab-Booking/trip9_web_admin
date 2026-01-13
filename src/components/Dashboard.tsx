@@ -183,9 +183,9 @@ interface KPICardProps {
 }
 function KPICard({ label, value, hint }: KPICardProps) {
   return (
-    <div className="bg-white p-4 rounded-2xl shadow-sm border">
+    <div className="bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800 ">
       <div className="text-sm text-gray-500">{label}</div>
-      <div className="mt-2 text-2xl font-semibold dark:text-black">{value}</div>
+      <div className="mt-2 text-2xl font-semibold dark:text-white">{value}</div>
       {hint && <div className="text-xs text-gray-400 mt-1">{hint}</div>}
     </div>
   );
@@ -197,7 +197,7 @@ interface TabsProps {
 }
 function Tabs({ tabs, active, onChange }: TabsProps) {
   return (
-    <div className="flex gap-2 bg-white p-1 rounded-xl border">
+    <div className="flex gap-2 bg-white p-1 rounded-xl border dark:bg-gray-800">
       {tabs.map((t: string) => (
         <button
           key={t}
@@ -632,7 +632,7 @@ export default function Dashboard() {
         {activeTab === "Ride Analytics" && (
           <section className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border">
+              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-medium">Total rides (time series)</h3>
                   <div className="text-sm text-gray-500">Last 7 days</div>
@@ -662,8 +662,8 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-2 dark:text-black">Category breakdown</h3>
+              <div className="bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
+                <h3 className="text-lg font-medium mb-2 dark:text-white">Category breakdown</h3>
                 <div style={{ height: 260 }}>
                   {categoryLoading ? (
                     <div className="h-full flex items-center justify-center text-sm text-gray-400">
@@ -697,8 +697,8 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3 dark:text-black">Peak hours</h3>
+              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
+                <h3 className="text-lg font-medium mb-3 dark:text-white">Peak hours</h3>
                 <div style={{ height: 220 }}>
                   {peakLoading ? (
                     <div className="h-full flex items-center justify-center text-sm text-gray-400">
@@ -722,8 +722,8 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3 dark:text-black">Conversion funnel</h3>
+              <div className="bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
+                <h3 className="text-lg font-medium mb-3">Conversion funnel</h3>
                 {funnelLoading ? (
                   <div className="text-sm text-gray-400">Loading funnel data…</div>
                 ) : funnelData.length === 0 ? (
@@ -733,7 +733,7 @@ export default function Dashboard() {
                     {funnelData.map((f) => (
                       <div key={f.step} className="flex items-center justify-between">
                         <div>
-                          <div className="text-sm dark:text-black">{f.step}</div>
+                          <div className="text-sm dark:text-white">{f.step}</div>
                           <div className="text-xs text-gray-400">
                             {f.percentage}% of requests
                           </div>
@@ -748,8 +748,8 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl shadow-sm border">
-              <h3 className="text-lg font-medium mb-3 dark:text-black">Cancellation reasons (split)</h3>
+            <div className="bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
+              <h3 className="text-lg font-medium mb-3 dark:text-white">Cancellation reasons (split)</h3>
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead>
@@ -775,7 +775,7 @@ export default function Dashboard() {
                       </tr>
                     ) : (
                       cancellations.map((r, idx) => (
-                        <tr key={idx} className="border-t dark:text-black">
+                        <tr key={idx} className="border-t dark:text-white">
                           <td className="px-3 py-2">{r.reason}</td>
                           <td className="px-3 py-2 capitalize">{r.cancelledBy}</td>
                           <td className="px-3 py-2">{r.count.toLocaleString()}</td>
@@ -793,8 +793,8 @@ export default function Dashboard() {
         {activeTab === "Driver Performance" && (
           <section className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3 dark:text-black">Top drivers (by rides)</h3>
+              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
+                <h3 className="text-lg font-medium mb-3 dark:text-white">Top drivers (by rides)</h3>
 
                 {driversLoading ? (
                   <div className="text-sm text-gray-400">Loading drivers…</div>
@@ -815,7 +815,7 @@ export default function Dashboard() {
                             className="flex items-center justify-between border rounded-md p-3"
                           >
                             <div>
-                              <div className="font-medium dark:text-black">
+                              <div className="font-medium dark:text-white">
                                 {name}
                                 <span className="ml-2 text-xs text-gray-400 ">
                                   {d.driverId.slice(-6)}
@@ -851,8 +851,8 @@ export default function Dashboard() {
                 )}
               </div>
 
-              <div className="bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3 dark:text-black">Acceptance / Cancellation</h3>
+              <div className="bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
+                <h3 className="text-lg font-medium mb-3 dark:text-white">Acceptance / Cancellation</h3>
                 <div style={{ height: 220 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={drivers}>
@@ -879,8 +879,8 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl shadow-sm border">
-              <h3 className="text-lg font-medium mb-3 dark:text-black">Subscription plan usage</h3>
+            <div className="bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
+              <h3 className="text-lg font-medium mb-3 dark:text-white">Subscription plan usage</h3>
               <CompactPlanUsageBarChart
                 title="Subscription Plan Usage"
                 subtitle="Active drivers by plan"
@@ -898,8 +898,8 @@ export default function Dashboard() {
           <section className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border">
-                <h3 className="text-lg font-medium mb-3 dark:text-black">
+              <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border dark:bg-gray-800">
+                <h3 className="text-lg font-medium mb-3 dark:text-white">
                   New vs Returning
                 </h3>
 
@@ -949,11 +949,11 @@ export default function Dashboard() {
                 )}
               </div>
 
-              <div className="bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition">
+              <div className="bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition dark:bg-gray-800">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-800">
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-white">
                       Churned Users
                     </h3>
                   </div>
@@ -965,14 +965,14 @@ export default function Dashboard() {
 
                 {/* Metric */}
                 <div className="flex items-end gap-2 mb-3">
-                  <span className="text-4xl font-bold text-gray-900">
+                  <span className="text-4xl font-bold text-gray-900 dark:text-white">
                     {loading ? "—" : error ? "0" : churnedUsers}
                   </span>
-                  <span className="text-sm text-gray-500 mb-1">users</span>
+                  <span className="text-sm font-bold text-gray-500 mb-1">users</span>
                 </div>
 
                 {/* Insight */}
-                <p className="text-sm text-gray-600">
+                <p className="text-sm font-bold text-gray-600">
                   These users have not completed any rides.
                 </p>
               </div>
@@ -987,11 +987,11 @@ export default function Dashboard() {
         {activeTab === "Revenue & Finance" && (
           <section className="space-y-6">
             {/* Subscription Revenue */}
-            <div className="bg-white rounded-2xl border p-5 shadow-sm">
+            <div className="bg-white rounded-2xl border p-5 shadow-sm dark:bg-gray-800">
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-800">
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-white">
                     Subscription Revenue
                   </h3>
                   <p className="text-xs text-gray-500">

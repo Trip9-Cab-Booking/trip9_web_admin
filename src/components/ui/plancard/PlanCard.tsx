@@ -79,7 +79,7 @@ export default function PlanCard({ plan, onEdit, onDelete, onView, onViewDrivers
                                             }`}
                                         title={`${label}`}
                                     >
-                                        <div className="font-medium">{label}</div>
+                                        <div className="font-medium text-gray-500">{label}</div>
                                         <div className="text-xs text-gray-500 mt-0.5">
                                             {smallPrice ? formatCurrency(smallPrice) : "—"}{smallDurLabel ? ` • ${smallDurLabel}` : ""}
                                         </div>
@@ -112,7 +112,7 @@ export default function PlanCard({ plan, onEdit, onDelete, onView, onViewDrivers
                     <button
                         type="button"
                         onClick={() => onView(plan)}
-                        className="px-3 py-1 rounded-md bg-white border text-sm hover:bg-gray-50"
+                        className="px-3 py-1 rounded-md bg-white border text-black text-sm hover:bg-gray-50"
                         aria-label={`View ${plan.name}`}
                     >
                         View

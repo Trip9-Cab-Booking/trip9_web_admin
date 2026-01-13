@@ -48,7 +48,7 @@ export default function CreateFaqTitle({ audience, onCreate }: Props) {
     };
 
     return (
-        <div className="bg-white border rounded-lg p-4 flex gap-3">
+        <div className="bg-white border rounded-lg p-4 flex gap-3 dark:bg-gray-800">
             <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}

@@ -66,7 +66,7 @@ export default function FaqItem({
     }, [isOpen, faq.id, faq.source, audience]);
 
     return (
-        <div className="border rounded-lg bg-white">
+        <div className="border rounded-lg bg-white dark:bg-gray-800">
             <button
                 onClick={() => setOpenTitleId(isOpen ? null : faq.id)}
                 className="w-full px-5 py-4 flex justify-between font-medium"

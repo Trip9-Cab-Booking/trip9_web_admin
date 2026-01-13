@@ -76,32 +76,33 @@ export default function RidesPerUserBarChart({
                             dataKey="range"
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fontSize: 12, fill: "#6b7280" }}
+                            tick={{ fontSize: 16, fill: "#6b7280" }}
                         />
 
                         <YAxis
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fontSize: 12, fill: "#6b7280" }}
+                            tick={{ fontSize: 16, fill: "#6b7280" }}
                             allowDecimals={false}
                         />
 
                         <Tooltip
-                            formatter={(value: number) => [
-                                `${value} users`,
-                                "Users",
-                            ]}
+                            formatter={(value: number | undefined) => {
+                                if (value === undefined) return ['0 users', 'Users'];
+                                return [`${value} users`, 'Users'];
+                            }}
                             contentStyle={{
                                 background: "white",
                                 borderRadius: "8px",
                                 border: "1px solid rgba(0,0,0,0.06)",
+                                color: "#000000",
                             }}
                         />
 
                         <Bar
                             dataKey="users"
                             radius={[6, 6, 0, 0]}
-                            minPointSize={4}   // ⭐ THIS IS THE KEY
+                            minPointSize={4}
                         >
                             {normalizedData.map((entry, index) => (
                                 <Cell
@@ -115,7 +116,7 @@ export default function RidesPerUserBarChart({
                 </ResponsiveContainer>
             </div>
 
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+            <div className="text-sm text-gray-500 dark:text-gray-400 mt-3">
                 Total users analysed: {totalUsers}
             </div>
         </div>
