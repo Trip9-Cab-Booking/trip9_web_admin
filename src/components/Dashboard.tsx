@@ -1039,11 +1039,13 @@ export default function Dashboard() {
                       <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
                       <YAxis tickLine={false} axisLine={false} fontSize={12} />
                       <Tooltip
-                        cursor={{ fill: "rgba(0,0,0,0.04)" }}
-                        formatter={(value: number | undefined) =>
-                          value !== undefined ? [`₹${value.toLocaleString()}`, 'Revenue'] : ['₹0', 'Revenue']
+                        formatter={(value) =>
+                          typeof value === "number"
+                            ? [`₹${value.toLocaleString()}`, "Revenue"]
+                            : ["₹0", "Revenue"]
                         }
                       />
+
                       <Bar
                         dataKey="revenue"
                         fill="#2563eb"
