@@ -71,16 +71,20 @@ export default function CompactPlanUsageBarChart({
                         />
                         <Tooltip
                             cursor={{ fill: "rgba(0,0,0,0.04)" }}
-                            formatter={(value: number, name: string, props: any) => [
-                                `${value} (${props.payload.percent}%)`,
-                                "Drivers",
-                            ]}
+                            formatter={(value: number | undefined, _name: string | undefined, props: any) => {
+                                const percent = props?.payload?.percent ?? 0;
+                                const safeValue = value ?? 0;
+
+                                return [`${safeValue} (${percent}%)`, "Drivers"];
+                            }}
                             contentStyle={{
                                 background: "white",
                                 borderRadius: "8px",
                                 border: "1px solid rgba(0,0,0,0.06)",
                             }}
                         />
+
+
                         <Bar
                             dataKey="value"
                             radius={[4, 4, 4, 4]}

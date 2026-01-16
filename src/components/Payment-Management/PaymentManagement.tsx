@@ -86,8 +86,6 @@ const MOCK_TRANSACTIONS: Transaction[] = [
 const currencyFmt = (v: number, cur = "INR") =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: cur }).format(v);
 
-
-
 export default function PaymentManagementPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [txLoading, setTxLoading] = useState(false);

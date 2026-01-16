@@ -227,6 +227,21 @@ export default function CreateUserModal({
 
   const initials = `${(formData.firstName || '').slice(0, 1)}${(formData.lastName || '').slice(0, 1)}`.toUpperCase();
 
+  // Allow only letters and spaces
+  const handleAlphaOnly = (value: string) => {
+    return value.replace(/[^a-zA-Z\s]/g, "");
+  };
+
+  // Allow only digits
+  const handleNumericOnly = (value: string) => {
+    return value.replace(/\D/g, "");
+  };
+
+  const handleFullNameOnly = (value: string) => {
+    return value.replace(/[^a-zA-Z\s.]/g, "");
+  };
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -385,12 +400,13 @@ export default function CreateUserModal({
                   <Input
                     id="firstName"
                     value={formData.firstName}
-                    onChange={(e) => handleChange("firstName", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("firstName", handleAlphaOnly(e.target.value))
+                    }
                     onBlur={() => setTouched((s) => ({ ...s, firstName: true }))}
                     placeholder="Enter first name"
-                    className={`h-11 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600`}
-                    aria-invalid={Boolean(touched.firstName && errors.firstName)}
-                    aria-describedby={touched.firstName && errors.firstName ? "err-firstName" : undefined}
+                    className="h-11 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600"
+                    inputMode="text"
                   />
                   {touched.firstName && errors.firstName && (
                     <p id="err-firstName" className="text-xs text-red-600 mt-1">
@@ -406,12 +422,13 @@ export default function CreateUserModal({
                   <Input
                     id="lastName"
                     value={formData.lastName}
-                    onChange={(e) => handleChange("lastName", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("lastName", handleAlphaOnly(e.target.value))
+                    }
                     onBlur={() => setTouched((s) => ({ ...s, lastName: true }))}
                     placeholder="Enter last name"
                     className="h-11 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600"
-                    aria-invalid={Boolean(touched.lastName && errors.lastName)}
-                    aria-describedby={touched.lastName && errors.lastName ? "err-lastName" : undefined}
+                    inputMode="text"
                   />
                   {touched.lastName && errors.lastName && (
                     <p id="err-lastName" className="text-xs text-red-600 mt-1">
@@ -428,12 +445,14 @@ export default function CreateUserModal({
                     id="mobileNumber"
                     type="tel"
                     value={formData.mobileNumber}
-                    onChange={(e) => handleChange("mobileNumber", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("mobileNumber", handleNumericOnly(e.target.value))
+                    }
                     onBlur={() => setTouched((s) => ({ ...s, mobileNumber: true }))}
                     placeholder="Enter mobile number"
                     className="h-11 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600"
-                    aria-invalid={Boolean(touched.mobileNumber && errors.mobileNumber)}
-                    aria-describedby={touched.mobileNumber && errors.mobileNumber ? "err-mobile" : undefined}
+                    inputMode="numeric"
+                    maxLength={10}
                   />
                   {touched.mobileNumber && errors.mobileNumber && (
                     <p id="err-mobile" className="text-xs text-red-600 mt-1">
@@ -491,9 +510,12 @@ export default function CreateUserModal({
                   <Input
                     id="fullName"
                     value={formData.fullName}
-                    onChange={(e) => handleChange("fullName", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("fullName", handleFullNameOnly(e.target.value))
+                    }
                     placeholder="Enter full name"
                     className="h-11 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600"
+                    inputMode="text"
                   />
                   {errors.fullName && (
                     <p className="text-xs text-red-600 mt-1 font-medium">{errors.fullName}</p>
@@ -508,9 +530,13 @@ export default function CreateUserModal({
                     id="phoneNumber"
                     type="tel"
                     value={formData.phoneNumber}
-                    onChange={(e) => handleChange("phoneNumber", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("phoneNumber", handleNumericOnly(e.target.value))
+                    }
                     placeholder="Enter phone number"
                     className="h-11 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600"
+                    inputMode="numeric"
+                    maxLength={10}
                   />
                   {errors.phoneNumber && (
                     <p className="text-xs text-red-600 mt-1 font-medium">{errors.phoneNumber}</p>

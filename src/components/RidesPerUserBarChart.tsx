@@ -88,7 +88,7 @@ export default function RidesPerUserBarChart({
                         />
 
                         <Tooltip
-                            formatter={(value: ValueType) => {
+                            formatter={(value) => {
                                 if (typeof value !== "number") {
                                     return ["0 users", "Users"];
                                 }
@@ -101,7 +101,6 @@ export default function RidesPerUserBarChart({
                                 color: "#000000",
                             }}
                         />
-
 
                         <Bar
                             dataKey="users"

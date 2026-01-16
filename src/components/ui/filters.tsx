@@ -77,24 +77,42 @@ export default function CompactFilters({
 
           <div>
             <label className="sr-only">Payment mode</label>
-            <select value={selectedMode} onChange={(e) => setSelectedMode(e.target.value)} className="w-full px-2 py-1 text-sm rounded-md border border-gray-200 dark:border-gray-700 bg-transparent">
-              <option value="">All modes</option>
+            <select
+              value={selectedMode}
+              onChange={(e) => setSelectedMode(e.target.value)}
+              className="w-full px-2 py-1 text-sm rounded-md border border-gray-200 dark:border-gray-700 
+             bg-white dark:bg-gray-800 
+             text-gray-900 dark:text-gray-100"
+            >
+              <option value="" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">
+                All modes
+              </option>
               <option value="card">Card</option>
               <option value="upi">UPI</option>
               <option value="netbanking">Netbanking</option>
               <option value="wallet">Wallet</option>
               <option value="cash">Cash</option>
             </select>
+
           </div>
 
           <div>
             <label className="sr-only">Status</label>
-            <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className="w-full px-2 py-1 text-sm rounded-md border border-gray-200 dark:border-gray-700 bg-transparent">
-              <option value="">All status</option>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="w-full px-2 py-1 text-sm rounded-md border border-gray-200 dark:border-gray-700 
+             bg-white dark:bg-gray-800 
+             text-gray-900 dark:text-gray-100"
+            >
+              <option value="" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">
+                All status
+              </option>
               <option value="success">Success</option>
               <option value="failed">Failed</option>
               <option value="pending">Pending</option>
             </select>
+
           </div>
         </div>
 

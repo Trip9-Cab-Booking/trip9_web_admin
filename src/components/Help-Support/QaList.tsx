@@ -81,15 +81,15 @@ export default function QaList({
 
     return (
         <>
-            <div className="border-t p-5 space-y-4 bg-gray-50 dark:bg-gray-800">
+            <div className="border-t p-5 space-y-4 bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
                 {qas.length === 0 && editingQaId !== "NEW" && (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                         No questions added yet.
                     </p>
                 )}
 
                 {editingQaId === "NEW" && (
-                    <div className="bg-white border rounded-md p-4 ">
+                    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md p-4">
                         <EditQaForm
                             qa={{ id: "NEW", question: "", answer: "" }}
                             faqId={faq.id}
@@ -117,28 +117,23 @@ export default function QaList({
                             />
                         ) : (
                             <>
-                                <p className="font-medium text-sm">
+                                <p className="font-medium text-sm text-gray-900 dark:text-gray-100">
                                     {qa.question}
                                 </p>
-                                <p className="text-sm text-gray-600 mt-1">
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                     {qa.answer}
                                 </p>
-
                                 <div className="flex gap-4 mt-3 text-sm">
                                     <button
-                                        onClick={() =>
-                                            setEditingQaId(qa.id)
-                                        }
-                                        className="text-blue-600"
+                                        onClick={() => setEditingQaId(qa.id)}
+                                        className="text-blue-600 dark:text-blue-400 hover:underline"
                                     >
                                         Edit
                                     </button>
 
                                     <button
-                                        onClick={() =>
-                                            openDeleteModal(qa.id)
-                                        }
-                                        className="text-red-600"
+                                        onClick={() => openDeleteModal(qa.id)}
+                                        className="text-red-600 dark:text-red-400 hover:underline"
                                     >
                                         Delete
                                     </button>
@@ -150,7 +145,7 @@ export default function QaList({
 
                 <button
                     onClick={() => setEditingQaId("NEW")}
-                    className="text-blue-600 text-sm font-medium"
+                    className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline"
                 >
                     + Add Question
                 </button>

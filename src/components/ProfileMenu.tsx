@@ -14,6 +14,7 @@ import { logout, selectCurrentUser } from "@/store/authSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
+import { LogOut, User } from "lucide-react";
 
 export default function AccountMenu() {
   const currentUser = useSelector(selectCurrentUser);
@@ -104,15 +105,27 @@ export default function AccountMenu() {
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
         <MenuItem onClick={goToProfile} className="flex flex-col">
-          <Typography variant="inherit">{currentUser?.firstName}</Typography>
-          <Typography variant="body2">{currentUser?.email}</Typography>
+          {/* <Typography variant="inherit">{currentUser?.firstName}</Typography>
+          <Typography variant="body2">{currentUser?.email}</Typography> */}
+          <div className="flex items-center gap-2">
+            <User className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              Profile
+            </span>
+          </div>
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleLogout}>
-          <ListItemIcon>
+          {/* <ListItemIcon>
             <Logout fontSize="small" />
           </ListItemIcon>
-          Logout
+          Logout */}
+          <div className="flex items-center gap-2">
+            <LogOut className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              Logout
+            </span>
+          </div>
         </MenuItem>
       </Menu>
     </React.Fragment>

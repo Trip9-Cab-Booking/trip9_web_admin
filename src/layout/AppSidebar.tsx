@@ -243,7 +243,7 @@ const AppSidebar: React.FC = () => {
                 className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
                   }`}
               >
-                {isExpanded || isHovered || isMobileOpen ? "Menu" : <HorizontaLDots />}
+                {/* {isExpanded || isHovered || isMobileOpen ? "Menu" : <HorizontaLDots />} */}
               </h2>
 
               {renderMenuItems(navItems, "main")}
