@@ -83,8 +83,6 @@ export default function CompactPlanUsageBarChart({
                                 border: "1px solid rgba(0,0,0,0.06)",
                             }}
                         />
-
-
                         <Bar
                             dataKey="value"
                             radius={[4, 4, 4, 4]}
