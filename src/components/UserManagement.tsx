@@ -141,7 +141,7 @@ const UserManagement = () => {
     try {
       const res = await axios.get(`${BASE}/api/admin/users`, {
         params: { page, limit: pageSize, ...(searchQuery && { searchText: searchQuery }) },
-        headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': '69420' },
+        headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': '69420', },
       });
 
       if (res.data?.success === 401) {
@@ -199,6 +199,7 @@ const UserManagement = () => {
         email: u.email ?? '',
         imageUrl: typeof u.profilePic === 'string' && u.profilePic.length ? u.profilePic : null,
         dob: u.bankDetails?.dob ?? u.dob ?? '',
+        gender: u.gender ?? '',
         fullName: u.bankDetails?.name ?? `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(),
         phoneNumber: u.bankDetails?.phone ?? '',
         panNumber: u.bankDetails?.pan ?? u.panNumber ?? '',
@@ -291,6 +292,7 @@ const UserManagement = () => {
     fd.append("lastName", form.lastName);
     fd.append("phone", form.mobileNumber);
     fd.append("email", form.email);
+    fd.append("gender", form.gender || "");
 
     if (form.panNumber?.trim()) {
       fd.append("bankDetails[pan]", form.panNumber.trim());
@@ -324,6 +326,7 @@ const UserManagement = () => {
       if (res?.status === 200 || res?.data?.success) {
         const msg = res.data?.message ?? "User created successfully";
         showFeedback(msg, "success");
+        console.log('created userData:', res.data)
         await fetchUsers();
         return res.data;
       } else {
@@ -351,34 +354,31 @@ const UserManagement = () => {
       fd.append('lastName', data.lastName.trim());
       fd.append('phone', data.mobileNumber);
       fd.append('email', data.email.trim());
+      fd.append('gender', data.gender || '');
 
-      if (data.dob?.trim()) {
-        fd.append('bankDetails[dob]', data.dob.trim());
-      }
-      if (data.fullName?.trim()) {
-        fd.append('bankDetails[name]', data.fullName.trim());
-      }
-      if (data.phoneNumber?.trim()) {
-        fd.append('bankDetails[phone]', data.phoneNumber.trim());
-      }
-      if (data.panNumber?.trim()) {
-        fd.append('bankDetails[pan]', data.panNumber.trim());
-      }
+      if (data.dob?.trim()) fd.append('bankDetails[dob]', data.dob.trim());
+      if (data.fullName?.trim()) fd.append('bankDetails[name]', data.fullName.trim());
+      if (data.phoneNumber?.trim()) fd.append('bankDetails[phone]', data.phoneNumber.trim());
+      if (data.panNumber?.trim()) fd.append('bankDetails[pan]', data.panNumber.trim());
 
       if (data.image instanceof File) {
         fd.append('profilePic', data.image);
       }
 
-      const res = await axios.put(`${BASE}/api/admin/user/update/${editingUserId}`, fd, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'ngrok-skip-browser-warning': '69420',
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const res = await axios.put(
+        `${BASE}/api/admin/user/update/${editingUserId}`,
+        fd,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'ngrok-skip-browser-warning': '69420',
+          },
+        }
+      );
 
       showFeedback(res.data?.message || 'User updated successfully', 'success');
-      fetchUsers();
+      await fetchUsers();
+
     } catch (err: any) {
       console.error('Update user failed:', err);
       const errMsg = err?.response?.data?.message ?? 'Failed to update user';
@@ -389,7 +389,6 @@ const UserManagement = () => {
       setIsEditing(false);
     }
   };
-
 
   const handleDelete = async (userId: string) => {
     // if (!confirm('Are you sure you want to delete this user?')) return;
