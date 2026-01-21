@@ -63,6 +63,7 @@ export default function CompactFilters({
             <input
               type="date"
               value={dateFrom}
+              max="9999-12-31"
               onChange={(e) => setDateFrom(e.target.value)}
               className="px-2 py-1 w-full max-w-[130px] text-sm rounded-md border border-gray-200 dark:border-gray-700 bg-transparent"
             />
@@ -70,6 +71,7 @@ export default function CompactFilters({
             <input
               type="date"
               value={dateTo}
+              max="9999-12-31"
               onChange={(e) => setDateTo(e.target.value)}
               className="px-2 py-1 w-full max-w-[130px] text-sm rounded-md border border-gray-200 dark:border-gray-700 bg-transparent"
             />

@@ -26,6 +26,7 @@ export interface UserFormData {
   lastName: string;
   mobileNumber: string;
   email: string;
+  gender: string;
   dob?: string;
   phoneNumber?: string;
   fullName?: string;
@@ -50,6 +51,7 @@ export default function CreateUserModal({
     lastName: initialData?.lastName ?? '',
     mobileNumber: initialData?.mobileNumber ?? '',
     email: initialData?.email ?? '',
+    gender: initialData?.gender ?? '',
     image: (initialData?.image as File) ?? null,
     dob: initialData?.dob ?? '',
     fullName: initialData?.fullName ?? '',
@@ -69,6 +71,7 @@ export default function CreateUserModal({
     lastName: string;
     mobileNumber: string;
     email: string;
+    gender: string;
     phoneNumber: string;
     panNumber: string;
     fullName: string;
@@ -77,6 +80,7 @@ export default function CreateUserModal({
     lastName: '',
     mobileNumber: '',
     email: '',
+    gender: '',
     phoneNumber: '',
     panNumber: '',
     fullName: ''
@@ -90,6 +94,7 @@ export default function CreateUserModal({
       lastName: initialData.lastName ?? prev.lastName,
       mobileNumber: initialData.mobileNumber ?? prev.mobileNumber,
       email: initialData.email ?? prev.email,
+      gender: initialData.gender ?? prev.gender,
       dob: initialData.dob ?? prev.dob,
       accountNumber: initialData.accountNumber ?? prev.accountNumber,
       bankName: initialData.bankName ?? prev.bankName,
@@ -156,6 +161,11 @@ export default function CreateUserModal({
         if (value && !/^[a-zA-Z\s]*$/.test(value)) return 'Only letters and spaces allowed';
         return '';
 
+      case 'gender':
+        if (!value.trim()) return 'Gender is required';
+        if (!['male', 'female', 'other'].includes(value)) return 'Invalid gender selection';
+        return '';
+
       case 'mobileNumber':
         if (value && !/^\d*$/.test(value)) return 'Numbers only';
         if (value.length !== 10 && value.length > 0) return 'Exactly 10 digits required';
@@ -185,13 +195,14 @@ export default function CreateUserModal({
     formData.firstName.trim().length > 0 &&
     formData.lastName.trim().length > 0 &&
     formData.mobileNumber.length === 10 &&
+    formData.gender?.trim() && 
     formData.email.trim().length > 0 &&
     Object.values(errors).every(error => error === '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setTouched({
-      firstName: true, lastName: true, mobileNumber: true, email: true
+      firstName: true, lastName: true, mobileNumber: true, email: true, gender: true
     });
 
     if (!formData.firstName.trim() || !formData.lastName.trim() ||
@@ -205,13 +216,13 @@ export default function CreateUserModal({
       onOpenChange(false);
 
       setFormData({
-        userId: '', firstName: '', lastName: '', mobileNumber: '', email: '',
+        userId: '', firstName: '', lastName: '', mobileNumber: '', email: '', gender: '',
         image: null, dob: '', fullName: '', phoneNumber: '', panNumber: ''
       });
       setImagePreview(null);
       setTouched({});
       setErrors({
-        firstName: '', lastName: '', mobileNumber: '', email: '',
+        firstName: '', lastName: '', mobileNumber: '', email: '', gender: '',
         phoneNumber: '', panNumber: '', fullName: ''
       });
     } catch (err) {
@@ -483,6 +494,38 @@ export default function CreateUserModal({
                   )}
                 </div>
 
+                <div>
+                  <Label
+                    htmlFor="gender"
+                    className="text-sm font-medium text-gray-700 dark:text-gray-200"
+                  >
+                    Gender <span className="text-destructive">*</span>
+                  </Label>
+
+                  <select
+                    id="gender"
+                    value={formData.gender}
+                    onChange={(e) => handleChange("gender", e.target.value)}
+                    onBlur={() => setTouched((s) => ({ ...s, gender: true }))}
+                    className="h-11 mt-1 block w-full rounded-md bg-white dark:bg-gray-700
+               text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600
+               px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    aria-invalid={Boolean(touched.gender && errors.gender)}
+                    aria-describedby={touched.gender && errors.gender ? "err-gender" : undefined}
+                  >
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+
+                  {touched.gender && errors.gender && (
+                    <p id="err-gender" className="text-xs text-red-600 mt-1">
+                      {errors.gender}
+                    </p>
+                  )}
+                </div>
+
                 <div className="md:col-span-2">
                   <h3 className="text-base font-semibold mt-2 text-gray-900 dark:text-gray-100">
                     Bank Details
@@ -497,6 +540,7 @@ export default function CreateUserModal({
                   <Input
                     id="dob"
                     type="date"
+                    max="9999-12-31"
                     value={formData.dob || ''}
                     onChange={(e) => handleChange("dob", e.target.value)}
                     className="w-full h-11 bg-white  text-gray-900 dark:bg-gray-700 dark:text-gray-100 border  dark:border-gray-600 border-gray-300"

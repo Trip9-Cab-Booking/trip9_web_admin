@@ -86,6 +86,7 @@ const PromoDiscountControl: React.FC<Props> = ({
                     <label className="text-xs mt-2">Validity from</label>
                     <input
                         type="datetime-local"
+                        max="9999-12-31T23:59"
                         value={newPromo.validFrom || ""}
                         onChange={(e) =>
                             setNewPromo((p) => ({
@@ -99,6 +100,7 @@ const PromoDiscountControl: React.FC<Props> = ({
                     <label className="text-xs mt-2">Validity to</label>
                     <input
                         type="datetime-local"
+                        max="9999-12-31T23:59"
                         value={newPromo.validTo || ""}
                         onChange={(e) =>
                             setNewPromo((p) => ({
