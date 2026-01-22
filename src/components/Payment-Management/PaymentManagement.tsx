@@ -413,8 +413,8 @@ export default function PaymentManagementPage() {
                     <tr key={tx.id} className="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                       <td className="py-3 pr-4 font-mono text-xs">{tx.id}</td>
                       <td className="py-3 pr-4 capitalize text-sm">{tx.type.replaceAll("_", " ")}</td>
-                      <td className="py-3 pr-4 truncate max-w-[200px]">{tx.userName}</td>
-                      <td className="py-3 pr-4 truncate max-w-[150px]">{tx.driverName ?? "—"}</td>
+                      <td className="py-3 pr-4 truncate max-w-50">{tx.userName}</td>
+                      <td className="py-3 pr-4 truncate max-w-37.5">{tx.driverName ?? "—"}</td>
                       <td className="py-3 pr-4 text-left font-semibold">{currencyFmt(tx.amount)}</td>
                       <td className="py-3 pr-4 uppercase text-xs">{tx.mode}</td>
                       <td className="py-3 pr-4">

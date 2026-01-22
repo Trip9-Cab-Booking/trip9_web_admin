@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { selectAccessToken } from '@/store/authSlice';
@@ -60,6 +60,10 @@ export default function RideListPage() {
   const statusOptions = ['Accepted', 'Completed', 'Cancelled', 'Ongoing', 'Requested'];
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+
+  const fromDateRef = useRef<HTMLInputElement>(null);
+  const toDateRef = useRef<HTMLInputElement>(null);
+
 
   // helpers
   const toggleMulti = (list: string[], setList: (v: string[]) => void, value: string) => {
@@ -207,14 +211,14 @@ export default function RideListPage() {
   };
 
   return (
-    <div className="p-6 bg-gray-100 dark:bg-gray-900 min-h-screen font-inter">
+    <div className="p-6 bg-gray-100 dark:bg-gray-900 min-h-screen font-inter overflow-x-hidden">
       <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6 text-center">Ride Management</h1>
       <div className="bg-white dark:bg-gray-900 border rounded-xl p-3 shadow-sm mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           {/* Left group: search + date range */}
-          <div className="flex flex-col items-center gap-2 flex-1 min-w-0">
+          <div className="flex flex-col items-center px-4 gap-2 flex-1 min-w-0">
             <div className='flex gap-4 w-full'>
-              <div className="relative flex-2 w-1/2">
+              <div className="relative w-[60%] min-w-55">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 100-15 7.5 7.5 0 000 15z" /></svg>
                 </span>
@@ -228,26 +232,95 @@ export default function RideListPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 text-sm text-gray-600">
-                  <label className="sr-only">From</label>
+                <div className="relative">
                   <input
+                    ref={fromDateRef}
                     type="date"
+                    id="fromDate"
                     value={dateFrom ?? ''}
                     max="9999-12-31"
                     onChange={(e) => setDateFrom(e.target.value || null)}
-                    className="px-2 py-1 border rounded-md text-sm focus:ring-2 focus:ring-indigo-400"
+                    className="
+      w-44 px-2 py-1 pr-9
+      border rounded-md text-sm
+      bg-white dark:bg-gray-900
+      text-gray-900 dark:text-gray-100
+      focus:ring-2 focus:ring-indigo-400
+    "
                   />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = fromDateRef.current;
+                      if (!el) return;
+                      if (el.showPicker) el.showPicker();
+                      else el.focus();
+                    }}
+                    className="
+      absolute right-2 top-1/2 -translate-y-1/2
+      text-gray-500 hover:text-gray-700
+      dark:text-gray-400 dark:hover:text-gray-200
+    "
+                    aria-label="Open calendar"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                        d="M8 7V3m8 4V3M5 11h14M5 19h14M5 7h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2z"
+                      />
+                    </svg>
+                  </button>
                 </div>
                 <span className="text-gray-300">—</span>
-                <div className="flex items-center gap-1 text-sm text-gray-600">
-                  <label className="sr-only">To</label>
+                <div className="relative">
                   <input
+                    ref={toDateRef}
                     type="date"
+                    id="toDate"
                     value={dateTo ?? ''}
                     max="9999-12-31"
                     onChange={(e) => setDateTo(e.target.value || null)}
-                    className="px-2 py-1 border rounded-md text-sm focus:ring-2 focus:ring-indigo-400"
+                    className="
+      w-44 px-2 py-1 pr-9
+      border rounded-md text-sm
+      bg-white dark:bg-gray-900
+      text-gray-900 dark:text-gray-100
+      focus:ring-2 focus:ring-indigo-400
+    "
                   />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = toDateRef.current;
+                      if (!el) return;
+                      if (el.showPicker) el.showPicker();
+                      else el.focus();
+                    }}
+                    className="
+      absolute right-2 top-1/2 -translate-y-1/2
+      text-gray-500 hover:text-gray-700
+      dark:text-gray-400 dark:hover:text-gray-200
+    "
+                    aria-label="Open calendar"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                        d="M8 7V3m8 4V3M5 11h14M5 19h14M5 7h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2z"
+                      />
+                    </svg>
+                  </button>
                 </div>
               </div>
             </div>
@@ -341,90 +414,90 @@ export default function RideListPage() {
         </div>
       ) : (
         <>
-          <div className="max-w-full overflow-x-auto">
-            <div className="bg-white dark:bg-gray-900 shadow-md rounded-lg
-            max-h-[55vh] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-400/50 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600/50
-            scrollbar-thin">
-              <table className="w-full text-sm table-fixed divide-y divide-gray-200 dark:divide-gray-700 min-w-312.5 xl:min-w-0">
-                <thead className="bg-gray-50 dark:bg-gray-800">
-                  <tr>
-                    <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Vehicle</th>
-                    <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Pickup</th>
-                    <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Drop</th>
-                    <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Fare</th>
-                    <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">User Name</th>
-                    <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Driver Name</th>
-                    <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                    <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Date</th>
-                    <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Cancellation</th>
-                    <th className="px-2 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Rating</th>
-                    <th className="px-2 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                  {rides.length === 0 ? (
+          <div className="relative max-w-full overflow-x-auto overflow-y-hidden">
+            <div className="bg-white dark:bg-gray-900 shadow-md rounded-lg max-h-[55vh] overflow-hidden">
+              <div className="overflow-x-auto h-full [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-400/50 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600/50 scrollbar-thin">
+                <table className="w-full table-fixed divide-y divide-gray-200 dark:divide-gray-700 min-w-312.5 xl:min-w-0">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
-                      <td colSpan={11} className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        No ride data found matching your criteria.
-                      </td>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Vehicle</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Pickup</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Drop</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Fare</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">User</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Driver</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Comment</th>
+                      <th className="px-2 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Rating</th>
+                      <th className="px-2 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Action</th>
                     </tr>
-                  ) : (
-                    rides.map((ride) => (
-                      <tr key={ride._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                        <td className="w-20 px-3 py-4 truncate max-w-20 font-medium text-gray-900 dark:text-gray-100">
-                          {ride.rideDetails.vehicleType} ({ride.rideDetails.vehicleCategory})
-                        </td>
-                        <td className="w-36 px-3 py-4 max-w-36 truncate text-gray-900 dark:text-gray-100">
-                          {ride.rideDetails.pickupLocation.address}
-                        </td>
-                        <td className="w-36 px-3 py-4 max-w-36 truncate text-gray-900 dark:text-gray-100">
-                          {ride.rideDetails.dropLocation.address}
-                        </td>
-                        <td className="w-16 px-3 py-4 text-left font-semibold text-gray-900 dark:text-gray-100">
-                          ₹{ride.rideDetails.estimatedFare}
-                        </td>
-                        <td className="w-28 px-3 py-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                          {ride.userDetails.firstName} {ride.userDetails.lastName}
-                        </td>
-                        <td className="w-28 px-3 py-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                          {ride.driverDetails.firstName} {ride.driverDetails.lastName}
-                        </td>
-                        <td className="capitalize">
-                          <StatusBadge status={ride.rideDetails.status} />
-                        </td>
-                        <td className="px-3 py-4 text-sm">
-                          <span className="text-gray-900 dark:text-gray-100 font-medium text-xs">
-                            {new Date(ride.rideDetails.createdAt).toLocaleDateString()}
-                          </span>
-                        </td>
-
-
-                        <td className="px-3 py-4">
-                          {ride.rideDetails.status === 'cancelled'
-                            ? <span className="text-sm text-gray-700 dark:text-gray-300 block truncate">{`${ride.rideDetails.cancelledBy ?? 'N/A'} - ${ride.rideDetails.cancellationReason ?? 'No reason'}`}</span>
-                            : <span className="text-gray-400 dark:text-gray-500">—</span>
-                          }
-                        </td>
-                        <td className="w-20 px-3 py-4 text-center">
-                          {ride.driverDetails.ratingStats
-                            ? <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">{`${ride.driverDetails.ratingStats.average.toFixed(1)} ⭐ (${ride.driverDetails.ratingStats.totalRidesRated})`}</span>
-                            : <span className="text-gray-400 dark:text-gray-500">N/A</span>
-                          }
-                        </td>
-                        <td className="w-20 px-3 py-4 text-center">
-                          <Link
-                            href={`/ride-management/${ride._id}`}
-                            aria-label={`View ride ${ride._id}`}
-                            className="inline-block px-3 py-1 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-600 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/50 hover:border-blue-400 dark:hover:border-blue-400 transition-colors"
-                          >
-                            View
-                          </Link>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                    {rides.length === 0 ? (
+                      <tr>
+                        <td colSpan={11} className="text-center py-8 text-gray-500 dark:text-gray-400">
+                          No ride data found matching your criteria.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      rides.map((ride) => (
+                        <tr key={ride._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                          <td className="w-20 px-3 py-4 truncate max-w-20 font-medium text-gray-900 dark:text-gray-100">
+                            {ride.rideDetails.vehicleType} ({ride.rideDetails.vehicleCategory})
+                          </td>
+                          <td className="w-36 px-3 py-4 max-w-36 truncate text-gray-900 dark:text-gray-100">
+                            {ride.rideDetails.pickupLocation.address}
+                          </td>
+                          <td className="w-36 px-3 py-4 max-w-36 truncate text-gray-900 dark:text-gray-100">
+                            {ride.rideDetails.dropLocation.address}
+                          </td>
+                          <td className="w-16 px-3 py-4 text-left font-semibold text-gray-900 dark:text-gray-100">
+                            ₹{ride.rideDetails.estimatedFare}
+                          </td>
+                          <td className="w-28 px-3 py-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                            {ride.userDetails.firstName}
+                          </td>
+                          <td className="w-28 px-3 py-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                            {ride.driverDetails.firstName}
+                          </td>
+                          <td className="capitalize">
+                            <StatusBadge status={ride.rideDetails.status} />
+                          </td>
+                          <td className="px-3 py-4 text-sm">
+                            <span className="text-gray-900 dark:text-gray-100 font-medium text-xs">
+                              {new Date(ride.rideDetails.createdAt).toLocaleDateString()}
+                            </span>
+                          </td>
+
+
+                          <td className="px-3 py-4">
+                            {ride.rideDetails.status === 'cancelled'
+                              ? <span className="text-sm text-gray-700 dark:text-gray-300 block truncate">{`${ride.rideDetails.cancelledBy ?? 'N/A'} - ${ride.rideDetails.cancellationReason ?? 'No reason'}`}</span>
+                              : <span className="text-gray-400 dark:text-gray-500">—</span>
+                            }
+                          </td>
+                          <td className="w-20 px-3 py-4 text-center">
+                            {ride.driverDetails.ratingStats
+                              ? <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">{`${ride.driverDetails.ratingStats.average.toFixed(1)} ⭐ (${ride.driverDetails.ratingStats.totalRidesRated})`}</span>
+                              : <span className="text-gray-400 dark:text-gray-500">N/A</span>
+                            }
+                          </td>
+                          <td className="w-20 px-3 py-4 text-center">
+                            <Link
+                              href={`/ride-management/${ride._id}`}
+                              aria-label={`View ride ${ride._id}`}
+                              className="inline-block px-3 py-1 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-600 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/50 hover:border-blue-400 dark:hover:border-blue-400 transition-colors"
+                            >
+                              View
+                            </Link>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
@@ -453,4 +526,4 @@ export default function RideListPage() {
       )}
     </div>
   );
-}
+}           
