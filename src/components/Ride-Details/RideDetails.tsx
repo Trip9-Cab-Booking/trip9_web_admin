@@ -69,7 +69,7 @@ export type Ride = any;
 
 function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white shadow-sm rounded-2xl p-4">
+    <div className="bg-white dark:bg-gray-900 dark:text-white border shadow-sm rounded-2xl p-4">
       <h3 className="text-sm font-medium text-gray-600">{title}</h3>
       <div className="mt-2">{children}</div>
     </div>
@@ -152,13 +152,13 @@ export default function RideDetailsPage({
   if (!ride) return <div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">Ride not found.</p></div>;
 
   return (
-    <main className="min-h-screen bg-gray-50 p-6">
+    <main className="min-h-screen bg-gray-50 p-6 dark:bg-gray-900 dark:text-white">
       <div className="max-w-full mx-auto space-y-6">
         <header className="flex items-center justify-between">
           <div>
             <button
               onClick={() => router.back()}
-              className="inline-flex gap-2 items-center px-3 py-1 rounded-md border bg-white shadow-sm text-sm hover:bg-gray-100 mb-4"
+              className="inline-flex gap-2 items-center px-3 py-1 rounded-md border bg-white shadow-sm text-sm hover:bg-gray-100 mb-4 dark:bg-gray-900 dark:text-white"
             >
               <BsArrowLeft />
               Back
@@ -286,7 +286,7 @@ export default function RideDetailsPage({
 
           <aside className="space-y-4">
             <div className="sticky top-20">
-              <div className="bg-white shadow-sm rounded-2xl p-4 space-y-3">
+              <div className="bg-white dark:bg-gray-900 dark:text-white border shadow-sm rounded-2xl p-4 space-y-3 ">
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-sm text-gray-500">Summary</h4>
@@ -300,7 +300,7 @@ export default function RideDetailsPage({
                     <span>Estimated</span>
                     <span>₹{ride.summary.estimatedPrice}</span>
                   </div>
-                  <div className="flex items-center justify-between text-sm text-gray-800 font-medium mt-1">
+                  <div className="flex items-center justify-between text-sm text-gray-600 font-medium mt-1">
                     <span>Final</span>
                     <span>₹{ride.finalFare ?? "—"}</span>
                   </div>

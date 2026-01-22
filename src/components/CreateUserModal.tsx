@@ -195,7 +195,7 @@ export default function CreateUserModal({
     formData.firstName.trim().length > 0 &&
     formData.lastName.trim().length > 0 &&
     formData.mobileNumber.length === 10 &&
-    formData.gender?.trim() && 
+    formData.gender?.trim() &&
     formData.email.trim().length > 0 &&
     Object.values(errors).every(error => error === '');
 
@@ -533,18 +533,64 @@ export default function CreateUserModal({
                   </h3>
                 </div>
 
-                <div>
-                  <Label htmlFor="dob" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                <div className="relative">
+                  <Label
+                    htmlFor="dob"
+                    className="text-sm font-medium text-gray-700 dark:text-gray-200"
+                  >
                     Date of Birth
                   </Label>
-                  <Input
+
+                  <input
                     id="dob"
                     type="date"
                     max="9999-12-31"
-                    value={formData.dob || ''}
+                    value={formData.dob || ""}
                     onChange={(e) => handleChange("dob", e.target.value)}
-                    className="w-full h-11 bg-white  text-gray-900 dark:bg-gray-700 dark:text-gray-100 border  dark:border-gray-600 border-gray-300"
+                    className="
+      w-full h-11 px-3 pr-10
+      bg-white dark:bg-gray-700
+      text-gray-900 dark:text-gray-100
+      border border-gray-300 dark:border-gray-600
+      rounded-md
+      focus:ring-2 focus:ring-indigo-400
+      [&::-webkit-calendar-picker-indicator]:opacity-0
+      [&::-webkit-calendar-picker-indicator]:absolute
+      [&::-webkit-calendar-picker-indicator]:right-3
+    "
                   />
+
+                  {/* Custom calendar icon */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("dob") as HTMLInputElement | null;
+                      if (!el) return;
+                      if (el.showPicker) el.showPicker();
+                      else el.focus();
+                    }}
+                    className="
+      absolute right-3 top-9.5
+      text-gray-400 hover:text-gray-600
+      dark:text-gray-300 dark:hover:text-gray-100
+    "
+                    aria-label="Open calendar"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M8 7V3m8 4V3M5 11h14M5 19h14M5 7h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2z"
+                      />
+                    </svg>
+                  </button>
                 </div>
 
                 <div>
