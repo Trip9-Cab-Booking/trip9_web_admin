@@ -41,11 +41,9 @@ const BASE = process.env.NEXT_PUBLIC_BASE_URL;
 
 export default function RideListPage() {
   const [rides, setRides] = useState<Ride[]>([]);
-  // const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const token = useSelector(selectAccessToken);
   // States
@@ -55,9 +53,6 @@ export default function RideListPage() {
   // dates
   const [dateFrom, setDateFrom] = useState<string | null>(null);
   const [dateTo, setDateTo] = useState<string | null>(null);
-
-  // payment & status
-  //removed card and NetBanking
   const paymentOptions = ['Cash', 'UPI', 'Wallet'];
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
@@ -335,8 +330,6 @@ export default function RideListPage() {
           </div>
         </div>
       </div>
-
-
 
       {loading ? (
         <div className="flex justify-center items-center h-48 text-gray-500">
