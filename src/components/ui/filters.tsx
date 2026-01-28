@@ -48,8 +48,8 @@ export default function CompactFilters({
           </div> */}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 items-center">
-          <div className="relative">
+        <div className="flex flex-wrap xl:flex-nowrap gap-3 items-center">
+          <div className="relative flex-1 min-w-60">
             <label className="sr-only">Search</label>
             <div className="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center">
               <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none">
@@ -65,7 +65,7 @@ export default function CompactFilters({
             />
           </div>
 
-          <div className="flex flex-nowrap lg:flex-nowrap items-center gap-2">
+          <div className="flex flex-wrap lg:flex-nowrap items-center gap-2">
             <div className="relative min-w-32.5 max-w-32.5 w-full">
               <input
                 ref={fromDateRef}
@@ -166,12 +166,12 @@ export default function CompactFilters({
             </div>
           </div>
 
-          <div className="flex justify-center items-center lg:ml-4" >
+          <div className="flex justify-center items-center w-full max-w-37.5" >
             <label className="sr-only">Payment mode</label>
             <select
               value={selectedMode}
               onChange={(e) => setSelectedMode(e.target.value)}
-              className="  w-[80%] min-w-35 px-2 py-1 text-sm rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              className="  w-full px-2 py-1 text-sm rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             >
               <option value="" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">
                 All modes
@@ -184,12 +184,12 @@ export default function CompactFilters({
             </select>
           </div>
 
-          <div>
+          <div className="w-full max-w-37.5">
             <label className="sr-only">Status</label>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-[80%] px-2 py-1 text-sm rounded-md border border-gray-200 dark:border-gray-700 
+              className="w-full px-2 py-1 text-sm rounded-md border border-gray-200 dark:border-gray-700 
              bg-white dark:bg-gray-800 
              text-gray-900 dark:text-gray-100"
             >
