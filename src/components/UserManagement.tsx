@@ -434,7 +434,7 @@ const UserManagement = () => {
       <header className="flex items-center justify-between mb-4">
         <h1 className="font-semibold text-lg">User Management</h1>
         <div className="flex items-center gap-2">
-          <Search onSearch={handleSearch} />
+          <Search onSearch={handleSearch} placeholder="Search users..." />
 
           <div className="flex items-center gap-2">
             <button
