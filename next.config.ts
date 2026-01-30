@@ -19,7 +19,6 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
 
-  output: "export",
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "4.imimg.com" },
