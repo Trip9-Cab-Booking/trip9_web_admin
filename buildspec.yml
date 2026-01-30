@@ -12,6 +12,8 @@ phases:
       - npm run build
 
 artifacts:
-  base-directory: out
   files:
-    - '**/*'
+     - .next/**/*
+     - public/**/*
+     - package.json
+     - next.config.ts
