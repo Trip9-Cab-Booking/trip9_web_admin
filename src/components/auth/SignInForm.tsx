@@ -57,8 +57,7 @@ const SignInForm = () => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     dispatch(setLoading(true));
     setFormErrors({});
 
@@ -71,40 +70,43 @@ const SignInForm = () => {
         errors[field] = err.message;
       });
       setFormErrors(errors);
+      dispatch(setLoading(false));
       return;
     }
 
     try {
-      dispatch(setLoading(true));
-      console.log(formValues);
-
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/admin/login`, {
-        email: formValues.email,
-        password: formValues.password,
-      });
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/admin/login`,
+        {
+          email: formValues.email,
+          password: formValues.password,
+        }
+      );
 
       const userData = res.data;
 
       if (res.status === 200) {
-        const payload = {
-          user: {
-            id: userData?.data.id,
-            email: userData?.data.email,
-            firstName: userData?.data.firstName,
-            role: userData?.data.role,
-          },
-          accessToken: userData?.token,
-        }
-        console.log("payload", payload);
+        dispatch(
+          setCredentials({
+            user: {
+              id: userData?.data.id,
+              email: userData?.data.email,
+              firstName: userData?.data.firstName,
+              role: userData?.data.role,
+            },
+            accessToken: userData?.token,
+          })
+        );
 
-        dispatch(setCredentials(payload));
         showFeedback("Login successful!", "success");
         router.push("/dashboard");
       }
     } catch (error: unknown) {
-      const msg = axios.isAxiosError(error) && error.response?.data?.message
-        ? error.response.data.message
-        : "Login failed";
+      const msg =
+        axios.isAxiosError(error) && error.response?.data?.message
+          ? error.response.data.message
+          : "Login failed";
+
       setFormErrors((prev) => ({ ...prev, email: msg }));
       showFeedback(msg, "error");
     } finally {
@@ -220,7 +222,7 @@ const SignInForm = () => {
             </form>
           </div>
         </div>
-        <Dialog
+        {/* <Dialog
           open={open}
           //   onClose={handleClose}
           sx={{ '& .MuiDialog-paper': { width: '50%', height: "50%", maxHeight: 300, paddingBottom: "20px", paddingX: "20px" } }}
@@ -239,6 +241,17 @@ const SignInForm = () => {
                   toast.error("Invalid email format");
                 }
               },
+            },
+          }}
+        > */}
+        <Dialog
+          open={open}
+          onClose={handleClose}
+          PaperProps={{
+            component: "form",
+            onSubmit: (event: React.FormEvent<HTMLDivElement>) => {
+              event.preventDefault();
+              handleSubmit();
             },
           }}
         >
@@ -273,7 +286,7 @@ const SignInForm = () => {
             </DialogActions>
           }
         </Dialog>
-      </div>
+      </div >
 
       <CustomSnackbar
         open={showAlert}
