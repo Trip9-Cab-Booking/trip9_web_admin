@@ -26,7 +26,7 @@ const SignInSchema = z.object({
 type SignInValues = z.infer<typeof SignInSchema>;
 
 const SignInForm = () => {
-    useRedirectIfAuthenticated();
+  useRedirectIfAuthenticated();
   const router = useRouter();
   const dispatch = useDispatch();
   const loading = useSelector(selectAuthLoading);
@@ -36,18 +36,18 @@ const SignInForm = () => {
     password: "",
   });
 
-    const [formErrors, setFormErrors] = useState<Partial<Record<keyof SignInValues, string>>>({});
-    const [showPassword, setShowPassword] = useState(false);
-    const [alertMessage, setAlertMessage] = useState("");
-    const [alertSeverity, setAlertSeverity] = useState<"success" | "error" | "info">("info");
-    const [showAlert, setShowAlert] = useState(false);
-    const [forgotLoading, setForgotLoading] = useState<boolean>(false)
+  const [formErrors, setFormErrors] = useState<Partial<Record<keyof SignInValues, string>>>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertSeverity, setAlertSeverity] = useState<"success" | "error" | "info">("info");
+  const [showAlert, setShowAlert] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState<boolean>(false)
 
-    const showFeedback = (message: string, severity: "success" | "error" | "info" = "info") => {
-      setAlertMessage(message);
-      setAlertSeverity(severity);
-      setShowAlert(true);
-    };
+  const showFeedback = (message: string, severity: "success" | "error" | "info" = "info") => {
+    setAlertMessage(message);
+    setAlertSeverity(severity);
+    setShowAlert(true);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -59,7 +59,7 @@ const SignInForm = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    dispatch(setLoading(true));
     setFormErrors({});
 
     const result = SignInSchema.safeParse(formValues);
@@ -75,8 +75,8 @@ const SignInForm = () => {
     }
 
     try {
-        dispatch(setLoading(true));
-        console.log(formValues);
+      dispatch(setLoading(true));
+      console.log(formValues);
 
       const res = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/admin/login`, {
         email: formValues.email,
@@ -87,19 +87,19 @@ const SignInForm = () => {
 
       if (res.status === 200) {
         const payload = {
-            user: {
-                id: userData?.data.id,
-                email: userData?.data.email,
-                firstName: userData?.data.firstName,
-                role: userData?.data.role,
-              },
-              accessToken: userData?.token,
+          user: {
+            id: userData?.data.id,
+            email: userData?.data.email,
+            firstName: userData?.data.firstName,
+            role: userData?.data.role,
+          },
+          accessToken: userData?.token,
         }
         console.log("payload", payload);
 
         dispatch(setCredentials(payload));
         showFeedback("Login successful!", "success");
-        router.push("/");
+        router.push("/dashboard");
       }
     } catch (error: unknown) {
       const msg = axios.isAxiosError(error) && error.response?.data?.message
@@ -115,84 +115,84 @@ const SignInForm = () => {
 
   const [open, setOpen] = React.useState(false);
 
-    const handleClickOpen = () => {
-      setOpen(true);
-    };
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
 
-    const handleClose = () => {
-      setOpen(false);
-    };
+  const handleClose = () => {
+    setOpen(false);
+  };
 
 
-    async function handleForgot(email: string){
-        setForgotLoading(true);
-        try {
-            const res = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/admin/forgot-password`, {email});
-            const resData = res.data;
-            console.log(resData);
-            dispatch(updateAccessToken(resData?.resetToken));
-            showFeedback(resData?.message || "Email sent successfully", "success");
-        } catch (error: unknown) {
-            if (axios.isAxiosError(error) && error.response?.data?.message) {
-                showFeedback(error.response.data.message, "error");
-            } else {
-                showFeedback("An unexpected error occurred", "error");
-            }
-            }finally{
-                setForgotLoading(false);
-                handleClose();
-            }
-        }
+  async function handleForgot(email: string) {
+    setForgotLoading(true);
+    try {
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/admin/forgot-password`, { email });
+      const resData = res.data;
+      console.log(resData);
+      dispatch(updateAccessToken(resData?.resetToken));
+      showFeedback(resData?.message || "Email sent successfully", "success");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        showFeedback(error.response.data.message, "error");
+      } else {
+        showFeedback("An unexpected error occurred", "error");
+      }
+    } finally {
+      setForgotLoading(false);
+      handleClose();
+    }
+  }
 
   return (
     <>
-    <div className="flex flex-col flex-1 lg:w-1/2 w-full">
-      <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
-        <div>
-          <div className="mb-5 sm:mb-8">
-            <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
-              Sign In
-            </h1>
-          </div>
+      <div className="flex flex-col flex-1 lg:w-1/2 w-full">
+        <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
+          <div>
+            <div className="mb-5 sm:mb-8">
+              <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
+                Sign In
+              </h1>
+            </div>
 
-          <form onSubmit={handleSubmit} noValidate>
-            <div className="space-y-6">
-              <TextField
-                label="Email"
-                name="email"
-                type="email"
-                variant="filled"
-                fullWidth
-                required
-                value={formValues.email}
-                onChange={handleChange}
-                helperText={formErrors.email}
-              />
+            <form onSubmit={handleSubmit} noValidate>
+              <div className="space-y-6">
+                <TextField
+                  label="Email"
+                  name="email"
+                  type="email"
+                  variant="filled"
+                  fullWidth
+                  required
+                  value={formValues.email}
+                  onChange={handleChange}
+                  helperText={formErrors.email}
+                />
 
-              <div className="my-4">
-                <div className="relative">
-                  <TextField
-                    label="Password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    variant="filled"
-                    fullWidth
-                    value={formValues.password}
-                    onChange={handleChange}
-                    error={!!formErrors.password}
-                    helperText={formErrors.password}
-                  />
-                  <span
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
-                  >
-                    {showPassword ? <EyeIcon /> : <EyeCloseIcon />}
-                  </span>
+                <div className="my-4">
+                  <div className="relative">
+                    <TextField
+                      label="Password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      variant="filled"
+                      fullWidth
+                      value={formValues.password}
+                      onChange={handleChange}
+                      error={!!formErrors.password}
+                      helperText={formErrors.password}
+                    />
+                    <span
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                    >
+                      {showPassword ? <EyeIcon /> : <EyeCloseIcon />}
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-center justify-between">
-                {/* <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between">
+                  {/* <div className="flex items-center gap-3">
                   <Checkbox
                     name="acceptTerms"
                     checked={formValues.acceptTerms}
@@ -202,29 +202,29 @@ const SignInForm = () => {
                     Accept the terms and conditions
                   </span>
                 </div> */}
-               
-              </div>
 
-              <button
-                disabled={loading}
-                className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600 disabled:opacity-50 mb-2"
-              >
-                {loading ? "Signing in..." : "Sign in"}
-              </button>
-               <span className="flex w-full justify-end">
-                <button type="button" onClick={handleClickOpen}  className="text-sm text-brand-500 hover:text-brand-600">
-                  Forgot password?
+                </div>
+
+                <button
+                  disabled={loading}
+                  className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600 disabled:opacity-50 mb-2"
+                >
+                  {loading ? "Signing in..." : "Sign in"}
                 </button>
-               </span>
-            </div>
-          </form>
+                <span className="flex w-full justify-end">
+                  <button type="button" onClick={handleClickOpen} className="text-sm text-brand-500 hover:text-brand-600">
+                    Forgot password?
+                  </button>
+                </span>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
-      <Dialog
+        <Dialog
           open={open}
-        //   onClose={handleClose}
+          //   onClose={handleClose}
           sx={{ '& .MuiDialog-paper': { width: '50%', height: "50%", maxHeight: 300, paddingBottom: "20px", paddingX: "20px" } }}
-            maxWidth="md"
+          maxWidth="md"
           slotProps={{
             paper: {
               component: 'form',
@@ -257,30 +257,30 @@ const SignInForm = () => {
               type="email"
               variant="standard"
               className="mt-10"
-              sx={{width: "80%", display: 'flex', justifyContent: "center", margin: "30px auto" }}
+              sx={{ width: "80%", display: 'flex', justifyContent: "center", margin: "30px auto" }}
             />
           </DialogContent>
           {forgotLoading ?
             <DialogActions>
-                <Box sx={{ display: 'flex', alignItems: "center", width: "100%", justifyContent: "center" }}>
-                    <CircularProgress />
-                </Box>
-          </DialogActions>
-          :
-          <DialogActions>
-            <button onClick={handleClose} className="bg-gray-900 text-slate-50 p-1 px-2 rounded-sm" >Cancel</button>
-            <button type="submit" className="bg-blue-900 text-slate-50 p-1 px-2 rounded-sm" >Send email</button>
-          </DialogActions>
-        }
+              <Box sx={{ display: 'flex', alignItems: "center", width: "100%", justifyContent: "center" }}>
+                <CircularProgress />
+              </Box>
+            </DialogActions>
+            :
+            <DialogActions>
+              <button onClick={handleClose} className="bg-gray-900 text-slate-50 p-1 px-2 rounded-sm" >Cancel</button>
+              <button type="submit" className="bg-blue-900 text-slate-50 p-1 px-2 rounded-sm" >Send email</button>
+            </DialogActions>
+          }
         </Dialog>
-    </div>
+      </div>
 
-    <CustomSnackbar
+      <CustomSnackbar
         open={showAlert}
         message={alertMessage}
         severity={alertSeverity}
         onClose={() => setShowAlert(false)}
-        />
+      />
     </>
   );
 };

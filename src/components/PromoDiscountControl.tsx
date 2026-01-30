@@ -1,22 +1,28 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Promo, PromoForm, PromoType } from "@/types/promo";
+import { Trash2 } from "lucide-react";
+import DeleteConfirmModal from "./DeleteConfirmModal";
+import Pagination from "./ui/pagination";
+import { axiosInstance } from "@/utils/axiosInstance";
 
 type Props = {
     newPromo: PromoForm;
-    promos: Promo[];
+    // promos: Promo[];
     setNewPromo: React.Dispatch<React.SetStateAction<PromoForm>>;
     savePromo: () => void;
     removePromo: (code: string) => void;
+    onRefresh: () => void;
 };
 
 const PromoDiscountControl: React.FC<Props> = ({
     newPromo,
-    promos,
+    // promos,
     setNewPromo,
     savePromo,
     removePromo,
+    onRefresh
 }) => {
 
     const selectPromo = (promo: Promo) => {
@@ -30,6 +36,61 @@ const PromoDiscountControl: React.FC<Props> = ({
             totalUsageLimit: promo.totalUsageLimit,
             couponId: promo.couponId,
         });
+    };
+    const [promos, setPromos] = React.useState<Promo[]>([]);
+    const [page, setPage] = React.useState(1);
+    const [totalPages, setTotalPages] = React.useState(1);
+    const [loadingPromos, setLoadingPromos] = React.useState(false);
+    const [deleteOpen, setDeleteOpen] = React.useState(false);
+    const [selectedCouponId, setSelectedCouponId] = React.useState<string | null>(null);
+    const [deleting, setDeleting] = React.useState(false);
+
+    const handleRefresh = () => {
+        setPage(1);
+    };
+
+
+    const fetchCoupons = async (page = 1, limit = 10) => {
+        const response = await axiosInstance.get(
+            "/api/admin/coupon/coupons",
+            { params: { page, limit } }
+        );
+
+        setPromos(response.data.data.list);
+        setTotalPages(response.data.data.pagination.totalPages);
+    };
+
+    useEffect(() => {
+        const loadCoupons = async () => {
+            try {
+                setLoadingPromos(true);
+                await fetchCoupons(page);
+            } catch (error) {
+                console.error("Failed to fetch coupons", error);
+            } finally {
+                setLoadingPromos(false);
+            }
+        };
+
+        loadCoupons();
+    }, [page]);
+
+    const handleConfirmDelete = async () => {
+        if (!selectedCouponId) return;
+
+        setDeleting(true);
+        try {
+            await removePromo(selectedCouponId);
+            onRefresh();
+        } finally {
+            setDeleting(false);
+            setSelectedCouponId(null);
+        }
+    };
+
+    const handlePageChange = (p: number) => {
+        if (p < 1 || p > totalPages) return;
+        setPage(p);
     };
 
     return (
@@ -157,7 +218,7 @@ const PromoDiscountControl: React.FC<Props> = ({
                                     totalUsageLimit: 1000,
                                 })
                             }
-                            className="px-3 py-2 rounded bg-red-500"
+                            className="px-3 py-2 rounded bg-red-500 text-white"
                         >
                             Clear
                         </button>
@@ -165,11 +226,15 @@ const PromoDiscountControl: React.FC<Props> = ({
                 </div>
 
                 {/* ACTIVE PROMOS */}
-                <div className="p-3 border rounded">
+                <div className="p-3 border rounded flex flex-col">
                     <h4 className="font-medium mb-2">Active Coupons</h4>
 
-                    <div className="space-y-2 max-h-64 overflow-auto">
-                        {promos.length === 0 && (
+                    <div className="space-y-2 max-h-fit overflow-auto">
+                        {loadingPromos && (
+                            <div className="text-sm text-gray-500">Loading coupons...</div>
+                        )}
+
+                        {!loadingPromos && promos.length === 0 && (
                             <div className="text-sm text-gray-500">No coupons yet</div>
                         )}
 
@@ -190,17 +255,37 @@ const PromoDiscountControl: React.FC<Props> = ({
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        removePromo(p.couponId);
+                                        setSelectedCouponId(p.couponId);
+                                        setDeleteOpen(true);
                                     }}
-                                    className="px-2 py-1 rounded bg-red-500 text-white text-sm"
                                 >
-                                    Delete
+                                    <Trash2 className="w-5 h-5 text-red-500" />
                                 </button>
                             </div>
                         ))}
                     </div>
+
+                    {/* ✅ Pagination INSIDE promo */}
+                    {totalPages > 1 && (
+                        <div className="mt-3 self-end">
+                            <Pagination
+                                currentPage={page}
+                                totalPages={totalPages}
+                                onPageChange={handlePageChange}
+                            />
+                        </div>
+                    )}
                 </div>
+
             </div>
+            <DeleteConfirmModal open={deleteOpen}
+                onOpenChange={setDeleteOpen}
+                onConfirm={handleConfirmDelete}
+                loading={deleting}
+                title="Delete promo code?"
+                description="This promo code will be permanently removed. This action cannot be undone."
+                destructiveLabel="Delete"
+                cancelLabel="Cancel" />
         </section>
     );
 };

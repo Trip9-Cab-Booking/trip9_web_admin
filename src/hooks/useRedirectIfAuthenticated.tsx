@@ -14,7 +14,7 @@ export const useRedirectIfAuthenticated = () => {
 
   useEffect(() => {
     if (accessToken && user?.role === "admin") {
-      router.push('/');
+      router.push('/dashboard');
     }
   }, [accessToken, router, user]);
 };
