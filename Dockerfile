@@ -1,7 +1,7 @@
 # --------------------
 # Build stage
 # --------------------
-FROM node:18-alpine AS builder
+FROM public.ecr.aws/docker/library/node:18-alpine AS builder
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ RUN npm run build
 # --------------------
 # Runtime stage
 # --------------------
-FROM node:18-alpine AS runner
+FROM public.ecr.aws/docker/library/node:18-alpine AS runner
 
 WORKDIR /app
 
