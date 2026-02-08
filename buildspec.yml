@@ -10,8 +10,7 @@ phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION |
-        docker login --username AWS --password-stdin $ECR_REGISTRY
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
       - export IMAGE_TAG=$CODEBUILD_BUILD_NUMBER
       - echo Using image tag: $IMAGE_TAG
 
